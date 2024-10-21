@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:golden_test/src/device.dart';
 
-bool disableInfiniteAnimationsInTests = false;
+bool disableInfiniteAnimationsInGoldenTests = false;
 
-List<Locale> goldenTestLocales = [const Locale('en', 'US')];
+List<Locale> goldenTestSupportedLocales = [const Locale('en', 'US')];
+List<LocalizationsDelegate<dynamic>> goldenTestLocalizationsDelegates = [];
 
-List<Device> supportedDevices = [
+List<Device> goldenTestSupportedDevices = [
   Device.noInsets(),
   Device.iphone15Pro(),
   Device.pixel9ProXL(),
@@ -16,7 +17,7 @@ List<Device> supportedDevices = [
 
 List<Brightness> goldenTestSupportedModes = [Brightness.light, Brightness.dark];
 
-ThemeData themeInTests = ThemeData(
+ThemeData goldenTestThemeInTests = ThemeData(
   brightness: Brightness.light,
   useMaterial3: true,
   colorScheme: ColorScheme.fromSeed(
@@ -25,7 +26,7 @@ ThemeData themeInTests = ThemeData(
   ),
 );
 
-ThemeData darkThemeInTests = ThemeData(
+ThemeData goldenTestDarkThemeInTests = ThemeData(
   brightness: Brightness.dark,
   useMaterial3: true,
   colorScheme: ColorScheme.fromSeed(

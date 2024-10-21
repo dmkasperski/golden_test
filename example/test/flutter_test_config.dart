@@ -9,7 +9,7 @@ Future<void> testExecutable(FutureOr<void> Function() testMain) async {
 
   await (FontLoader('Roboto')..addFont(rootBundle.load('assets/fonts/Roboto-Regular.ttf'))).load();
 
-  supportedDevices = [
+  goldenTestSupportedDevices = [
     const Device.iphone15Pro(),
     const Device.ipadPro12(),
   ];

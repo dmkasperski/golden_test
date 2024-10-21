@@ -13,20 +13,21 @@ void goldenTest({
   bool supportMultipleDevices = false,
   List<Brightness> supportedModes = const [],
   List<Locale>? supportedLocales,
+  List<LocalizationsDelegate<dynamic>>? localizationsDelegates,
   Future<void> Function(WidgetTester tester)? setup,
   Future<void> Function(WidgetTester tester)? tearDown,
   Future<void> Function(WidgetTester tester)? action,
   bool skip = false,
 }) {
   final testModes = supportedModes.isNotEmpty ? supportedModes : goldenTestSupportedModes;
-  final testDevices = supportMultipleDevices ? supportedDevices : devices;
+  final testDevices = supportMultipleDevices ? goldenTestSupportedDevices : devices;
 
   for (final mode in testModes) {
     for (final device in testDevices) {
       testWidgets(name, (WidgetTester tester) async {
         tester.platformDispatcher.platformBrightnessTestValue = mode;
         debugDisableShadows = false;
-        disableInfiniteAnimationsInTests = true;
+        disableInfiniteAnimationsInGoldenTests = true;
         _setupSize(device, tester);
         try {
           if (setup != null) {
@@ -38,8 +39,9 @@ void goldenTest({
               alignment: Alignment.topLeft,
               child: Builder(builder: builder),
             ),
-            mode == Brightness.light ? themeInTests : darkThemeInTests,
-            supportedLocales ?? goldenTestLocales,
+            mode == Brightness.light ? goldenTestThemeInTests : goldenTestDarkThemeInTests,
+            supportedLocales ?? goldenTestSupportedLocales,
+            localizationsDelegates: localizationsDelegates ?? goldenTestLocalizationsDelegates,
           );
 
           final edgeInsets = EdgeInsets.fromViewPadding(tester.view.padding, tester.view.devicePixelRatio);
@@ -62,7 +64,7 @@ void goldenTest({
               : 'goldens/${mode.name}/$name.png');
         } finally {
           debugDisableShadows = true;
-          disableInfiniteAnimationsInTests = true;
+          disableInfiniteAnimationsInGoldenTests = true;
 
           if (tearDown != null) {
             tearDown(tester);
@@ -77,6 +79,7 @@ Widget _themedWidget(
   Widget child,
   ThemeData theme,
   List<Locale> supportedLocales, {
+  List<LocalizationsDelegate<dynamic>>? localizationsDelegates,
   LocaleResolutionCallback? localeResolutionCallback,
   NavigatorObserver? navigatorObserver,
   RouteFactory? onGenerateRoute,
@@ -86,6 +89,7 @@ Widget _themedWidget(
         color: Colors.white,
         debugShowCheckedModeBanner: false,
         supportedLocales: supportedLocales,
+        localizationsDelegates: localizationsDelegates,
         localeResolutionCallback: localeResolutionCallback ?? ((Locale? local, Iterable<Locale> locales) => null),
         navigatorObservers: [if (navigatorObserver != null) navigatorObserver],
         onGenerateRoute: onGenerateRoute,
