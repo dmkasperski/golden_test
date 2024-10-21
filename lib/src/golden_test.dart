@@ -21,56 +21,61 @@ void goldenTest({
 }) {
   final testModes = supportedModes.isNotEmpty ? supportedModes : goldenTestSupportedModes;
   final testDevices = supportMultipleDevices ? goldenTestSupportedDevices : devices;
+  final testLocales = supportedLocales ?? goldenTestSupportedLocales;
 
-  for (final mode in testModes) {
-    for (final device in testDevices) {
-      testWidgets(name, (WidgetTester tester) async {
-        tester.platformDispatcher.platformBrightnessTestValue = mode;
-        debugDisableShadows = false;
-        disableInfiniteAnimationsInGoldenTests = true;
-        _setupSize(device, tester);
-        try {
-          if (setup != null) {
-            setup(tester);
-          }
-
-          final widget = _themedWidget(
-            Container(
-              alignment: Alignment.topLeft,
-              child: Builder(builder: builder),
-            ),
-            mode == Brightness.light ? goldenTestThemeInTests : goldenTestDarkThemeInTests,
-            supportedLocales ?? goldenTestSupportedLocales,
-            localizationsDelegates: localizationsDelegates ?? goldenTestLocalizationsDelegates,
-          );
-
-          final edgeInsets = EdgeInsets.fromViewPadding(tester.view.padding, tester.view.devicePixelRatio);
-          await tester.pumpWidget(
-            DecoratedBox(
-              position: DecorationPosition.foreground,
-              decoration: DeviceFrame(mode, edgeInsets),
-              child: widget,
-            ),
-          );
-
-          if (action != null) {
-            await tester.pumpAndSettle();
-            action(tester);
-          }
-
-          await tester.pumpAndSettle();
-          await _takeAScreenshot(supportMultipleDevices
-              ? 'goldens/${mode.name}/${device.name}/$name.png'
-              : 'goldens/${mode.name}/$name.png');
-        } finally {
-          debugDisableShadows = true;
+  for (final locale in testLocales) {
+    for (final mode in testModes) {
+      for (final device in testDevices) {
+        testWidgets(name, (WidgetTester tester) async {
+          tester.platformDispatcher.platformBrightnessTestValue = mode;
+          tester.platformDispatcher.localesTestValue = [locale];
+          tester.platformDispatcher.localeTestValue = locale;
+          debugDisableShadows = false;
           disableInfiniteAnimationsInGoldenTests = true;
+          _setupSize(device, tester);
+          try {
+            if (setup != null) {
+              setup(tester);
+            }
 
-          if (tearDown != null) {
-            tearDown(tester);
+            final widget = _themedWidget(
+              Container(
+                alignment: Alignment.topLeft,
+                child: Builder(builder: builder),
+              ),
+              mode == Brightness.light ? goldenTestThemeInTests : goldenTestDarkThemeInTests,
+              [locale],
+              localizationsDelegates: localizationsDelegates ?? goldenTestLocalizationsDelegates,
+            );
+
+            final edgeInsets = EdgeInsets.fromViewPadding(tester.view.padding, tester.view.devicePixelRatio);
+            await tester.pumpWidget(
+              DecoratedBox(
+                position: DecorationPosition.foreground,
+                decoration: DeviceFrame(mode, edgeInsets),
+                child: widget,
+              ),
+            );
+
+            if (action != null) {
+              await tester.pumpAndSettle();
+              await action(tester);
+            }
+
+            await tester.pumpAndSettle();
+            await _takeAScreenshot(supportMultipleDevices
+                ? 'goldens/${locale.languageCode}/${mode.name}/${device.name}/$name.png'
+                : 'goldens/${locale.languageCode}/${mode.name}/$name.png');
+          } finally {
+            debugDisableShadows = true;
+            disableInfiniteAnimationsInGoldenTests = true;
+
+            if (tearDown != null) {
+              tearDown(tester);
+            }
           }
-        }
-      }, skip: skip);
+        }, skip: skip);
+      }
     }
   }
 }

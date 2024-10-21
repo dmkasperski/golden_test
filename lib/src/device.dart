@@ -51,15 +51,6 @@ class Device {
           insets: const EdgeInsets.only(top: 48, bottom: 40),
         );
 
-  const Device.macbookPro14()
-      : this(
-          name: 'macbook pro 14',
-          devicePixelRatio: 4,
-          width: 3024,
-          height: 1964,
-          insets: const EdgeInsets.all(0),
-        );
-
   const Device.browser()
       : this(
           name: 'browser',

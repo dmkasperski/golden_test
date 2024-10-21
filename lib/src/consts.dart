@@ -11,7 +11,6 @@ List<Device> goldenTestSupportedDevices = [
   Device.iphone15Pro(),
   Device.pixel9ProXL(),
   Device.ipadPro12(),
-  Device.macbookPro14(),
   Device.browser(),
 ];
 
