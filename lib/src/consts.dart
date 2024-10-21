@@ -19,8 +19,6 @@ List<Brightness> goldenTestSupportedModes = [Brightness.light, Brightness.dark];
 ThemeData themeInTests = ThemeData(
   brightness: Brightness.light,
   useMaterial3: true,
-  fontFamily: 'Roboto',
-  fontFamilyFallback: const ['Roboto'],
   colorScheme: ColorScheme.fromSeed(
     seedColor: Colors.red,
     brightness: Brightness.light,
@@ -30,8 +28,6 @@ ThemeData themeInTests = ThemeData(
 ThemeData darkThemeInTests = ThemeData(
   brightness: Brightness.dark,
   useMaterial3: true,
-  fontFamily: 'Roboto',
-  fontFamilyFallback: const ['Roboto'],
   colorScheme: ColorScheme.fromSeed(
     seedColor: Colors.red,
     brightness: Brightness.dark,
