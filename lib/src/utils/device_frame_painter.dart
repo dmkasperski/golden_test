@@ -6,7 +6,9 @@ class DeviceFramePainter extends BoxPainter {
 
   DeviceFramePainter(this.brightness, this.insets);
 
-  Color get color => brightness == Brightness.light ? Colors.black.withOpacity(0.2) : Colors.white;
+  Color get color => brightness == Brightness.light
+      ? Colors.black.withOpacity(0.2)
+      : Colors.white;
 
   Paint get background => Paint()
     ..isAntiAlias = true
@@ -25,11 +27,15 @@ class DeviceFramePainter extends BoxPainter {
   void paint(Canvas canvas, Offset offset, ImageConfiguration configuration) {
     final size = configuration.size;
     if (insets.left != 0) {
-      canvas.drawRect(Rect.fromLTWH(0, insets.top, insets.left, size!.height - insets.top), background);
+      canvas.drawRect(
+          Rect.fromLTWH(0, insets.top, insets.left, size!.height - insets.top),
+          background);
     }
     if (insets.right != 0) {
       canvas.drawRect(
-          Rect.fromLTWH(size!.width - insets.right, insets.top, insets.right, size.height - insets.top), background);
+          Rect.fromLTWH(size!.width - insets.right, insets.top, insets.right,
+              size.height - insets.top),
+          background);
     }
     if (insets.top != 0) {
       canvas.drawRect(Rect.fromLTWH(0, 0, size!.width, insets.top), background);
@@ -37,8 +43,8 @@ class DeviceFramePainter extends BoxPainter {
 
     if (insets.bottom != 0) {
       final offset = (insets.bottom - 4) / 2;
-      canvas.drawLine(
-          Offset(size!.width * 0.3, size.height - offset), Offset(size.width * 0.7, size.height - offset), linePaint);
+      canvas.drawLine(Offset(size!.width * 0.3, size.height - offset),
+          Offset(size.width * 0.7, size.height - offset), linePaint);
     }
   }
 }

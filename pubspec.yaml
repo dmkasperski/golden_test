@@ -5,7 +5,7 @@ homepage: https://github.com/dmkasperski/golden_test
 repository: https://github.com/dmkasperski/golden_test
 
 environment:
-  sdk: '>=3.4.3 <4.0.0'
+  sdk: '>=3.3.4 <4.0.0'
   flutter: '>=3.3.0'
 
 dependencies:
