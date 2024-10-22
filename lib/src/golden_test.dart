@@ -1,50 +1,107 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:golden_test/src/consts.dart';
+import 'package:golden_test/src/config.dart';
 import 'package:golden_test/src/device.dart';
 import 'package:golden_test/src/utils/device_frame.dart';
 import 'package:meta/meta.dart';
 
+/// The goldenTest method is designed to facilitate automated UI testing
+/// of Flutter widgets by comparing their rendered output against a predefined golden image.
+/// This ensures consistent visual behavior across different devices, theme modes, and locales.
+///
+/// Parameters
+/// * [name]: A descriptive string that identifies the test case.
+///
+/// * [builder]: A WidgetBuilder function that constructs the widget to be tested.
+///
+/// * [supportedDevices]: An optional list specifying the devices on which the test should be run.
+///   Defaults to [Device.iphone15Pro()].
+///
+/// * [supportMultipleDevices]: A boolean indicating whether the test should run on multiple devices simultaneously.
+///   Defaults to false.
+///
+/// * [supportedModes]: An optional list specifying the Brightness on which the test should be run.
+///   Defaults to an empty list. Global config defaults to light and dark mode.
+///
+/// * [supportedLocales]: An optional list of Locale specifying the locales in which the test should be run.
+///   Defaults to an empty list. Global config defaults `en_US`.
+///
+/// * [localizationsDelegates]: An optional list of LocalizationsDelegate objects providing localization support for the test.
+///
+/// * [setup]: An optional asynchronous function that can be used to perform setup tasks before the test runs.
+///
+/// * [tearDown]: An optional asynchronous function that can be used to perform cleanup tasks after the test runs.
+///
+/// * [action]: An optional asynchronous function that can be used to perform additional actions on the widget tester during the test.
+///
+/// * [skip]: A boolean indicating whether the test should be skipped.
+///   Defaults to false.
+///
+/// {@tool snippet}
+/// ```dart
+///   goldenTest(
+///     name: 'Example',
+///     builder: (_) => Scaffold(
+///       body: Center(
+///       child: Container(
+///         height: 100,
+///         color: Colors.red,
+///         child: const Center(child: Text('Example')),
+///         ),
+///       ),
+///     ),
+///   );
+/// ```
+/// {@end-tool}
 @isTest
 void goldenTest({
   required String name,
   required WidgetBuilder builder,
-  List<Device> devices = const [Device.iphone15Pro()],
+  List<Device> supportedDevices = const [Device.iphone15Pro()],
   bool supportMultipleDevices = false,
   List<Brightness> supportedModes = const [],
-  List<Locale>? supportedLocales,
+  List<Locale> supportedLocales = const [],
   List<LocalizationsDelegate<dynamic>>? localizationsDelegates,
   Future<void> Function(WidgetTester tester)? setup,
   Future<void> Function(WidgetTester tester)? tearDown,
   Future<void> Function(WidgetTester tester)? action,
   bool skip = false,
 }) {
+  assert(supportedDevices.isNotEmpty || goldenTestSupportedDevices.isNotEmpty,
+      '$supportedDevices and $goldenTestSupportedDevices both cannot be empty');
+  final testDevices = supportMultipleDevices ? goldenTestSupportedDevices : supportedDevices;
+
+  assert(supportedModes.isNotEmpty || goldenTestSupportedModes.isNotEmpty,
+      '$supportedModes and $goldenTestSupportedModes both cannot be empty');
   final testModes = supportedModes.isNotEmpty ? supportedModes : goldenTestSupportedModes;
-  final testDevices = supportMultipleDevices ? goldenTestSupportedDevices : devices;
-  final testLocales = supportedLocales ?? goldenTestSupportedLocales;
+
+  assert(supportedLocales.isNotEmpty || goldenTestSupportedLocales.isNotEmpty,
+      '$supportedLocales and $goldenTestSupportedLocales both cannot be empty');
+  final testLocales = supportedLocales.isNotEmpty ? supportedLocales : goldenTestSupportedLocales;
 
   for (final locale in testLocales) {
     for (final mode in testModes) {
       for (final device in testDevices) {
         testWidgets(name, (WidgetTester tester) async {
           tester.platformDispatcher.platformBrightnessTestValue = mode;
-          tester.platformDispatcher.localesTestValue = [locale];
-          tester.platformDispatcher.localeTestValue = locale;
           debugDisableShadows = false;
-          disableInfiniteAnimationsInGoldenTests = true;
           _setupSize(device, tester);
           try {
+            if (globalSetup != null) {
+              globalSetup!(locale);
+            }
+
             if (setup != null) {
               setup(tester);
             }
 
             final widget = _themedWidget(
-              Container(
+              child: Container(
                 alignment: Alignment.topLeft,
                 child: Builder(builder: builder),
               ),
-              mode == Brightness.light ? goldenTestThemeInTests : goldenTestDarkThemeInTests,
-              [locale],
+              theme: mode == Brightness.light ? goldenTestThemeInTests : goldenTestDarkThemeInTests,
+              supportedLocales: [locale],
               localizationsDelegates: localizationsDelegates ?? goldenTestLocalizationsDelegates,
             );
 
@@ -68,8 +125,6 @@ void goldenTest({
                 : 'goldens/${locale.languageCode}/${mode.name}/$name.png');
           } finally {
             debugDisableShadows = true;
-            disableInfiniteAnimationsInGoldenTests = true;
-
             if (tearDown != null) {
               tearDown(tester);
             }
@@ -80,26 +135,23 @@ void goldenTest({
   }
 }
 
-Widget _themedWidget(
-  Widget child,
-  ThemeData theme,
-  List<Locale> supportedLocales, {
+Widget _themedWidget({
+  required Widget child,
+  required ThemeData theme,
+  required List<Locale> supportedLocales,
   List<LocalizationsDelegate<dynamic>>? localizationsDelegates,
-  LocaleResolutionCallback? localeResolutionCallback,
-  NavigatorObserver? navigatorObserver,
-  RouteFactory? onGenerateRoute,
 }) =>
     MaterialApp(
-        theme: theme,
-        color: Colors.white,
-        debugShowCheckedModeBanner: false,
-        supportedLocales: supportedLocales,
-        localizationsDelegates: localizationsDelegates,
-        localeResolutionCallback: localeResolutionCallback ?? ((Locale? local, Iterable<Locale> locales) => null),
-        navigatorObservers: [if (navigatorObserver != null) navigatorObserver],
-        onGenerateRoute: onGenerateRoute,
-        onUnknownRoute: (settings) => _unknownPage(settings),
-        home: Scaffold(body: child));
+      theme: theme,
+      color: Colors.white,
+      debugShowCheckedModeBanner: false,
+      locale: supportedLocales.first,
+      supportedLocales: supportedLocales,
+      localizationsDelegates: localizationsDelegates,
+      localeResolutionCallback: ((Locale? local, Iterable<Locale> locales) => supportedLocales.first),
+      onUnknownRoute: (settings) => _unknownPage(settings),
+      home: Scaffold(body: child),
+    );
 
 /// Sets size of test device
 void _setupSize(Device device, WidgetTester tester) {

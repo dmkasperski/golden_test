@@ -14,7 +14,6 @@ void main() {
       ),
     ),
     supportMultipleDevices: true,
-
   );
 
   goldenTest(
