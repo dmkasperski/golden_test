@@ -69,15 +69,19 @@ void goldenTest({
 }) {
   assert(supportedDevices.isNotEmpty || goldenTestSupportedDevices.isNotEmpty,
       '$supportedDevices and $goldenTestSupportedDevices both cannot be empty');
-  final testDevices = supportMultipleDevices ? goldenTestSupportedDevices : supportedDevices;
+  final testDevices =
+      supportMultipleDevices ? goldenTestSupportedDevices : supportedDevices;
 
   assert(supportedModes.isNotEmpty || goldenTestSupportedModes.isNotEmpty,
       '$supportedModes and $goldenTestSupportedModes both cannot be empty');
-  final testModes = supportedModes.isNotEmpty ? supportedModes : goldenTestSupportedModes;
+  final testModes =
+      supportedModes.isNotEmpty ? supportedModes : goldenTestSupportedModes;
 
   assert(supportedLocales.isNotEmpty || goldenTestSupportedLocales.isNotEmpty,
       '$supportedLocales and $goldenTestSupportedLocales both cannot be empty');
-  final testLocales = supportedLocales.isNotEmpty ? supportedLocales : goldenTestSupportedLocales;
+  final testLocales = supportedLocales.isNotEmpty
+      ? supportedLocales
+      : goldenTestSupportedLocales;
 
   for (final locale in testLocales) {
     for (final mode in testModes) {
@@ -100,12 +104,16 @@ void goldenTest({
                 alignment: Alignment.topLeft,
                 child: Builder(builder: builder),
               ),
-              theme: mode == Brightness.light ? goldenTestThemeInTests : goldenTestDarkThemeInTests,
+              theme: mode == Brightness.light
+                  ? goldenTestThemeInTests
+                  : goldenTestDarkThemeInTests,
               supportedLocales: [locale],
-              localizationsDelegates: localizationsDelegates ?? goldenTestLocalizationsDelegates,
+              localizationsDelegates:
+                  localizationsDelegates ?? goldenTestLocalizationsDelegates,
             );
 
-            final edgeInsets = EdgeInsets.fromViewPadding(tester.view.padding, tester.view.devicePixelRatio);
+            final edgeInsets = EdgeInsets.fromViewPadding(
+                tester.view.padding, tester.view.devicePixelRatio);
             await tester.pumpWidget(
               DecoratedBox(
                 position: DecorationPosition.foreground,
@@ -149,14 +157,16 @@ Widget _themedWidget({
       locale: supportedLocales.first,
       supportedLocales: supportedLocales,
       localizationsDelegates: localizationsDelegates,
-      localeResolutionCallback: ((Locale? local, Iterable<Locale> locales) => supportedLocales.first),
+      localeResolutionCallback: ((Locale? local, Iterable<Locale> locales) =>
+          supportedLocales.first),
       onUnknownRoute: (settings) => _unknownPage(settings),
       home: Scaffold(body: child),
     );
 
 /// Sets size of test device
 void _setupSize(Device device, WidgetTester tester) {
-  tester.view.physicalSize = Size(device.width * device.devicePixelRatio, device.height * device.devicePixelRatio);
+  tester.view.physicalSize = Size(device.width * device.devicePixelRatio,
+      device.height * device.devicePixelRatio);
   tester.view.devicePixelRatio = device.devicePixelRatio;
   FakeViewPadding padding = FakeViewPadding(
       left: device.insets.left * device.devicePixelRatio,
@@ -168,11 +178,13 @@ void _setupSize(Device device, WidgetTester tester) {
 }
 
 Future<void> _takeAScreenshot(dynamic key, {int? version}) async =>
-    await expectLater(find.byType(MaterialApp), matchesGoldenFile(key, version: version));
+    await expectLater(
+        find.byType(MaterialApp), matchesGoldenFile(key, version: version));
 
 /// Fallback for route generator
 PageRouteBuilder _unknownPage(RouteSettings settings) => PageRouteBuilder(
       settings: settings,
-      pageBuilder: (context, _, __) =>
-          Text('Unknown route ${settings.toString()}', style: Theme.of(context).textTheme.bodyLarge),
+      pageBuilder: (context, _, __) => Text(
+          'Unknown route ${settings.toString()}',
+          style: Theme.of(context).textTheme.bodyLarge),
     );

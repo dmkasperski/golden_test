@@ -7,7 +7,9 @@ import 'package:golden_test/golden_test.dart';
 Future<void> testExecutable(FutureOr<void> Function() testMain) async {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  await (FontLoader('Roboto')..addFont(rootBundle.load('assets/fonts/Roboto-Regular.ttf'))).load();
+  await (FontLoader('Roboto')
+        ..addFont(rootBundle.load('assets/fonts/Roboto-Regular.ttf')))
+      .load();
 
   goldenTestSupportedDevices = [
     const Device.iphone15Pro(),
