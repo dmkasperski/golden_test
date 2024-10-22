@@ -1,6 +1,8 @@
 name: golden_test
-description: "A Flutter plugin for writing golden tests."
-version: 0.0.1
+description: "A utility Flutter plugin for writing golden tests."
+version: 0.1.0
+homepage: https://github.com/dmkasperski/golden_test
+repository: https://github.com/dmkasperski/golden_test
 
 environment:
   sdk: '>=3.4.3 <4.0.0'

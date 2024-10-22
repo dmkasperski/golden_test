@@ -135,6 +135,7 @@ void goldenTest({
   }
 }
 
+/// Apply theme to pumped Widget.
 Widget _themedWidget({
   required Widget child,
   required ThemeData theme,
@@ -169,6 +170,7 @@ void _setupSize(Device device, WidgetTester tester) {
 Future<void> _takeAScreenshot(dynamic key, {int? version}) async =>
     await expectLater(find.byType(MaterialApp), matchesGoldenFile(key, version: version));
 
+/// Fallback for route generator
 PageRouteBuilder _unknownPage(RouteSettings settings) => PageRouteBuilder(
       settings: settings,
       pageBuilder: (context, _, __) =>
