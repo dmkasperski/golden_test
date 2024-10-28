@@ -38,7 +38,10 @@ List<Device> goldenTestSupportedDevices = [
 ///
 /// If you want to run specific test on specific theme mode configure that test individually.
 /// See [goldenTest] parameter `supportedModes`
-List<Brightness> goldenTestSupportedThemes = [Brightness.light, Brightness.dark];
+List<Brightness> goldenTestSupportedThemes = [
+  Brightness.light,
+  Brightness.dark
+];
 
 /// A default ThemeData of your application - light mode.
 ThemeData goldenTestThemeInTests = ThemeData(
