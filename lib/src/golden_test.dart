@@ -59,7 +59,7 @@ void goldenTest({
   required WidgetBuilder builder,
   List<Device> supportedDevices = const [Device.iphone15Pro()],
   bool supportMultipleDevices = false,
-  List<Brightness> supportedModes = const [],
+  List<Brightness> supportedThemes = const [],
   List<Locale> supportedLocales = const [],
   List<LocalizationsDelegate<dynamic>>? localizationsDelegates,
   Future<void> Function(WidgetTester tester)? setup,
@@ -72,10 +72,10 @@ void goldenTest({
   final testDevices =
       supportMultipleDevices ? goldenTestSupportedDevices : supportedDevices;
 
-  assert(supportedModes.isNotEmpty || goldenTestSupportedModes.isNotEmpty,
-      '$supportedModes and $goldenTestSupportedModes both cannot be empty');
+  assert(supportedThemes.isNotEmpty || goldenTestSupportedThemes.isNotEmpty,
+      '$supportedThemes and $goldenTestSupportedThemes both cannot be empty');
   final testModes =
-      supportedModes.isNotEmpty ? supportedModes : goldenTestSupportedModes;
+      supportedThemes.isNotEmpty ? supportedThemes : goldenTestSupportedThemes;
 
   assert(supportedLocales.isNotEmpty || goldenTestSupportedLocales.isNotEmpty,
       '$supportedLocales and $goldenTestSupportedLocales both cannot be empty');
