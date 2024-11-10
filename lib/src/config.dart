@@ -40,7 +40,10 @@ List<Device> goldenTestSupportedDevices = [
 ///
 /// If you want to run specific test on specific theme mode configure that test individually.
 /// See [goldenTest] parameter `supportedModes`
-List<Brightness> goldenTestSupportedThemes = [Brightness.light, Brightness.dark];
+List<Brightness> goldenTestSupportedThemes = [
+  Brightness.light,
+  Brightness.dark,
+];
 
 /// A default ThemeData of your application - light mode.
 ThemeData goldenTestThemeInTests = ThemeData(
@@ -88,7 +91,8 @@ Future<void> Function(Locale locale)? globalSetup;
 void goldenTestDifferenceTolerance(double diffTolerance) {
   if (goldenFileComparator is LocalFileComparator) {
     goldenFileComparator = LocalFileComparatorWithTolerance(
-      Uri.parse('${(goldenFileComparator as LocalFileComparator).basedir}/test.dart'),
+      Uri.parse(
+          '${(goldenFileComparator as LocalFileComparator).basedir}/test.dart'),
       diffTolerance,
     );
   }

@@ -3,7 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 class LocalFileComparatorWithTolerance extends LocalFileComparator {
   LocalFileComparatorWithTolerance(super.testFile, this.diffTolerance)
-      : assert(diffTolerance >= 0 && diffTolerance <= 100, '[diffTolerance] must be within range from 0-100(%)');
+      : assert(diffTolerance >= 0 && diffTolerance <= 100,
+            '[diffTolerance] must be within range from 0-100(%)');
 
   /// Tolerance above which tests will be marked as Failed.
   /// Ranges from (0-1), both inclusive.
