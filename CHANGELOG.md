@@ -1,3 +1,6 @@
+## 0.1.2
+Add option to set difference tolerance at which tests are considered failing.
+
 ## 0.1.1
 Add read.me to example project.
 

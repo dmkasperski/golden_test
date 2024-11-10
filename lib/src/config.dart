@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_test/src/device.dart';
+import 'package:golden_test/src/local_file_comparator_with_tolerance.dart';
 
 /// List of supported localizations for all golden tests created in the project.
 ///
@@ -38,10 +40,7 @@ List<Device> goldenTestSupportedDevices = [
 ///
 /// If you want to run specific test on specific theme mode configure that test individually.
 /// See [goldenTest] parameter `supportedModes`
-List<Brightness> goldenTestSupportedThemes = [
-  Brightness.light,
-  Brightness.dark
-];
+List<Brightness> goldenTestSupportedThemes = [Brightness.light, Brightness.dark];
 
 /// A default ThemeData of your application - light mode.
 ThemeData goldenTestThemeInTests = ThemeData(
@@ -81,3 +80,16 @@ ThemeData goldenTestDarkThemeInTests = ThemeData(
 ///   globalSetup = (locale) async => Intl.defaultLocale = locale.languageCode;
 /// ```
 Future<void> Function(Locale locale)? globalSetup;
+
+/// The golden test difference tolerance at which tests are considered failing.
+/// Ranges from 0-100(%), inclusive.
+///
+/// Default value: [0].
+void goldenTestDifferenceTolerance(double diffTolerance) {
+  if (goldenFileComparator is LocalFileComparator) {
+    goldenFileComparator = LocalFileComparatorWithTolerance(
+      Uri.parse('${(goldenFileComparator as LocalFileComparator).basedir}/test.dart'),
+      diffTolerance,
+    );
+  }
+}

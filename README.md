@@ -10,6 +10,7 @@
   - [Setup Theme](#setup-theme)
     - [Dark mode](#dark-mode)
   - [Global config](#global-config)
+  - [Difference tolerance](#difference-tolerance)
 
 # golden_test
 
@@ -196,4 +197,13 @@ The globalSetup callback allows you to define project-specific configurations, s
 
 ```dart
     globalSetup = (_) async => duringTestExecution = false;
+```
+
+<a name="difference-tolerance"></a>
+## Difference Tolerance
+Difference tolerance for golden tests can help manage acceptable visual differences between the reference images and the current UI output. This is particularly useful for allowing small variations, such as those caused by anti-aliasing or minor platform rendering differences.
+
+Example - to achieve tolerance of 0.01% call:
+```dart
+    goldenTestDifferenceTolerance(0.01);
 ```
