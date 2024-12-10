@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_test/src/config.dart';
 import 'package:golden_test/src/device.dart';
 import 'package:golden_test/src/utils/device_frame.dart';
+import 'package:golden_test/src/utils/utils_common.dart';
 import 'package:meta/meta.dart';
 
 /// The goldenTest method is designed to facilitate automated UI testing
@@ -12,7 +13,7 @@ import 'package:meta/meta.dart';
 /// Parameters
 /// * [name]: A descriptive string that identifies the test case.
 ///
-/// * [builder]: A WidgetBuilder function that constructs the widget to be tested.
+/// * [builder]: A WidgetBuilder function that constructs the widget to be tested when using MaterialApp (not MaterialApp.router).
 ///
 /// * [supportedDevices]: An optional list specifying the devices on which the test should be run.
 ///   Defaults to [Device.iphone15Pro()].
@@ -53,10 +54,28 @@ import 'package:meta/meta.dart';
 ///   );
 /// ```
 /// {@end-tool}
+///
+/// * [routerDelegate, routeInformationProvider, routeInformationParser]: Provide all of these fields if you want to use MaterialApp.router instead of MaterialApp.
+///
+/// * [wrapper]: Wraps MaterialApp widget in anything you need.
+/// e.g. if you need to provide some Providers
+/// {@tool snippet}
+/// ```dart
+///   goldenTest(
+///     wrapper: (child) => MultiBlocProvider(
+///      providers: [
+///         BlocProvider<LanguageCubit>.value(value: mockLanguageCubit),
+///         BlocProvider<AuthCubit>.value(value: mockAuthCubit),
+///       ],
+///       child: child,
+///     ),
+///   );
+/// ```
+/// {@end-tool}
 @isTest
 void goldenTest({
   required String name,
-  required WidgetBuilder builder,
+  WidgetBuilder? builder,
   List<Device> supportedDevices = const [Device.iphone15Pro()],
   bool supportMultipleDevices = false,
   List<Brightness> supportedThemes = const [],
@@ -66,6 +85,10 @@ void goldenTest({
   Future<void> Function(WidgetTester tester)? tearDown,
   Future<void> Function(WidgetTester tester)? action,
   bool skip = false,
+  RouterDelegate<Object>? routerDelegate,
+  RouteInformationProvider? routeInformationProvider,
+  RouteInformationParser<Object>? routeInformationParser,
+  Widget Function(Widget child)? wrapper,
 }) {
   assert(supportedDevices.isNotEmpty || goldenTestSupportedDevices.isNotEmpty,
       '$supportedDevices and $goldenTestSupportedDevices both cannot be empty');
@@ -86,71 +109,102 @@ void goldenTest({
   for (final locale in testLocales) {
     for (final mode in testModes) {
       for (final device in testDevices) {
-        testWidgets(name, (WidgetTester tester) async {
-          tester.platformDispatcher.platformBrightnessTestValue = mode;
-          debugDisableShadows = false;
-          _setupSize(device, tester);
-          try {
-            if (globalSetup != null) {
-              globalSetup!(locale);
-            }
+        testWidgets(
+          name,
+          (WidgetTester tester) async {
+            tester.platformDispatcher.platformBrightnessTestValue = mode;
+            debugDisableShadows = false;
+            _setupSize(device, tester);
+            try {
+              if (globalSetup != null) {
+                globalSetup!(locale);
+              }
 
-            if (setup != null) {
-              setup(tester);
-            }
+              if (setup != null) {
+                setup(tester);
+              }
 
-            final widget = _themedWidget(
-              child: Container(
-                alignment: Alignment.topLeft,
-                child: Builder(builder: builder),
-              ),
-              theme: mode == Brightness.light
-                  ? goldenTestThemeInTests
-                  : goldenTestDarkThemeInTests,
-              supportedLocales: [locale],
-              localizationsDelegates:
-                  localizationsDelegates ?? goldenTestLocalizationsDelegates,
-            );
+              Widget widget = _themedMaterialApp(
+                theme: mode == Brightness.light
+                    ? goldenTestThemeInTests
+                    : goldenTestDarkThemeInTests,
+                supportedLocales: [locale],
+                localizationsDelegates:
+                    localizationsDelegates ?? goldenTestLocalizationsDelegates,
+                routerDelegate: routerDelegate,
+                routeInformationParser: routeInformationParser,
+                routeInformationProvider: routeInformationProvider,
+              );
 
-            final edgeInsets = EdgeInsets.fromViewPadding(
-                tester.view.padding, tester.view.devicePixelRatio);
-            await tester.pumpWidget(
-              DecoratedBox(
-                position: DecorationPosition.foreground,
-                decoration: DeviceFrame(mode, edgeInsets),
-                child: widget,
-              ),
-            );
+              if (wrapper != null) {
+                widget = wrapper(widget);
+              }
 
-            if (action != null) {
+              final edgeInsets = EdgeInsets.fromViewPadding(
+                  tester.view.padding, tester.view.devicePixelRatio);
+              await tester.pumpWidget(
+                DecoratedBox(
+                  position: DecorationPosition.foreground,
+                  decoration: DeviceFrame(mode, edgeInsets),
+                  child: widget,
+                ),
+              );
+
+              if (action != null) {
+                await tester.pumpAndSettle();
+                await action(tester);
+              }
+
               await tester.pumpAndSettle();
-              await action(tester);
+              await _takeAScreenshot(supportMultipleDevices
+                  ? 'goldens/${locale.languageCode}/${mode.name}/${device.name}/$name.png'
+                  : 'goldens/${locale.languageCode}/${mode.name}/$name.png');
+            } finally {
+              debugDisableShadows = true;
+              if (tearDown != null) {
+                tearDown(tester);
+              }
             }
-
-            await tester.pumpAndSettle();
-            await _takeAScreenshot(supportMultipleDevices
-                ? 'goldens/${locale.languageCode}/${mode.name}/${device.name}/$name.png'
-                : 'goldens/${locale.languageCode}/${mode.name}/$name.png');
-          } finally {
-            debugDisableShadows = true;
-            if (tearDown != null) {
-              tearDown(tester);
-            }
-          }
-        }, skip: skip);
+          },
+          skip: skip,
+        );
       }
     }
   }
 }
 
-/// Apply theme to pumped Widget.
-Widget _themedWidget({
-  required Widget child,
+/// Apply theme to MaterialApp Widget.
+Widget _themedMaterialApp({
+  WidgetBuilder? builder,
   required ThemeData theme,
   required List<Locale> supportedLocales,
   List<LocalizationsDelegate<dynamic>>? localizationsDelegates,
-}) =>
-    MaterialApp(
+  RouterDelegate<Object>? routerDelegate,
+  RouteInformationProvider? routeInformationProvider,
+  RouteInformationParser<Object>? routeInformationParser,
+}) {
+  assert(
+    xnor(
+      [
+        routerDelegate == null,
+        routeInformationProvider == null,
+        routeInformationParser == null,
+        builder != null,
+      ],
+    ),
+    'If you want to use `MaterialApp.router` then provide all related fields. Otherwise provide none of them and provide `builder` parameter.',
+  );
+
+  final bool areAllRouterFieldsProvided = [
+    routerDelegate,
+    routeInformationProvider,
+    routeInformationParser
+  ].every((element) => element != null);
+  if (areAllRouterFieldsProvided) {
+    return MaterialApp.router(
+      routeInformationParser: routeInformationParser!,
+      routerDelegate: routerDelegate,
+      routeInformationProvider: routeInformationProvider,
       theme: theme,
       color: Colors.white,
       debugShowCheckedModeBanner: false,
@@ -159,9 +213,27 @@ Widget _themedWidget({
       localizationsDelegates: localizationsDelegates,
       localeResolutionCallback: ((Locale? local, Iterable<Locale> locales) =>
           supportedLocales.first),
-      onUnknownRoute: (settings) => _unknownPage(settings),
-      home: Scaffold(body: child),
     );
+  }
+
+  return MaterialApp(
+    theme: theme,
+    color: Colors.white,
+    debugShowCheckedModeBanner: false,
+    locale: supportedLocales.first,
+    supportedLocales: supportedLocales,
+    localizationsDelegates: localizationsDelegates,
+    localeResolutionCallback: ((Locale? local, Iterable<Locale> locales) =>
+        supportedLocales.first),
+    onUnknownRoute: (settings) => _unknownPage(settings),
+    home: Scaffold(
+      body: Container(
+        alignment: Alignment.topLeft,
+        child: Builder(builder: builder!),
+      ),
+    ),
+  );
+}
 
 /// Sets size of test device
 void _setupSize(Device device, WidgetTester tester) {
