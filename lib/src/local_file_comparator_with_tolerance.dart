@@ -34,7 +34,6 @@ class LocalFileComparatorWithTolerance extends LocalFileComparator {
             golden.pathSegments.sublist(0, golden.pathSegments.length - 1),
       );
 
-      /// Includes path for dark/light mode and different languages.
       final Uri updatedBasedir =
           basedir.resolve(goldenPathWithoutFile.toString());
 
