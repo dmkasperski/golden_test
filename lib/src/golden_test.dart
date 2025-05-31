@@ -128,6 +128,8 @@ void goldenTest({
             }
 
             await tester.pumpAndSettle();
+            await _precacheImages(tester);
+
             await _takeAScreenshot(supportMultipleDevices
                 ? 'goldens/${locale.languageCode}/${mode.name}/${device.name}/$name.png'
                 : 'goldens/${locale.languageCode}/${mode.name}/$name.png');
@@ -188,3 +190,37 @@ PageRouteBuilder _unknownPage(RouteSettings settings) => PageRouteBuilder(
           'Unknown route ${settings.toString()}',
           style: Theme.of(context).textTheme.bodyLarge),
     );
+
+
+
+/// Adapted from the Alchemist library
+/// (https://github.com/Betterment/alchemist/blob/0ef689574ea40f81b2268576ce7be33032e12da8/lib/src/pumps.dart#L43).
+/// Grateful for the clear and effective solution provided there.
+///
+/// Ensures that the images for all [Image], [FadeInImage], and [DecoratedBox] 
+/// widgets are loaded before the golden file is generated.
+Future<void> _precacheImages(WidgetTester tester) async {
+  await tester.runAsync(() async {
+    final images = <Future<void>>[];
+    for (final element in find.byType(Image).evaluate()) {
+      final widget = element.widget as Image;
+      final image = widget.image;
+      images.add(precacheImage(image, element));
+    }
+    for (final element in find.byType(FadeInImage).evaluate()) {
+      final widget = element.widget as FadeInImage;
+      final image = widget.image;
+      images.add(precacheImage(image, element));
+    }
+    for (final element in find.byType(DecoratedBox).evaluate()) {
+      final widget = element.widget as DecoratedBox;
+      final decoration = widget.decoration;
+      if (decoration is BoxDecoration && decoration.image != null) {
+        final image = decoration.image!.image;
+        images.add(precacheImage(image, element));
+      }
+    }
+    await Future.wait(images);
+  });
+  await tester.pumpAndSettle();
+}
