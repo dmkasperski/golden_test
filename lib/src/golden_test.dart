@@ -193,8 +193,13 @@ PageRouteBuilder _unknownPage(RouteSettings settings) => PageRouteBuilder(
 
 
 
-/// Adapted from the Alchemist library
+/// Code from Alchemist Library (MIT License)
+/// Portions of this software are derived from the Alchemist library,
+/// which is subject to the MIT License.
 /// (https://github.com/Betterment/alchemist/blob/0ef689574ea40f81b2268576ce7be33032e12da8/lib/src/pumps.dart#L43).
+///
+/// Original Copyright (c) 2022 Betterment LLC
+///
 /// Grateful for the clear and effective solution provided there.
 ///
 /// Ensures that the images for all [Image], [FadeInImage], and [DecoratedBox] 

@@ -1,3 +1,7 @@
+## 0.1.3
+Fix directory for generating failure screenshots.
+Add option to precache assets.
+
 ## 0.1.2
 Add option to set difference tolerance at which tests are considered failing.
 
