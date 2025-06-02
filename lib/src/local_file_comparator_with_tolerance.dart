@@ -29,7 +29,15 @@ class LocalFileComparatorWithTolerance extends LocalFileComparator {
     }
 
     if (!result.passed) {
-      final error = await generateFailureOutput(result, golden, basedir);
+      final Uri goldenPathWithoutFile = golden.replace(
+        pathSegments:
+            golden.pathSegments.sublist(0, golden.pathSegments.length - 1),
+      );
+
+      final Uri updatedBasedir =
+          basedir.resolve(goldenPathWithoutFile.toString());
+
+      final error = await generateFailureOutput(result, golden, updatedBasedir);
       throw FlutterError(error);
     }
     return result.passed;
