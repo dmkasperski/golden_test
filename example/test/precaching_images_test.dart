@@ -29,15 +29,14 @@ void main() {
             height: 100,
             width: 100,
           ),
-
-          /// TODO: Mock network image.
-          // const DecoratedBox(
-          //   decoration: BoxDecoration(
-          //     image: DecorationImage(
-          //       image: NetworkImage('mockURL'),
-          //     ),
-          //   ),
-          // ),
+          const DecoratedBox(
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('assets/images/flutter_logo.png'),
+              ),
+            ),
+            child: SizedBox(width: 100, height: 100),
+          ),
         ],
       ),
     ),
