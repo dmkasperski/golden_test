@@ -1,5 +1,7 @@
-## 0.1.3
+## 0.1.4
 Fix directory for generating failure screenshots.
+
+## 0.1.3
 Add option to precache assets.
 
 ## 0.1.2
