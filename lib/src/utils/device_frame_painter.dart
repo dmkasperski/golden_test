@@ -7,7 +7,7 @@ class DeviceFramePainter extends BoxPainter {
   DeviceFramePainter(this.brightness, this.insets);
 
   Color get color => brightness == Brightness.light
-      ? Colors.black.withOpacity(0.2)
+      ? Colors.black.withAlpha(51)
       : Colors.white;
 
   Paint get background => Paint()
