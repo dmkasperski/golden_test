@@ -191,8 +191,6 @@ PageRouteBuilder _unknownPage(RouteSettings settings) => PageRouteBuilder(
           style: Theme.of(context).textTheme.bodyLarge),
     );
 
-
-
 /// Code from Alchemist Library (MIT License)
 /// Portions of this software are derived from the Alchemist library,
 /// which is subject to the MIT License.
@@ -202,7 +200,7 @@ PageRouteBuilder _unknownPage(RouteSettings settings) => PageRouteBuilder(
 ///
 /// Grateful for the clear and effective solution provided there.
 ///
-/// Ensures that the images for all [Image], [FadeInImage], and [DecoratedBox] 
+/// Ensures that the images for all [Image], [FadeInImage], and [DecoratedBox]
 /// widgets are loaded before the golden file is generated.
 Future<void> _precacheImages(WidgetTester tester) async {
   await tester.runAsync(() async {
