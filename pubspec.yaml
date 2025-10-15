@@ -16,7 +16,7 @@ dependencies:
   meta: ^1.15.0
 
 dev_dependencies:
-  leancode_lint: ^19.0.0
+  flutter_lints: ^5.0.0
 
 flutter:
   uses-material-design: true
