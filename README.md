@@ -41,34 +41,65 @@ Supported Features:
 
 <a name="device-configuration"></a>
 ### Device Configuration
-To run golden tests across multiple devices, this project defines a set of pre-configured devices for testing. You can prepare your own configuration globally and if needed override it for specific test. By default, tests are run on a single device, iPhone 15 Pro, but additional devices are available for testing. You can configure a specific test to run on multiple devices using the supportedDevices parameter in goldenTest.
+The package provides a flexible three-level device configuration system that allows you to set defaults globally, enable multi-device testing, and override settings per test.
 
-Example
-To specify devices for a particular test:
+#### Configuration Levels (Priority Order)
+1. **Per-test override** (highest priority): Explicitly specify devices for a specific test
+2. **Multi-device mode**: Enable testing across multiple devices
+3. **Global default** (lowest priority): Set a default device for all tests
+
+#### Default Single Device
+By default, tests run on iPhone 15 Pro. You can change the global default device for all tests:
 
 ```dart
-    goldenTest(
-        name: 'Example Page',
-        supportedDevices: [Device.iphone15Pro(), Device.pixel9ProXL()],
-        builder: (_) => ExamplePage(),
-    );
+goldenTestDefaultDevices = [Device.pixel9ProXL()]; // Your desired target device/devices
 ```
 
-To specify devices for all goldenTest you run across the project, you can override configuration:
+Now all tests automatically use this device without any additional parameters:
 
 ```dart
-List<Device> goldenTestSupportedDevices = [
-    // list of devices
-    ];
+goldenTest(
+    name: 'Example Page',
+    builder: (_) => ExamplePage(),
+); // Runs on Pixel 9 Pro XL
 ```
 
-and each Golden Test needs to enable multi device support:
+#### Multi-Device Testing
+Configure a separate list of devices for comprehensive multi-device testing:
+
 ```dart
-    goldenTest(
-        name: 'Example Page',
-        supportMultipleDevices: true,
-        builder: (_) => ExamplePage(),
-    );
+goldenTestSupportedDevices = [
+    Device.iphone15Pro(),
+    Device.pixel9ProXL(),
+    Device.ipadPro12(),
+];
+```
+
+Enable multi-device testing per test:
+
+```dart
+goldenTest(
+    name: 'Example Page',
+    supportMultipleDevices: true,
+    builder: (_) => ExamplePage(),
+); // Runs on all 3 devices
+```
+
+Or enable it globally for all tests:
+
+```dart
+goldenTestSupportMultipleDevices = true;
+```
+
+#### Per-Test Override
+Override device configuration for specific tests (ignores all global settings):
+
+```dart
+goldenTest(
+    name: 'Example Page',
+    supportedDevices: [Device.browser()],
+    builder: (_) => ExamplePage(),
+); // Runs only on browser device
 ```
 
 <a name="supported-devices"></a>

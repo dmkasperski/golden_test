@@ -1,6 +1,6 @@
 name: golden_test
 description: "A utility Flutter plugin for writing golden tests that streamlines adding golden tests to your project"
-version: 0.1.4
+version: 0.1.5
 homepage: https://github.com/dmkasperski/golden_test
 repository: https://github.com/dmkasperski/golden_test
 
@@ -13,7 +13,7 @@ dependencies:
     sdk: flutter
   flutter_test:
     sdk: flutter
-  meta: ^1.15.0
+  meta: ^1.17.0
 
 dev_dependencies:
   flutter_lints: ^5.0.0
