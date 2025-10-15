@@ -21,7 +21,7 @@ class LocalFileComparatorWithTolerance extends LocalFileComparator {
       debugPrint(
         '''
         Difference: ${result.diffPercent * 100}%, 
-        Acceptable tolerance: ${diffTolerance}%
+        Acceptable tolerance: $diffTolerance%
         ''',
       );
 
