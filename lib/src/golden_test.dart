@@ -80,15 +80,16 @@ void goldenTest({
   // Determine which devices to use for testing
   // Priority: explicit parameter > multi-device flag > global default
   final List<Device> testDevices;
-  
+
   if (supportedDevices != null) {
     // 1. Explicit per-test device configuration (highest priority)
     testDevices = supportedDevices;
   } else {
     // 2. Check if multi-device testing is enabled (local or global flag)
-    final shouldUseMultipleDevices = supportMultipleDevices || goldenTestSupportMultipleDevices;
-    testDevices = shouldUseMultipleDevices 
-        ? goldenTestSupportedDevices 
+    final shouldUseMultipleDevices =
+        supportMultipleDevices || goldenTestSupportMultipleDevices;
+    testDevices = shouldUseMultipleDevices
+        ? goldenTestSupportedDevices
         : goldenTestDefaultDevices;
   }
 
@@ -96,9 +97,8 @@ void goldenTest({
 
   // Determine which themes to use for testing
   // Priority: local parameter > global config
-  final testModes = supportedThemes.isNotEmpty 
-      ? supportedThemes 
-      : goldenTestSupportedThemes;
+  final testModes =
+      supportedThemes.isNotEmpty ? supportedThemes : goldenTestSupportedThemes;
 
   assert(testModes.isNotEmpty, 'No themes specified for testing');
 

@@ -110,11 +110,11 @@ ThemeData goldenTestDarkThemeInTests = ThemeData(
 Future<void> Function(Locale locale)? globalSetup;
 
 /// Global flag to control whether golden tests should run on multiple devices by default.
-/// 
+///
 /// When set to `true`, tests will run on all devices defined in [goldenTestSupportedDevices].
 /// When set to `false`, tests will run only on the device specified in the `supportedDevices` parameter
 /// or default to [Device.iphone15Pro()].
-/// 
+///
 /// This reduces boilerplate by allowing you to set this once globally instead of
 /// passing `supportMultipleDevices: true` to every test call.
 bool goldenTestSupportMultipleDevices = false;
