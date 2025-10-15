@@ -8,7 +8,7 @@ class Device {
   final EdgeInsets insets;
 
   const Device({
-    this.name,
+    this.name = 'default',
     this.devicePixelRatio = 1,
     this.width = 420,
     this.height = 800,
