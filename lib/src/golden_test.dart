@@ -15,16 +15,21 @@ import 'package:meta/meta.dart';
 /// * [builder]: A WidgetBuilder function that constructs the widget to be tested.
 ///
 /// * [supportedDevices]: An optional list specifying the devices on which the test should be run.
-///   Defaults to [Device.iphone15Pro()].
+///   When provided, this takes precedence over all other device configurations.
+///   When `null`, the device configuration is determined by [supportMultipleDevices] flag or global defaults.
 ///
-/// * [supportMultipleDevices]: A boolean indicating whether the test should run on multiple devices simultaneously.
+/// * [supportMultipleDevices]: A boolean indicating whether the test should run on multiple devices.
+///   When `true`, uses [goldenTestSupportedDevices] from global config.
+///   When `false`, uses [goldenTestDefaultDevices] from global config.
+///   Can also be controlled globally via [goldenTestSupportMultipleDevices].
+///   This is ignored if [supportedDevices] is explicitly provided.
 ///   Defaults to false.
 ///
-/// * [supportedModes]: An optional list specifying the Brightness on which the test should be run.
+/// * [supportedThemes]: An optional list specifying the Brightness modes on which the test should be run.
 ///   Defaults to an empty list. Global config defaults to light and dark mode.
 ///
 /// * [supportedLocales]: An optional list of Locale specifying the locales in which the test should be run.
-///   Defaults to an empty list. Global config defaults `en_US`.
+///   Defaults to an empty list. Global config defaults to `en_US`.
 ///
 /// * [localizationsDelegates]: An optional list of LocalizationsDelegate objects providing localization support for the test.
 ///
@@ -36,6 +41,11 @@ import 'package:meta/meta.dart';
 ///
 /// * [skip]: A boolean indicating whether the test should be skipped.
 ///   Defaults to false.
+///
+/// Device Selection Logic (priority from highest to lowest):
+/// 1. If [supportedDevices] parameter is explicitly provided, use those devices.
+/// 2. Else if [supportMultipleDevices] is `true` (local or global), use [goldenTestSupportedDevices].
+/// 3. Otherwise, use [goldenTestDefaultDevices].
 ///
 /// {@tool snippet}
 /// ```dart
@@ -57,7 +67,7 @@ import 'package:meta/meta.dart';
 void goldenTest({
   required String name,
   required WidgetBuilder builder,
-  List<Device> supportedDevices = const [Device.iphone15Pro()],
+  List<Device>? supportedDevices,
   bool supportMultipleDevices = false,
   List<Brightness> supportedThemes = const [],
   List<Locale> supportedLocales = const [],
@@ -67,21 +77,10 @@ void goldenTest({
   Future<void> Function(WidgetTester tester)? action,
   bool skip = false,
 }) {
-  assert(supportedDevices.isNotEmpty || goldenTestSupportedDevices.isNotEmpty,
-      '$supportedDevices and $goldenTestSupportedDevices both cannot be empty');
   final testDevices =
-      supportMultipleDevices ? goldenTestSupportedDevices : supportedDevices;
-
-  assert(supportedThemes.isNotEmpty || goldenTestSupportedThemes.isNotEmpty,
-      '$supportedThemes and $goldenTestSupportedThemes both cannot be empty');
-  final testModes =
-      supportedThemes.isNotEmpty ? supportedThemes : goldenTestSupportedThemes;
-
-  assert(supportedLocales.isNotEmpty || goldenTestSupportedLocales.isNotEmpty,
-      '$supportedLocales and $goldenTestSupportedLocales both cannot be empty');
-  final testLocales = supportedLocales.isNotEmpty
-      ? supportedLocales
-      : goldenTestSupportedLocales;
+      _resolveTestDevices(supportedDevices, supportMultipleDevices);
+  final testModes = _resolveTestThemes(supportedThemes);
+  final testLocales = _resolveTestLocales(supportedLocales);
 
   for (final locale in testLocales) {
     for (final mode in testModes) {
@@ -130,7 +129,9 @@ void goldenTest({
             await tester.pumpAndSettle();
             await _precacheImages(tester);
 
-            await _takeAScreenshot(supportMultipleDevices
+            // Include device name in path only when testing multiple devices
+            final shouldIncludeDeviceName = testDevices.length > 1;
+            await _takeAScreenshot(shouldIncludeDeviceName
                 ? 'goldens/${locale.languageCode}/${mode.name}/${device.name}/$name.png'
                 : 'goldens/${locale.languageCode}/${mode.name}/$name.png');
           } finally {
@@ -143,6 +144,51 @@ void goldenTest({
       }
     }
   }
+}
+
+/// Resolves which devices to use for testing.
+/// Priority: explicit parameter > multi-device flag > global default
+List<Device> _resolveTestDevices(
+  List<Device>? supportedDevices,
+  bool supportMultipleDevices,
+) {
+  final List<Device> testDevices;
+
+  if (supportedDevices != null) {
+    // 1. Explicit per-test device configuration (highest priority)
+    testDevices = supportedDevices;
+  } else {
+    // 2. Check if multi-device testing is enabled (local or global flag)
+    final shouldUseMultipleDevices =
+        supportMultipleDevices || goldenTestSupportMultipleDevices;
+    testDevices = shouldUseMultipleDevices
+        ? goldenTestSupportedDevices
+        : goldenTestDefaultDevices;
+  }
+
+  assert(testDevices.isNotEmpty, 'No devices specified for testing');
+  return testDevices;
+}
+
+/// Resolves which theme modes to use for testing.
+/// Priority: local parameter > global config
+List<Brightness> _resolveTestThemes(List<Brightness> supportedThemes) {
+  final testModes =
+      supportedThemes.isNotEmpty ? supportedThemes : goldenTestSupportedThemes;
+
+  assert(testModes.isNotEmpty, 'No themes specified for testing');
+  return testModes;
+}
+
+/// Resolves which locales to use for testing.
+/// Priority: local parameter > global config
+List<Locale> _resolveTestLocales(List<Locale> supportedLocales) {
+  final testLocales = supportedLocales.isNotEmpty
+      ? supportedLocales
+      : goldenTestSupportedLocales;
+
+  assert(testLocales.isNotEmpty, 'No locales specified for testing');
+  return testLocales;
 }
 
 /// Apply theme to pumped Widget.

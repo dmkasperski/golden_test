@@ -1,5 +1,22 @@
-## 0.1.3
+## 0.1.5
+1. Refactor device configuration system to support three distinct configuration levels:
+   - **New**: Added `goldenTestDefaultDevices` for setting global default device(s)
+   - **Improved**: `goldenTestSupportedDevices` now exclusively for multi-device testing
+   - **Changed**: `supportedDevices` parameter is now nullable, enabling proper configuration hierarchy
+   - **Enhanced**: Device selection logic now follows clear priority: per-test override > multi-device mode > global default
+   - **Fixed**: Golden file paths now intelligently include device names only when testing multiple devices 
+   
+    This change makes device configuration more intuitive and eliminates the need to pass `supportMultipleDevices: true` just to use a globally-defined single device.
+2. Improved formatting
+3. Updated dependencies
+4. Updated example project
+5. Updated documentation
+6. Drop deprecated .withOpacity
+
+## 0.1.4
 Fix directory for generating failure screenshots.
+
+## 0.1.3
 Add option to precache assets.
 
 ## 0.1.2

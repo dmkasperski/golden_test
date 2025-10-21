@@ -9,7 +9,7 @@ void main() {
         child: Container(
           height: 100,
           color: Colors.red,
-          child: const Center(child: Text('Example')),
+          child: const Center(child: Text('Centered')),
         ),
       ),
     ),
@@ -21,13 +21,15 @@ void main() {
     builder: (_) => simulateRouteStack(
       Scaffold(
         appBar: AppBar(
+          title: Text('App Bar Title'),
           automaticallyImplyLeading: false,
+          backgroundColor: Colors.red,
         ),
         body: Center(
           child: Container(
             height: 100,
             color: Colors.red,
-            child: const Center(child: Text('With appbar')),
+            child: const Center(child: Text('Centered with AppBar')),
           ),
         ),
       ),

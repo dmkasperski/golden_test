@@ -21,13 +21,38 @@ List<Locale> goldenTestSupportedLocales = [const Locale('en', 'US')];
 /// ```
 List<LocalizationsDelegate<dynamic>> goldenTestLocalizationsDelegates = [];
 
-/// List of supported localizations for all golden tests created in the project while
-/// flag `supportMultipleDevices` is set to `true` for [goldenTest].
+/// The default device(s) used for all golden tests when no other device configuration is specified.
 ///
-/// By default all tests run only on [Device] that represents Iphone 15 Pro.
+/// This is the device configuration used by default unless:
+/// - The test explicitly provides `supportedDevices` parameter, OR
+/// - The test has `supportMultipleDevices` flag enabled (which uses [goldenTestSupportedDevices] instead)
 ///
-/// If you want to run specific test on different devices configure that test individually.
-/// See [goldenTest] parameter `supportedDevices`
+/// By default, tests run on [Device.iphone15Pro()].
+/// You can customize this globally to match your primary design target device.
+///
+/// Example:
+/// ```dart
+/// goldenTestDefaultDevices = [Device.pixel9ProXL()]; // Use Pixel as default
+/// ```
+List<Device> goldenTestDefaultDevices = [Device.iphone15Pro()];
+
+/// The list of devices used for multi-device testing when `supportMultipleDevices` is enabled.
+///
+/// This list is only used when:
+/// - The test has `supportMultipleDevices: true` parameter, OR
+/// - The global [goldenTestSupportMultipleDevices] flag is set to `true`
+///
+/// This allows you to maintain a separate set of devices for comprehensive multi-device testing
+/// without affecting the default single-device testing behavior.
+///
+/// Example:
+/// ```dart
+/// goldenTestSupportedDevices = [
+///   Device.iphone15Pro(),
+///   Device.pixel9ProXL(),
+///   Device.ipadPro12(),
+/// ];
+/// ```
 List<Device> goldenTestSupportedDevices = [
   Device.noInsets(),
   Device.iphone15Pro(),
@@ -83,6 +108,16 @@ ThemeData goldenTestDarkThemeInTests = ThemeData(
 ///   globalSetup = (locale) async => Intl.defaultLocale = locale.languageCode;
 /// ```
 Future<void> Function(Locale locale)? globalSetup;
+
+/// Global flag to control whether golden tests should run on multiple devices by default.
+///
+/// When set to `true`, tests will run on all devices defined in [goldenTestSupportedDevices].
+/// When set to `false`, tests will run only on the device specified in the `supportedDevices` parameter
+/// or default to [Device.iphone15Pro()].
+///
+/// This reduces boilerplate by allowing you to set this once globally instead of
+/// passing `supportMultipleDevices: true` to every test call.
+bool goldenTestSupportMultipleDevices = false;
 
 /// The golden test difference tolerance at which tests are considered failing.
 /// Ranges from 0-100(%), inclusive.
