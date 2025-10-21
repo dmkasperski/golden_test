@@ -77,38 +77,9 @@ void goldenTest({
   Future<void> Function(WidgetTester tester)? action,
   bool skip = false,
 }) {
-  // Determine which devices to use for testing
-  // Priority: explicit parameter > multi-device flag > global default
-  final List<Device> testDevices;
-
-  if (supportedDevices != null) {
-    // 1. Explicit per-test device configuration (highest priority)
-    testDevices = supportedDevices;
-  } else {
-    // 2. Check if multi-device testing is enabled (local or global flag)
-    final shouldUseMultipleDevices =
-        supportMultipleDevices || goldenTestSupportMultipleDevices;
-    testDevices = shouldUseMultipleDevices
-        ? goldenTestSupportedDevices
-        : goldenTestDefaultDevices;
-  }
-
-  assert(testDevices.isNotEmpty, 'No devices specified for testing');
-
-  // Determine which themes to use for testing
-  // Priority: local parameter > global config
-  final testModes =
-      supportedThemes.isNotEmpty ? supportedThemes : goldenTestSupportedThemes;
-
-  assert(testModes.isNotEmpty, 'No themes specified for testing');
-
-  // Determine which locales to use for testing
-  // Priority: local parameter > global config
-  final testLocales = supportedLocales.isNotEmpty
-      ? supportedLocales
-      : goldenTestSupportedLocales;
-
-  assert(testLocales.isNotEmpty, 'No locales specified for testing');
+  final testDevices = _resolveTestDevices(supportedDevices, supportMultipleDevices);
+  final testModes = _resolveTestThemes(supportedThemes);
+  final testLocales = _resolveTestLocales(supportedLocales);
 
   for (final locale in testLocales) {
     for (final mode in testModes) {
@@ -172,6 +143,51 @@ void goldenTest({
       }
     }
   }
+}
+
+/// Resolves which devices to use for testing.
+/// Priority: explicit parameter > multi-device flag > global default
+List<Device> _resolveTestDevices(
+  List<Device>? supportedDevices,
+  bool supportMultipleDevices,
+) {
+  final List<Device> testDevices;
+
+  if (supportedDevices != null) {
+    // 1. Explicit per-test device configuration (highest priority)
+    testDevices = supportedDevices;
+  } else {
+    // 2. Check if multi-device testing is enabled (local or global flag)
+    final shouldUseMultipleDevices =
+        supportMultipleDevices || goldenTestSupportMultipleDevices;
+    testDevices = shouldUseMultipleDevices
+        ? goldenTestSupportedDevices
+        : goldenTestDefaultDevices;
+  }
+
+  assert(testDevices.isNotEmpty, 'No devices specified for testing');
+  return testDevices;
+}
+
+/// Resolves which theme modes to use for testing.
+/// Priority: local parameter > global config
+List<Brightness> _resolveTestThemes(List<Brightness> supportedThemes) {
+  final testModes =
+      supportedThemes.isNotEmpty ? supportedThemes : goldenTestSupportedThemes;
+
+  assert(testModes.isNotEmpty, 'No themes specified for testing');
+  return testModes;
+}
+
+/// Resolves which locales to use for testing.
+/// Priority: local parameter > global config
+List<Locale> _resolveTestLocales(List<Locale> supportedLocales) {
+  final testLocales = supportedLocales.isNotEmpty
+      ? supportedLocales
+      : goldenTestSupportedLocales;
+
+  assert(testLocales.isNotEmpty, 'No locales specified for testing');
+  return testLocales;
 }
 
 /// Apply theme to pumped Widget.
