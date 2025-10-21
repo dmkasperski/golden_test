@@ -77,7 +77,8 @@ void goldenTest({
   Future<void> Function(WidgetTester tester)? action,
   bool skip = false,
 }) {
-  final testDevices = _resolveTestDevices(supportedDevices, supportMultipleDevices);
+  final testDevices =
+      _resolveTestDevices(supportedDevices, supportMultipleDevices);
   final testModes = _resolveTestThemes(supportedThemes);
   final testLocales = _resolveTestLocales(supportedLocales);
 
