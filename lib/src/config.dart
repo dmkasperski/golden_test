@@ -132,3 +132,45 @@ void goldenTestDifferenceTolerance(double diffTolerance) {
     );
   }
 }
+
+/// A default builder function for the app used in golden tests.
+///
+/// !BEFORE USING!
+/// Try to look for different configuration options first,
+/// they allow to customize a lot from themes, locales etc.
+///
+/// You can override it to use your own app builder,
+/// useful for custom configuration that specifically use
+/// different app than material one or need to wrap it in some other widget.
+Widget Function({
+  required WidgetBuilder builder,
+  required ThemeData theme,
+  required List<Locale> supportedLocales,
+  List<LocalizationsDelegate<dynamic>>? localizationsDelegates,
+}) appBuilder = ({
+  required WidgetBuilder builder,
+  required ThemeData theme,
+  required List<Locale> supportedLocales,
+  List<LocalizationsDelegate<dynamic>>? localizationsDelegates,
+}) =>
+    MaterialApp(
+      theme: theme,
+      color: Colors.white,
+      debugShowCheckedModeBanner: false,
+      locale: supportedLocales.first,
+      supportedLocales: supportedLocales,
+      localizationsDelegates: localizationsDelegates,
+      localeResolutionCallback: ((Locale? local, Iterable<Locale> locales) =>
+          supportedLocales.first),
+      onUnknownRoute: _unknownPageBuilder,
+      home: Scaffold(body: Builder(builder: builder)),
+    );
+
+/// Fallback for route generator
+PageRouteBuilder _unknownPageBuilder(RouteSettings settings) =>
+    PageRouteBuilder(
+      settings: settings,
+      pageBuilder: (context, _, __) => Text(
+          'Unknown route ${settings.toString()}',
+          style: Theme.of(context).textTheme.bodyLarge),
+    );

@@ -1,3 +1,7 @@
+## 0.1.6
+
+Add `appBuilder` to config to enable setting custom app builders.
+
 ## 0.1.5
 1. Refactor device configuration system to support three distinct configuration levels:
    - **New**: Added `goldenTestDefaultDevices` for setting global default device(s)

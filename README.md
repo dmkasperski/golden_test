@@ -1,16 +1,24 @@
-- [Introduction](#introduction)
-  - [Installation](#installation)
-  - [Example](#example)
-  - [Device Configuration](#device-configuration)
-    - [Supported Devices](#supported-devices)
+- [golden\_test](#golden_test)
+    - [Introduction](#introduction)
+    - [Installation](#installation)
+    - [Example](#example)
+    - [Device Configuration](#device-configuration)
+      - [Configuration Levels (Priority Order)](#configuration-levels-priority-order)
+      - [Default Single Device](#default-single-device)
+      - [Multi-Device Testing](#multi-device-testing)
+      - [Per-Test Override](#per-test-override)
+      - [Supported Devices](#supported-devices)
   - [Localized Goldens](#localized-goldens)
-    - [Localization Delegates](#localization-delegates)
-    - [Using intl](#using-intl)
-    - [Custom Fonts](#custom-fonts)
-  - [Setup Theme](#setup-theme)
-    - [Dark mode](#dark-mode)
-  - [Global config](#global-config)
-  - [Difference tolerance](#difference-tolerance)
+      - [Localization Delegates](#localization-delegates)
+      - [Using intl](#using-intl)
+      - [Custom fonts](#custom-fonts)
+- [Setup Theme](#setup-theme)
+  - [Dark Theme](#dark-theme)
+  - [App Builder](#app-builder)
+      - [Using CupertinoApp](#using-cupertinoapp)
+      - [Wrapping in Providers](#wrapping-in-providers)
+  - [Global Setup Callback](#global-setup-callback)
+  - [Difference Tolerance](#difference-tolerance)
 
 # golden_test
 
@@ -220,6 +228,53 @@ You can also configure each test you run to specify supported themes:
         builder: (_) => ExamplePage(),
         supportedThemes: [Brightness.light, Brightness.dark],
     );
+```
+
+<a name="app-builder"></a>
+## App Builder
+The `appBuilder` configuration allows you to customize the app widget used in golden tests. By default, tests use `MaterialApp`, but you can override it to use `CupertinoApp`, `WidgetsApp`, or wrap the app in additional widgets like providers.
+
+**Note:** Before using `appBuilder`, check other configuration options first (themes, locales, etc.) as they may meet your needs without custom app setup.
+
+#### Using CupertinoApp
+To use `CupertinoApp` instead of `MaterialApp`:
+
+```dart
+    appBuilder = ({
+      required WidgetBuilder builder,
+      required ThemeData theme,
+      required List<Locale> supportedLocales,
+      List<LocalizationsDelegate<dynamic>>? localizationsDelegates,
+    }) =>
+      CupertinoApp(
+        theme: CupertinoThemeData(brightness: theme.brightness),
+        locale: supportedLocales.first,
+        supportedLocales: supportedLocales,
+        localizationsDelegates: localizationsDelegates,
+        home: CupertinoPageScaffold(child: Builder(builder: builder)),
+      );
+```
+
+#### Wrapping in Providers
+To wrap your app in providers or other widgets:
+
+```dart
+    appBuilder = ({
+      required WidgetBuilder builder,
+      required ThemeData theme,
+      required List<Locale> supportedLocales,
+      List<LocalizationsDelegate<dynamic>>? localizationsDelegates,
+    }) =>
+      Provider<MyProvider>(
+        create: (_) => MyProvider(),
+        child: MaterialApp(
+          theme: theme,
+          locale: supportedLocales.first,
+          supportedLocales: supportedLocales,
+          localizationsDelegates: localizationsDelegates,
+          home: Scaffold(body: Builder(builder: builder)),
+        ),
+      );
 ```
 
 <a name="global-config"></a>
