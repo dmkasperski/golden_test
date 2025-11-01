@@ -13,7 +13,7 @@ final red100x100PixelsImage = base64Decode(
 
 void main() {
   goldenTest(
-    name: 'Image from asset should be displayed',
+    'Image from asset should be displayed',
     builder: (_) => Scaffold(
       appBar: AppBar(),
       body: Column(

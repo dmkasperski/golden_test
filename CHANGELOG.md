@@ -1,3 +1,7 @@
+## 0.2.0
+
+1. Change test name from named param to unnamed one. (enables utility vscode config function for running specific tests)
+
 ## 0.1.5
 1. Refactor device configuration system to support three distinct configuration levels:
    - **New**: Added `goldenTestDefaultDevices` for setting global default device(s)
