@@ -198,17 +198,11 @@ Widget _themedWidget({
   required List<Locale> supportedLocales,
   List<LocalizationsDelegate<dynamic>>? localizationsDelegates,
 }) =>
-    MaterialApp(
+    appBuilder(
+      builder: (_) => child,
       theme: theme,
-      color: Colors.white,
-      debugShowCheckedModeBanner: false,
-      locale: supportedLocales.first,
       supportedLocales: supportedLocales,
       localizationsDelegates: localizationsDelegates,
-      localeResolutionCallback: ((Locale? local, Iterable<Locale> locales) =>
-          supportedLocales.first),
-      onUnknownRoute: (settings) => _unknownPage(settings),
-      home: Scaffold(body: child),
     );
 
 /// Sets size of test device
@@ -228,14 +222,6 @@ void _setupSize(Device device, WidgetTester tester) {
 Future<void> _takeAScreenshot(dynamic key, {int? version}) async =>
     await expectLater(
         find.byType(MaterialApp), matchesGoldenFile(key, version: version));
-
-/// Fallback for route generator
-PageRouteBuilder _unknownPage(RouteSettings settings) => PageRouteBuilder(
-      settings: settings,
-      pageBuilder: (context, _, __) => Text(
-          'Unknown route ${settings.toString()}',
-          style: Theme.of(context).textTheme.bodyLarge),
-    );
 
 /// Code from Alchemist Library (MIT License)
 /// Portions of this software are derived from the Alchemist library,
