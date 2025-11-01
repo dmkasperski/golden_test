@@ -64,8 +64,8 @@ import 'package:meta/meta.dart';
 /// ```
 /// {@end-tool}
 @isTest
-void goldenTest({
-  required String name,
+void goldenTest(
+  String name, {
   required WidgetBuilder builder,
   List<Device>? supportedDevices,
   bool supportMultipleDevices = false,

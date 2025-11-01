@@ -3,7 +3,7 @@ import 'package:golden_test/golden_test.dart';
 
 void main() {
   goldenTest(
-    name: 'Example',
+    'Example',
     builder: (_) => Scaffold(
       body: Center(
         child: Container(
@@ -17,7 +17,7 @@ void main() {
   );
 
   goldenTest(
-    name: 'With appbar',
+    'With appbar',
     builder: (_) => simulateRouteStack(
       Scaffold(
         appBar: AppBar(
