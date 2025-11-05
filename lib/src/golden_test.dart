@@ -42,12 +42,19 @@ import 'package:meta/meta.dart';
 /// * [skip]: A boolean indicating whether the test should be skipped.
 ///   Defaults to false.
 ///
+/// * [subdirectory]: An optional subdirectory path to organize golden files.
+///   When provided, this subdirectory will be inserted after "goldens" in the path.
+///   Useful for managing golden tests across multiple apps or design systems.
+///   Example: 'app1' creates path 'goldens/app1/en/light/MyWidget.png'
+///   Defaults to null (no subdirectory).
+///
 /// Device Selection Logic (priority from highest to lowest):
 /// 1. If [supportedDevices] parameter is explicitly provided, use those devices.
 /// 2. Else if [supportMultipleDevices] is `true` (local or global), use [goldenTestSupportedDevices].
 /// 3. Otherwise, use [goldenTestDefaultDevices].
 ///
 /// {@tool snippet}
+/// Basic example:
 /// ```dart
 ///   goldenTest(
 ///     name: 'Example',
@@ -60,6 +67,15 @@ import 'package:meta/meta.dart';
 ///         ),
 ///       ),
 ///     ),
+///   );
+/// ```
+///
+/// Example with custom subdirectory for organizing golden files:
+/// ```dart
+///   goldenTest(
+///     name: 'Button',
+///     builder: (_) => MyButton(),
+///     subdirectory: 'design_system/components',
 ///   );
 /// ```
 /// {@end-tool}
@@ -76,6 +92,7 @@ void goldenTest({
   Future<void> Function(WidgetTester tester)? tearDown,
   Future<void> Function(WidgetTester tester)? action,
   bool skip = false,
+  String? subdirectory,
 }) {
   final testDevices =
       _resolveTestDevices(supportedDevices, supportMultipleDevices);
@@ -131,9 +148,15 @@ void goldenTest({
 
             // Include device name in path only when testing multiple devices
             final shouldIncludeDeviceName = testDevices.length > 1;
-            await _takeAScreenshot(shouldIncludeDeviceName
-                ? 'goldens/${locale.languageCode}/${mode.name}/${device.name}/$name.png'
-                : 'goldens/${locale.languageCode}/${mode.name}/$name.png');
+            final goldenPath = _buildGoldenPath(
+              locale: locale,
+              mode: mode,
+              device: device,
+              name: name,
+              includeDeviceName: shouldIncludeDeviceName,
+              subdirectory: subdirectory,
+            );
+            await _takeAScreenshot(goldenPath);
           } finally {
             debugDisableShadows = true;
             if (tearDown != null) {
@@ -189,6 +212,45 @@ List<Locale> _resolveTestLocales(List<Locale> supportedLocales) {
 
   assert(testLocales.isNotEmpty, 'No locales specified for testing');
   return testLocales;
+}
+
+/// Builds the golden file path based on configuration and test parameters.
+///
+/// The path structure is:
+/// - goldens/[subdir]/locale/theme/[device]/name.png (with device name)
+/// - goldens/[subdir]/locale/theme/name.png (without device name)
+///
+/// The [subdir] is only included if [subdirectory] is provided.
+String _buildGoldenPath({
+  required Locale locale,
+  required Brightness mode,
+  required Device device,
+  required String name,
+  required bool includeDeviceName,
+  String? subdirectory,
+}) {
+  final pathSegments = <String>['goldens'];
+
+  // Add subdirectory if provided
+  if (subdirectory != null && subdirectory.isNotEmpty) {
+    pathSegments.add(subdirectory);
+  }
+
+  // Add locale
+  pathSegments.add(locale.languageCode);
+
+  // Add theme mode
+  pathSegments.add(mode.name);
+
+  // Add device name if testing multiple devices
+  if (includeDeviceName) {
+    pathSegments.add(device.name ?? 'default');
+  }
+
+  // Add test name
+  pathSegments.add('$name.png');
+
+  return pathSegments.join('/');
 }
 
 /// Apply theme to pumped Widget.

@@ -10,6 +10,7 @@
   - [Setup Theme](#setup-theme)
     - [Dark mode](#dark-mode)
   - [Global config](#global-config)
+  - [Golden File Organization](#golden-file-organization)
   - [Difference tolerance](#difference-tolerance)
 
 # golden_test
@@ -229,6 +230,67 @@ The globalSetup callback allows you to define project-specific configurations, s
 ```dart
     globalSetup = (_) async => duringTestExecution = false;
 ```
+
+## Golden File Organization
+Golden Test allows you to organize golden files into custom subdirectories per test, which is particularly useful when managing golden tests across multiple apps or design systems.
+
+### Custom Subdirectory
+By default, golden files are stored in the `goldens` directory with the following structure:
+```
+goldens/
+  ├── en/
+  │   ├── light/
+  │   │   └── MyWidget.png
+  │   └── dark/
+  │       └── MyWidget.png
+```
+
+You can add a custom subdirectory after `goldens` by using the `subdirectory` parameter:
+
+```dart
+goldenTest(
+  name: 'Example Page',
+  builder: (_) => ExamplePage(),
+  subdirectory: 'app1',
+);
+```
+
+This will create golden files in:
+```
+goldens/
+  ├── app1/
+  │   ├── en/
+  │   │   ├── light/
+  │   │   │   └── Example Page.png
+  │   │   └── dark/
+  │   │       └── Example Page.png
+```
+
+This is useful for scenarios like:
+- **Managing multiple apps with different design tokens:**
+  ```dart
+  goldenTest(
+    name: 'Button',
+    builder: (_) => MyButton(),
+    subdirectory: 'app1',
+  );
+  ```
+- **Organizing by feature or design system:**
+  ```dart
+  goldenTest(
+    name: 'Component',
+    builder: (_) => MyComponent(),
+    subdirectory: 'design_system/v2',
+  );
+  ```
+- **Separating different test suites:**
+  ```dart
+  goldenTest(
+    name: 'Legacy Widget',
+    builder: (_) => LegacyWidget(),
+    subdirectory: 'legacy',
+  );
+  ```
 
 <a name="difference-tolerance"></a>
 ## Difference Tolerance

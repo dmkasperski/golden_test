@@ -1,3 +1,10 @@
+## 0.1.6
+1. **New Feature**: Added `subdirectory` parameter to `goldenTest` for organizing golden files into custom subdirectories
+   - Allows per-test configuration of golden file organization
+   - Useful for managing multiple apps with different design tokens
+   - Supports nested subdirectories (e.g., `'design_system/v2'`)
+   - Path structure: `goldens/[subdirectory]/locale/theme/[device]/name.png`
+
 ## 0.1.5
 1. Refactor device configuration system to support three distinct configuration levels:
    - **New**: Added `goldenTestDefaultDevices` for setting global default device(s)
