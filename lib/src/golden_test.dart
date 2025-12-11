@@ -42,6 +42,10 @@ import 'package:meta/meta.dart';
 /// * [skip]: A boolean indicating whether the test should be skipped.
 ///   Defaults to false.
 ///
+/// * [tags]: Optional tags to apply to the test. Can be a single tag (String or Tag object)
+///   or an Iterable of tags. These tags can be used to filter which tests to run.
+///   Defaults to null (no tags).
+///
 /// * [subdirectory]: An optional subdirectory path to organize golden files.
 ///   When provided, this subdirectory will be inserted after "goldens" in the path.
 ///   Useful for managing golden tests across multiple apps or design systems.
@@ -92,6 +96,7 @@ void goldenTest({
   Future<void> Function(WidgetTester tester)? tearDown,
   Future<void> Function(WidgetTester tester)? action,
   bool skip = false,
+  dynamic tags,
   String? subdirectory,
 }) {
   final testDevices =
@@ -163,7 +168,7 @@ void goldenTest({
               tearDown(tester);
             }
           }
-        }, skip: skip);
+        }, skip: skip, tags: tags);
       }
     }
   }

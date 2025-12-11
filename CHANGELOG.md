@@ -1,3 +1,6 @@
+## 0.1.7
+1. Added `tags` parameter to properly proxy it to `testWidgets`
+
 ## 0.1.6
 1. **New Feature**: Added `subdirectory` parameter to `goldenTest` for organizing golden files into custom subdirectories
    - Allows per-test configuration of golden file organization
