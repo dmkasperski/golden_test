@@ -1,3 +1,14 @@
+## 1.0.0
+
+First stable release under [semantic versioning](https://semver.org/); the public API is now versioned with breaking changes reserved for major bumps.
+
+### Breaking changes
+- **Golden frame** — Redesigned the status bar and bottom bar UI rendered around the widget under test. All existing golden screenshots will need to be regenerated (`flutter test --update-goldens`).
+
+### Improvements
+- **Example app** — Expanded and clearer examples demonstrating real usage patterns.
+- **Documentation** — Reworked and expanded docs so setup and options are easier to follow.
+
 ## 0.1.7
 1. Added `tags` parameter to properly proxy it to `testWidgets`
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:golden_test/golden_test.dart';
+import 'package:golden_test_example/screens/example_screen.dart';
 
 void main() {
   goldenTest(
@@ -35,5 +36,16 @@ void main() {
       ),
     ),
     supportMultipleDevices: true,
+  );
+
+  goldenTest(
+    name: 'ExampleScreen',
+    builder: (_) => const ExampleScreen(),
+    supportMultipleDevices: true,
+    supportedLocales: [
+      Locale('en'),
+      Locale('es'),
+    ],
+    supportedDevices: [Device.iphone15Pro(), Device.ipadPro12()],
   );
 }

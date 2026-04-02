@@ -16,6 +16,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
 
   golden_test:
     # When depending on this package from a real application you should use:
@@ -87,3 +89,6 @@ flutter:
     - family: Roboto
       fonts:
         - asset: assets/fonts/Roboto-Regular.ttf
+    - family: MaterialIcons
+      fonts:
+        - asset: assets/fonts/MaterialIcons-Regular.otf
