@@ -133,12 +133,10 @@ void goldenTest({
                   localizationsDelegates ?? goldenTestLocalizationsDelegates,
             );
 
-            final edgeInsets = EdgeInsets.fromViewPadding(
-                tester.view.padding, tester.view.devicePixelRatio);
             await tester.pumpWidget(
               DecoratedBox(
                 position: DecorationPosition.foreground,
-                decoration: DeviceFrame(mode, edgeInsets),
+                decoration: DeviceFrame(mode, device.insets),
                 child: widget,
               ),
             );

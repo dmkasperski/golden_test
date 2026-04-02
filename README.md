@@ -1,6 +1,5 @@
 - [Introduction](#introduction)
-  - [Installation](#installation)
-  - [Example](#example)
+  - [Quick Start](#quick-start)
   - [Device Configuration](#device-configuration)
     - [Supported Devices](#supported-devices)
   - [Localized Goldens](#localized-goldens)
@@ -8,37 +7,88 @@
     - [Using intl](#using-intl)
     - [Custom Fonts](#custom-fonts)
   - [Setup Theme](#setup-theme)
-    - [Dark mode](#dark-mode)
-  - [Global config](#global-config)
+    - [Dark Theme](#dark-theme)
+  - [Global Setup Callback](#global-setup-callback)
   - [Golden File Organization](#golden-file-organization)
   - [Difference tolerance](#difference-tolerance)
 
 # golden_test
 
+**golden_test** is a lightweight, opinionated wrapper around Flutter's golden testing APIs that dramatically reduces boilerplate while adding first-class support for themes, locales, and multiple devices.
+It focuses on real-world UI scenarios, making golden tests easier to write, scale, and maintain compared to lower-level solutions.
+
 <a name="introduction"></a>
 ### Introduction
-Golden Test is a Flutter plugin for writing golden tests.
+
+When a UI change is detected, golden_test generates a visual diff so you can instantly see what changed:
+
+<img src="doc/screenshots/golden_diff_showcase.png" width="800">
+
+*Left: original golden — Center: diff overlay — Right: updated golden (via [Image Diff](https://plugins.jetbrains.com/plugin/26527-image-diff) Android Studio plugin)*
 
 Supported Features:
 1. Multiple device support
 2. Dark mode support
 3. Localized Goldens
 
-<a name="installation"></a>
-### Installation
+<a name="quick-start"></a>
+### Quick Start
 
-```yaml
-    dev_dependencies:
-        golden_test: [latest-version]
+#### 1. Add the package
+
+```bash
+dart pub add golden_test --dev
 ```
-<a name="example"></a>
-### Example
+
+#### 2. Write your first golden test
+
 ```dart
-    goldenTest(
-      name: 'Example Page',
-      builder: (_) => ExamplePage(),
-    );
+import 'package:flutter_test/flutter_test.dart';
+import 'package:golden_test/golden_test.dart';
+
+void main() {
+  goldenTest(
+    name: 'My widget',
+    builder: (_) => const MyWidget(),
+  );
+}
 ```
+
+#### 3. Generate the golden file
+
+```bash
+flutter test --update-goldens
+```
+
+Your first golden image will be generated automatically.
+
+---
+
+#### Going further
+
+Add per-test locale, device, and theme overrides (these can also be configured globally — see [Localized Goldens](#localized-goldens), [Device Configuration](#device-configuration), and [Setup Theme](#setup-theme)):
+
+```dart
+goldenTest(
+  name: 'ExampleScreen',
+  builder: (_) => const ExampleScreen(),
+  supportMultipleDevices: true,
+  supportedLocales: [
+    Locale('en'),
+    Locale('es'),
+  ],
+  supportedDevices: [Device.iphone15Pro(), Device.ipadPro12()],
+);
+```
+
+This single call automatically generates golden files across all configured devices, themes, and languages:
+
+|                             | English | Spanish |
+| --------------------------- | ------- | ------- |
+| **Light** **iPhone 15 Pro** | <img src="doc/screenshots/en_light_iphone15pro.png" width="200"> | <img src="doc/screenshots/es_light_iphone15pro.png" width="200"> |
+| **Dark** **iPhone 15 Pro**  | <img src="doc/screenshots/en_dark_iphone15pro.png" width="200"> | <img src="doc/screenshots/es_dark_iphone15pro.png" width="200"> |
+| **Light** **iPad Pro 12**   | <img src="doc/screenshots/en_light_ipadpro12.png" width="300"> | <img src="doc/screenshots/es_light_ipadpro12.png" width="300"> |
+| **Dark** **iPad Pro 12**    | <img src="doc/screenshots/en_dark_ipadpro12.png" width="300"> | <img src="doc/screenshots/es_dark_ipadpro12.png" width="300"> |
 
 <a name="device-configuration"></a>
 ### Device Configuration
@@ -228,7 +278,7 @@ You can also configure each test you run to specify supported themes:
 The globalSetup callback allows you to define project-specific configurations, such as disabling animations or setting a default locale for tests.
 
 ```dart
-    globalSetup = (_) async => duringTestExecution = false;
+    globalSetup = (_) async => duringTestExecution = true;
 ```
 
 ## Golden File Organization
