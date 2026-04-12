@@ -22,7 +22,7 @@ It focuses on real-world UI scenarios, making golden tests easier to write, scal
 
 When a UI change is detected, golden_test generates a visual diff so you can instantly see what changed:
 
-<img src="doc/screenshots/golden_diff_showcase.png" width="800">
+<img src="https://raw.githubusercontent.com/dmkasperski/golden_test/master/doc/screenshots/golden_diff_showcase.png" width="800">
 
 *Left: original golden — Center: diff overlay — Right: updated golden (via [Image Diff](https://plugins.jetbrains.com/plugin/26527-image-diff) Android Studio plugin)*
 
@@ -85,10 +85,10 @@ This single call automatically generates golden files across all configured devi
 
 |                             | English | Spanish |
 | --------------------------- | ------- | ------- |
-| **Light** **iPhone 15 Pro** | <img src="doc/screenshots/en_light_iphone15pro.png" width="200"> | <img src="doc/screenshots/es_light_iphone15pro.png" width="200"> |
-| **Dark** **iPhone 15 Pro**  | <img src="doc/screenshots/en_dark_iphone15pro.png" width="200"> | <img src="doc/screenshots/es_dark_iphone15pro.png" width="200"> |
-| **Light** **iPad Pro 12**   | <img src="doc/screenshots/en_light_ipadpro12.png" width="300"> | <img src="doc/screenshots/es_light_ipadpro12.png" width="300"> |
-| **Dark** **iPad Pro 12**    | <img src="doc/screenshots/en_dark_ipadpro12.png" width="300"> | <img src="doc/screenshots/es_dark_ipadpro12.png" width="300"> |
+| **Light** **iPhone 15 Pro** | <img src="https://raw.githubusercontent.com/dmkasperski/golden_test/master/doc/screenshots/en_light_iphone15pro.png" width="200"> | <img src="https://raw.githubusercontent.com/dmkasperski/golden_test/master/doc/screenshots/es_light_iphone15pro.png" width="200"> |
+| **Dark** **iPhone 15 Pro**  | <img src="https://raw.githubusercontent.com/dmkasperski/golden_test/master/doc/screenshots/en_dark_iphone15pro.png" width="200"> | <img src="https://raw.githubusercontent.com/dmkasperski/golden_test/master/doc/screenshots/es_dark_iphone15pro.png" width="200"> |
+| **Light** **iPad Pro 12**   | <img src="https://raw.githubusercontent.com/dmkasperski/golden_test/master/doc/screenshots/en_light_ipadpro12.png" width="300"> | <img src="https://raw.githubusercontent.com/dmkasperski/golden_test/master/doc/screenshots/es_light_ipadpro12.png" width="300"> |
+| **Dark** **iPad Pro 12**    | <img src="https://raw.githubusercontent.com/dmkasperski/golden_test/master/doc/screenshots/en_dark_ipadpro12.png" width="300"> | <img src="https://raw.githubusercontent.com/dmkasperski/golden_test/master/doc/screenshots/es_dark_ipadpro12.png" width="300"> |
 
 <a name="device-configuration"></a>
 ### Device Configuration

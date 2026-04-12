@@ -1,3 +1,7 @@
+## 1.0.1
+
+- Fixed README images not rendering on pub.dev by using absolute URLs.
+
 ## 1.0.0
 
 First stable release under [semantic versioning](https://semver.org/); the public API is now versioned with breaking changes reserved for major bumps.
