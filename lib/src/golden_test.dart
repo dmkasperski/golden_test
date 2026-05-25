@@ -10,7 +10,9 @@ import 'package:meta/meta.dart';
 /// This ensures consistent visual behavior across different devices, theme modes, and locales.
 ///
 /// Parameters
-/// * [name]: A descriptive string that identifies the test case.
+/// * [name]: A descriptive string that identifies the test case. The value is used
+///   verbatim as the golden filename on disk, so avoid path separators and characters
+///   that complicate filesystem tooling.
 ///
 /// * [builder]: A WidgetBuilder function that constructs the widget to be tested.
 ///
@@ -31,20 +33,28 @@ import 'package:meta/meta.dart';
 /// * [supportedLocales]: An optional list of Locale specifying the locales in which the test should be run.
 ///   Defaults to an empty list. Global config defaults to `en_US`.
 ///
+/// * [supportedTextScales]: An optional list of `textScaleFactor` values to run the
+///   test at, enabling accessibility regression testing. Defaults to an empty list,
+///   which uses [goldenTestSupportedTextScales] (default `[1.0]`). Use
+///   [AndroidFontScale] / [IosDynamicTypeScale] `.value`, or pass any custom
+///   `double` values.
+///
 /// * [localizationsDelegates]: An optional list of LocalizationsDelegate objects providing localization support for the test.
 ///
 /// * [setup]: An optional asynchronous function that can be used to perform setup tasks before the test runs.
 ///
 /// * [tearDown]: An optional asynchronous function that can be used to perform cleanup tasks after the test runs.
 ///
-/// * [action]: An optional asynchronous function that can be used to perform additional actions on the widget tester during the test.
+/// * [action]: An optional asynchronous function that can be used to perform
+///   additional actions on the widget tester during the test.
 ///
 /// * [skip]: A boolean indicating whether the test should be skipped.
 ///   Defaults to false.
 ///
-/// * [tags]: Optional tags to apply to the test. Can be a single tag (String or Tag object)
-///   or an Iterable of tags. These tags can be used to filter which tests to run.
-///   Defaults to null (no tags).
+/// * [tags]: Optional tags to apply to the test. Accepts a single tag (String or
+///   Tag object) or an `Iterable` of such tags — same shape as Flutter's own
+///   `testWidgets` tags parameter. These tags can be used to filter which tests
+///   to run. Defaults to null (no tags).
 ///
 /// * [subdirectory]: An optional subdirectory path to organize golden files.
 ///   When provided, this subdirectory will be inserted after "goldens" in the path.
@@ -82,6 +92,15 @@ import 'package:meta/meta.dart';
 ///     subdirectory: 'design_system/components',
 ///   );
 /// ```
+///
+/// Example of a text-scale accessibility matrix with platform presets:
+/// ```dart
+///   goldenTest(
+///     name: 'Settings',
+///     builder: (_) => const SettingsScreen(),
+///     supportedTextScales: [1.0, AndroidFontScale.maximum.value],
+///   );
+/// ```
 /// {@end-tool}
 @isTest
 void goldenTest({
@@ -91,82 +110,90 @@ void goldenTest({
   bool supportMultipleDevices = false,
   List<Brightness> supportedThemes = const [],
   List<Locale> supportedLocales = const [],
+  List<double> supportedTextScales = const [],
   List<LocalizationsDelegate<dynamic>>? localizationsDelegates,
   Future<void> Function(WidgetTester tester)? setup,
   Future<void> Function(WidgetTester tester)? tearDown,
   Future<void> Function(WidgetTester tester)? action,
   bool skip = false,
-  dynamic tags,
+  Object? tags,
   String? subdirectory,
 }) {
   final testDevices =
       _resolveTestDevices(supportedDevices, supportMultipleDevices);
   final testModes = _resolveTestThemes(supportedThemes);
   final testLocales = _resolveTestLocales(supportedLocales);
+  final textScaleConfig = _resolveTextScales(supportedTextScales);
+  final testScales = textScaleConfig.scales;
+  final includeTextScaleInPath = textScaleConfig.includeInPath;
 
   for (final locale in testLocales) {
     for (final mode in testModes) {
       for (final device in testDevices) {
-        testWidgets(name, (WidgetTester tester) async {
-          tester.platformDispatcher.platformBrightnessTestValue = mode;
-          debugDisableShadows = false;
-          _setupSize(device, tester);
-          try {
-            if (globalSetup != null) {
-              globalSetup!(locale);
-            }
+        for (final scale in testScales) {
+          testWidgets(name, (WidgetTester tester) async {
+            tester.platformDispatcher.platformBrightnessTestValue = mode;
+            tester.platformDispatcher.textScaleFactorTestValue = scale;
+            debugDisableShadows = false;
+            _setupSize(device, tester);
+            try {
+              if (globalSetup != null) {
+                await globalSetup!(locale);
+              }
 
-            if (setup != null) {
-              setup(tester);
-            }
+              if (setup != null) {
+                await setup(tester);
+              }
 
-            final widget = _themedWidget(
-              child: Container(
-                alignment: Alignment.topLeft,
-                child: Builder(builder: builder),
-              ),
-              theme: mode == Brightness.light
-                  ? goldenTestThemeInTests
-                  : goldenTestDarkThemeInTests,
-              supportedLocales: [locale],
-              localizationsDelegates:
-                  localizationsDelegates ?? goldenTestLocalizationsDelegates,
-            );
+              final widget = _themedWidget(
+                child: Container(
+                  alignment: Alignment.topLeft,
+                  child: Builder(builder: builder),
+                ),
+                theme: mode == Brightness.light
+                    ? goldenTestThemeInTests
+                    : goldenTestDarkThemeInTests,
+                supportedLocales: [locale],
+                localizationsDelegates:
+                    localizationsDelegates ?? goldenTestLocalizationsDelegates,
+              );
 
-            await tester.pumpWidget(
-              DecoratedBox(
-                position: DecorationPosition.foreground,
-                decoration: DeviceFrame(mode, device.insets),
-                child: widget,
-              ),
-            );
+              await tester.pumpWidget(
+                DecoratedBox(
+                  position: DecorationPosition.foreground,
+                  decoration: DeviceFrame(mode, device.insets),
+                  child: widget,
+                ),
+              );
 
-            if (action != null) {
+              if (action != null) {
+                await tester.pumpAndSettle();
+                await action(tester);
+              }
+
               await tester.pumpAndSettle();
-              await action(tester);
-            }
+              await _precacheImages(tester);
 
-            await tester.pumpAndSettle();
-            await _precacheImages(tester);
-
-            // Include device name in path only when testing multiple devices
-            final shouldIncludeDeviceName = testDevices.length > 1;
-            final goldenPath = _buildGoldenPath(
-              locale: locale,
-              mode: mode,
-              device: device,
-              name: name,
-              includeDeviceName: shouldIncludeDeviceName,
-              subdirectory: subdirectory,
-            );
-            await _takeAScreenshot(goldenPath);
-          } finally {
-            debugDisableShadows = true;
-            if (tearDown != null) {
-              tearDown(tester);
+              // Include device name in path only when testing multiple devices
+              final shouldIncludeDeviceName = testDevices.length > 1;
+              final goldenPath = _buildGoldenPath(
+                locale: locale,
+                mode: mode,
+                device: device,
+                name: name,
+                includeDeviceName: shouldIncludeDeviceName,
+                textScale: includeTextScaleInPath ? scale : null,
+                subdirectory: subdirectory,
+              );
+              await _takeAScreenshot(goldenPath);
+            } finally {
+              debugDisableShadows = true;
+              if (tearDown != null) {
+                await tearDown(tester);
+              }
             }
-          }
-        }, skip: skip, tags: tags);
+          }, skip: skip, tags: tags);
+        }
       }
     }
   }
@@ -217,43 +244,68 @@ List<Locale> _resolveTestLocales(List<Locale> supportedLocales) {
   return testLocales;
 }
 
+/// Resolved text-scale configuration for a golden test run.
+typedef _TextScaleConfig = ({List<double> scales, bool includeInPath});
+
+/// Resolves which text scale factors to use for testing.
+///
+/// A scale segment is included in the golden path only when [scales] contains
+/// more than one value. A single scale — including the default `[1.0]` — runs
+/// without a scale folder.
+_TextScaleConfig _resolveTextScales(List<double> supportedTextScales) {
+  final scales = supportedTextScales.isNotEmpty
+      ? supportedTextScales
+      : goldenTestSupportedTextScales;
+
+  assert(scales.isNotEmpty, 'No text scales specified for testing');
+  return (scales: scales, includeInPath: scales.length > 1);
+}
+
 /// Builds the golden file path based on configuration and test parameters.
 ///
 /// The path structure is:
-/// - goldens/[subdir]/locale/theme/[device]/name.png (with device name)
-/// - goldens/[subdir]/locale/theme/name.png (without device name)
+/// - goldens/[subdir]/locale/theme/[device]/[textScale]/name.png
 ///
-/// The [subdir] is only included if [subdirectory] is provided.
+/// The [subdir] and device segments are included when configured. The [textScale]
+/// segment is the last directory before the filename and is only included when
+/// more than one scale is active.
 String _buildGoldenPath({
   required Locale locale,
   required Brightness mode,
   required Device device,
   required String name,
   required bool includeDeviceName,
+  double? textScale,
   String? subdirectory,
 }) {
   final pathSegments = <String>['goldens'];
 
-  // Add subdirectory if provided
   if (subdirectory != null && subdirectory.isNotEmpty) {
     pathSegments.add(subdirectory);
   }
 
-  // Add locale
   pathSegments.add(locale.languageCode);
 
-  // Add theme mode
   pathSegments.add(mode.name);
 
-  // Add device name if testing multiple devices
   if (includeDeviceName) {
     pathSegments.add(device.name ?? 'default');
   }
 
-  // Add test name
+  if (textScale != null) {
+    pathSegments.add('${_formatTextScale(textScale)}x');
+  }
+
   pathSegments.add('$name.png');
 
   return pathSegments.join('/');
+}
+
+/// Formats a text scale factor for inclusion in the golden path.
+/// Trims trailing zeros so `1.0` becomes `1`, `1.30` becomes `1.3`, etc.
+String _formatTextScale(double scale) {
+  final s = scale.toStringAsFixed(2);
+  return s.replaceFirst(RegExp(r'\.?0+$'), '');
 }
 
 /// Apply theme to pumped Widget.
@@ -290,7 +342,10 @@ void _setupSize(Device device, WidgetTester tester) {
   tester.view.viewPadding = padding;
 }
 
-Future<void> _takeAScreenshot(dynamic key, {int? version}) async =>
+Future<void> _takeAScreenshot(
+  dynamic key, {
+  int? version,
+}) async =>
     await expectLater(
         find.byType(MaterialApp), matchesGoldenFile(key, version: version));
 

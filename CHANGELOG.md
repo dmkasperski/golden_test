@@ -1,3 +1,14 @@
+## 1.1.0
+
+### Fixes
+- **Async hooks now awaited** — `globalSetup`, `setup`, and `tearDown` callbacks are now properly awaited inside `goldenTest`, preventing race conditions with font loading, `Intl.defaultLocale`, and mock wiring.
+
+### Improvements
+- **Typed `tags` parameter** — `goldenTest`'s `tags` parameter is now `Object?` (matching Flutter's own `testWidgets` signature) instead of `dynamic`, with dartdoc clarifying the accepted shapes (`String`, `Tag`, `Iterable`).
+
+### New features
+- **Text-scale matrix** — `supportedTextScales` and `goldenTestSupportedTextScales` add text scale as a test axis. Optional [AndroidFontScale] / [IosDynamicTypeScale] enums and accessibility preset lists are available.
+
 ## 1.0.1
 
 - Fixed README images not rendering on pub.dev by using absolute URLs.
