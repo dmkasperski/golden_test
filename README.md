@@ -8,6 +8,7 @@
     - [Custom Fonts](#custom-fonts)
   - [Setup Theme](#setup-theme)
     - [Dark Theme](#dark-theme)
+  - [Text Scale (Accessibility)](#text-scale)
   - [Global Setup Callback](#global-setup-callback)
   - [Golden File Organization](#golden-file-organization)
   - [Difference tolerance](#difference-tolerance)
@@ -271,6 +272,42 @@ You can also configure each test you run to specify supported themes:
         builder: (_) => ExamplePage(),
         supportedThemes: [Brightness.light, Brightness.dark],
     );
+```
+
+<a name="text-scale"></a>
+## Text Scale (Accessibility)
+Golden tests support multiple text scale factors to catch layout regressions at large accessibility font sizes. The list of supported scales can be modified globally or per test. By default tests run at `1.0` only (`goldenTestSupportedTextScales = [1.0]`). 
+
+To add text-scale coverage for all tests:
+
+```dart
+goldenTestSupportedTextScales = [1.0, 2.0];
+```
+
+Or specify scales for a specific test:
+
+```dart
+goldenTest(
+  name: 'Example Page',
+  builder: (_) => ExamplePage(),
+  supportedTextScales: [1.0, 2.0],
+);
+```
+
+#### Platform presets
+Use [AndroidFontScale] / [IosDynamicTypeScale] `.value`, [androidAccessibilityTextScalePresets], [iosAccessibilityTextScalePresets], or any custom `double` value:
+
+```dart
+goldenTest(
+  name: 'Example Page',
+  builder: (_) => ExamplePage(),
+  supportedTextScales: [
+    1.0,
+    1.5,
+    AndroidFontScale.extraLarge.value,
+    ...iosAccessibilityTextScalePresets,
+  ],
+);
 ```
 
 <a name="global-config"></a>

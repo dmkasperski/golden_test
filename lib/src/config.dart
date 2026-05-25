@@ -70,6 +70,15 @@ List<Brightness> goldenTestSupportedThemes = [
   Brightness.dark,
 ];
 
+/// List of text scale factors used for all golden tests when no per-test
+/// configuration is provided.
+///
+/// Defaults to `[1.0]` — tests run at the default scale without a scale segment
+/// in the golden path. Add more values (e.g. `2.0`) to run a text-scale matrix;
+///
+/// Per-test override via the `supportedTextScales` parameter takes precedence.
+List<double> goldenTestSupportedTextScales = const [1.0];
+
 /// A default ThemeData of your application - light mode.
 ThemeData goldenTestThemeInTests = ThemeData(
   brightness: Brightness.light,
