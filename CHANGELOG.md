@@ -1,3 +1,8 @@
+## 1.1.1
+
+### Fixes
+- **Bundled Roboto font** — The package now ships its own Roboto font, so the device frame's status bar time renders correctly in any consuming project regardless of whether it bundles Roboto itself.
+
 ## 1.1.0
 
 ### Fixes

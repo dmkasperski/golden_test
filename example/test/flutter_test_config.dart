@@ -9,10 +9,6 @@ import 'package:golden_test_example/l10n/app_localizations.dart';
 Future<void> testExecutable(FutureOr<void> Function() testMain) async {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  await (FontLoader('Roboto')
-        ..addFont(rootBundle.load('assets/fonts/Roboto-Regular.ttf')))
-      .load();
-
   await (FontLoader('MaterialIcons')
         ..addFont(rootBundle.load('assets/fonts/MaterialIcons-Regular.otf')))
       .load();
