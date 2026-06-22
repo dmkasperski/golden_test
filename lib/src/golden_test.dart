@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_test/src/config.dart';
 import 'package:golden_test/src/device.dart';
@@ -102,6 +103,20 @@ import 'package:meta/meta.dart';
 ///   );
 /// ```
 /// {@end-tool}
+bool _packageFontsLoaded = false;
+
+Future<void> _ensurePackageFontsLoaded() async {
+  if (_packageFontsLoaded) return;
+  _packageFontsLoaded = true;
+  await (FontLoader('Roboto')
+        ..addFont(
+          rootBundle.load(
+            'packages/golden_test/lib/fonts/Roboto-Regular.ttf',
+          ),
+        ))
+      .load();
+}
+
 @isTest
 void goldenTest({
   required String name,
@@ -132,6 +147,7 @@ void goldenTest({
       for (final device in testDevices) {
         for (final scale in testScales) {
           testWidgets(name, (WidgetTester tester) async {
+            await _ensurePackageFontsLoaded();
             tester.platformDispatcher.platformBrightnessTestValue = mode;
             tester.platformDispatcher.textScaleFactorTestValue = scale;
             debugDisableShadows = false;
