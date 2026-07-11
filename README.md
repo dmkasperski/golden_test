@@ -10,6 +10,8 @@
     - [Dark Theme](#dark-theme)
   - [Text Scale (Accessibility)](#text-scale)
   - [Global Setup Callback](#global-setup-callback)
+  - [Network Image Stub](#network-image-stub)
+    - [CachedNetworkImage support](#cachednetworkimage-support)
   - [Golden File Organization](#golden-file-organization)
   - [Difference tolerance](#difference-tolerance)
 
@@ -317,6 +319,38 @@ The globalSetup callback allows you to define project-specific configurations, s
 ```dart
     globalSetup = (_) async => duringTestExecution = true;
 ```
+
+<a name="network-image-stub"></a>
+## Network Image Stub
+Widgets that load images over the network (`Image.network`, `FadeInImage` with a `NetworkImage`, `DecoratedBox` with a `NetworkImage`) would otherwise time out or produce flaky goldens, since there's no real network during tests. By default, Golden Test intercepts these requests and resolves them with a placeholder image, so goldens stay deterministic.
+
+Disable this globally if needed:
+```dart
+goldenTestStubNetworkImages = false;
+```
+
+Or override the stub image:
+```dart
+goldenTestNetworkImageStubPng = myPlaceholderPngBytes;
+```
+
+### CachedNetworkImage support
+The [`cached_network_image`](https://pub.dev/packages/cached_network_image) package doesn't go through `dart:io`'s `HttpClient`, so the stub above doesn't cover it on its own — it fetches through `flutter_cache_manager`, which relies on SQLite and `path_provider`, neither of which work inside Flutter's fake-async test zone.
+
+Golden Test ships opt-in support for this via a separate entry point, imported only by projects that already use `CachedNetworkImage` (and therefore already depend on `cached_network_image` and `flutter_cache_manager` — this import adds no dependency to projects that don't):
+
+```dart
+// flutter_test_config.dart
+import 'package:golden_test/cached_network_image.dart';
+
+Future<void> testExecutable(FutureOr<void> Function() testMain) async {
+  ...
+  setupGoldenTestCachedNetworkImage();
+  return testMain();
+}
+```
+
+That's it — every `CachedNetworkImage` in your goldens now resolves to the same stub image, with no per-widget changes needed.
 
 ## Golden File Organization
 Golden Test allows you to organize golden files into custom subdirectories per test, which is particularly useful when managing golden tests across multiple apps or design systems.

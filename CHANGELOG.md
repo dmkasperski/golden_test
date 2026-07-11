@@ -1,3 +1,9 @@
+## 1.2.0
+
+### New features
+- **`CachedNetworkImage` support** — the [`cached_network_image`](https://pub.dev/packages/cached_network_image) package's `CachedNetworkImage` widget now works in golden tests out of the box, with no dependency added to `golden_test` itself. Import the new opt-in entry point `package:golden_test/cached_network_image.dart` (only in projects that already use `CachedNetworkImage`) and call `setupGoldenTestCachedNetworkImage()` once in `flutter_test_config.dart`. See [README § CachedNetworkImage support](README.md#cachednetworkimage-support).
+- **`goldenTestCachedNetworkImageManager` hook** — new config hook in `lib/src/config.dart` that the `CachedNetworkImage` support above builds on; also usable directly for custom cache manager wiring.
+
 ## 1.1.0
 
 ### Fixes

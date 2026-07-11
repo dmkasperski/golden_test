@@ -43,6 +43,10 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
+  # Used directly by network_image_stub_test.dart to exercise CachedNetworkImage;
+  # golden_test's opt-in cached_network_image.dart entry point uses this same
+  # dependency from the example app's own graph, not from golden_test's pubspec.
+  cached_network_image: ^3.0.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

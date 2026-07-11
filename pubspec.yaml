@@ -1,6 +1,6 @@
 name: golden_test
 description: "A utility Flutter plugin for writing golden tests that streamlines adding golden tests to your project"
-version: 1.1.0
+version: 1.2.0
 homepage: https://github.com/dmkasperski/golden_test
 repository: https://github.com/dmkasperski/golden_test
 
@@ -24,6 +24,15 @@ dependencies:
 
 dev_dependencies:
   flutter_lints: ^5.0.0
+  # Not real dependencies of golden_test: cached_network_image.dart (see lib/)
+  # is an opt-in entry point, imported only by consumers who already use
+  # CachedNetworkImage (and therefore already have these packages resolvable
+  # in their own dependency graph). Declaring them here — rather than under
+  # `dependencies` — lets us analyze/test that file in this repo without
+  # forcing the packages onto every golden_test consumer.
+  cached_network_image: ^3.0.0
+  file: ^7.0.0
+  flutter_cache_manager: ^3.0.0
 
 flutter:
   uses-material-design: true

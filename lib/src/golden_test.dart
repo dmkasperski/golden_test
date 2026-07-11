@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_test/src/config.dart';
 import 'package:golden_test/src/device.dart';
+import 'package:golden_test/src/network_image_stub.dart';
 import 'package:golden_test/src/utils/device_frame.dart';
 import 'package:meta/meta.dart';
 
@@ -136,62 +137,65 @@ void goldenTest({
             tester.platformDispatcher.textScaleFactorTestValue = scale;
             debugDisableShadows = false;
             _setupSize(device, tester);
-            try {
-              if (globalSetup != null) {
-                await globalSetup!(locale);
-              }
 
-              if (setup != null) {
-                await setup(tester);
-              }
+            await runWithNetworkImageStub(() async {
+              try {
+                if (globalSetup != null) {
+                  await globalSetup!(locale);
+                }
 
-              final widget = _themedWidget(
-                child: Container(
-                  alignment: Alignment.topLeft,
-                  child: Builder(builder: builder),
-                ),
-                theme: mode == Brightness.light
-                    ? goldenTestThemeInTests
-                    : goldenTestDarkThemeInTests,
-                supportedLocales: [locale],
-                localizationsDelegates:
-                    localizationsDelegates ?? goldenTestLocalizationsDelegates,
-              );
+                if (setup != null) {
+                  await setup(tester);
+                }
 
-              await tester.pumpWidget(
-                DecoratedBox(
-                  position: DecorationPosition.foreground,
-                  decoration: DeviceFrame(mode, device.insets),
-                  child: widget,
-                ),
-              );
+                final widget = _themedWidget(
+                  child: Container(
+                    alignment: Alignment.topLeft,
+                    child: Builder(builder: builder),
+                  ),
+                  theme: mode == Brightness.light
+                      ? goldenTestThemeInTests
+                      : goldenTestDarkThemeInTests,
+                  supportedLocales: [locale],
+                  localizationsDelegates:
+                      localizationsDelegates ?? goldenTestLocalizationsDelegates,
+                );
 
-              if (action != null) {
+                await tester.pumpWidget(
+                  DecoratedBox(
+                    position: DecorationPosition.foreground,
+                    decoration: DeviceFrame(mode, device.insets),
+                    child: widget,
+                  ),
+                );
+
+                if (action != null) {
+                  await tester.pumpAndSettle();
+                  await action(tester);
+                }
+
                 await tester.pumpAndSettle();
-                await action(tester);
-              }
+                await _precacheImages(tester);
 
-              await tester.pumpAndSettle();
-              await _precacheImages(tester);
-
-              // Include device name in path only when testing multiple devices
-              final shouldIncludeDeviceName = testDevices.length > 1;
-              final goldenPath = _buildGoldenPath(
-                locale: locale,
-                mode: mode,
-                device: device,
-                name: name,
-                includeDeviceName: shouldIncludeDeviceName,
-                textScale: includeTextScaleInPath ? scale : null,
-                subdirectory: subdirectory,
-              );
-              await _takeAScreenshot(goldenPath);
-            } finally {
-              debugDisableShadows = true;
-              if (tearDown != null) {
-                await tearDown(tester);
+                // Include device name in path only when testing multiple devices
+                final shouldIncludeDeviceName = testDevices.length > 1;
+                final goldenPath = _buildGoldenPath(
+                  locale: locale,
+                  mode: mode,
+                  device: device,
+                  name: name,
+                  includeDeviceName: shouldIncludeDeviceName,
+                  textScale: includeTextScaleInPath ? scale : null,
+                  subdirectory: subdirectory,
+                );
+                await _takeAScreenshot(goldenPath);
+              } finally {
+                debugDisableShadows = true;
+                if (tearDown != null) {
+                  await tearDown(tester);
+                }
               }
-            }
+            });
           }, skip: skip, tags: tags);
         }
       }

@@ -128,6 +128,39 @@ Future<void> Function(Locale locale)? globalSetup;
 /// passing `supportMultipleDevices: true` to every test call.
 bool goldenTestSupportMultipleDevices = false;
 
+/// When true (default), all network image requests during golden tests are
+/// intercepted and resolved with [goldenTestNetworkImageStubPng], preventing
+/// timeouts and ensuring deterministic output. Set to false in
+/// `flutter_test_config.dart` to disable.
+bool goldenTestStubNetworkImages = true;
+
+/// Hook to make `CachedNetworkImage` (from the `cached_network_image` package)
+/// work in golden tests without modifying individual test files.
+///
+/// `CachedNetworkImage` uses `flutter_cache_manager` which relies on SQLite.
+/// SQLite uses platform channels that do not function inside Flutter's fake-async
+/// test zone, so golden tests that contain `CachedNetworkImage` hang indefinitely
+/// unless the default cache manager is replaced with one that works in tests.
+///
+/// Set this once in `flutter_test_config.dart`. The function is called at the
+/// start of every test — assign a fresh stub instance each call.
+///
+/// Example — replace [CachedNetworkImageProvider.defaultCacheManager] with a
+/// lightweight in-memory stub. Do NOT read the existing field first: reading it
+/// lazily constructs [DefaultCacheManager], which schedules async
+/// `path_provider` + SQLite initialization that fails inside Flutter's
+/// fake-async test zone.
+/// ```dart
+/// // flutter_test_config.dart
+/// goldenTestCachedNetworkImageManager = () {
+///   CachedNetworkImageProvider.defaultCacheManager = GoldenTestCacheManager();
+/// };
+/// ```
+///
+/// See the `example/test/flutter_test_config.dart` in the `golden_test` package
+/// for a complete `GoldenTestCacheManager` implementation.
+void Function()? goldenTestCachedNetworkImageManager;
+
 /// The golden test difference tolerance at which tests are considered failing.
 /// Ranges from 0-100(%), inclusive.
 ///
