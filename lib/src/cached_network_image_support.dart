@@ -37,10 +37,14 @@ class GoldenTestCacheManager implements BaseCacheManager {
     });
   }
 
+  // Fixed, far-future expiry — this stub's entries never actually need to
+  // expire, and a static date avoids wall-clock/timezone-dependent flakiness.
+  static final _validTill = DateTime.utc(2100);
+
   FileInfo _info(String url) => FileInfo(
         _file(url),
         FileSource.Online,
-        DateTime.now().add(const Duration(days: 30)),
+        _validTill,
         url,
       );
 
