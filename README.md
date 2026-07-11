@@ -17,7 +17,7 @@
 
 # golden_test
 
-**golden_test** is a lightweight, opinionated wrapper around Flutter's golden testing APIs that dramatically reduces boilerplate while adding first-class support for themes, locales, and multiple devices.
+**golden_test** is a lightweight, **zero-dependency**, opinionated wrapper around Flutter's golden testing APIs that dramatically reduces boilerplate while adding first-class support for themes, locales, and multiple devices.
 It focuses on real-world UI scenarios, making golden tests easier to write, scale, and maintain compared to lower-level solutions.
 
 <a name="introduction"></a>
@@ -337,7 +337,7 @@ goldenTestNetworkImageStubPng = myPlaceholderPngBytes;
 ### CachedNetworkImage support
 The [`cached_network_image`](https://pub.dev/packages/cached_network_image) package doesn't go through `dart:io`'s `HttpClient`, so the stub above doesn't cover it on its own — it fetches through `flutter_cache_manager`, which relies on SQLite and `path_provider`, neither of which work inside Flutter's fake-async test zone.
 
-Golden Test ships opt-in support for this via a separate entry point, imported only by projects that already use `CachedNetworkImage` (and therefore already depend on `cached_network_image` and `flutter_cache_manager` — this import adds no dependency to projects that don't):
+Golden Test ships opt-in support for this via a separate entry point, imported only by projects that already use `CachedNetworkImage`:
 
 ```dart
 // flutter_test_config.dart
@@ -349,8 +349,6 @@ Future<void> testExecutable(FutureOr<void> Function() testMain) async {
   return testMain();
 }
 ```
-
-That's it — every `CachedNetworkImage` in your goldens now resolves to the same stub image, with no per-widget changes needed.
 
 ## Golden File Organization
 Golden Test allows you to organize golden files into custom subdirectories per test, which is particularly useful when managing golden tests across multiple apps or design systems.
