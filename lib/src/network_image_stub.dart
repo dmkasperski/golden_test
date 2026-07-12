@@ -132,9 +132,6 @@ class _FakeHttpClient implements HttpClient {
   int? maxConnectionsPerHost;
 
   @override
-  bool findProxyFromEnvironment = false;
-
-  @override
   Future<HttpClientRequest> getUrl(Uri url) async => _FakeHttpClientRequest();
 
   @override
@@ -184,12 +181,6 @@ class _FakeHttpHeaders implements HttpHeaders {
 
   @override
   int contentLength = -1;
-
-  @override
-  bool followRedirects = true;
-
-  @override
-  int maxRedirects = 5;
 
   @override
   void set(String name, Object value, {bool preserveHeaderCase = false}) {}
