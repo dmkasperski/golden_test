@@ -1,3 +1,8 @@
+## 2.0.0
+
+### Breaking changes
+- **Migrated to `material_ui`** — Flutter 3.47 decoupled Material (and Cupertino) from the core SDK into standalone `material_ui`/`cupertino_ui` packages on pub.dev, deprecating `package:flutter/material.dart`. `golden_test` now imports `package:material_ui/material_ui.dart` instead, and the minimum supported Flutter version is now `3.47.0` (Dart SDK `^3.12.0`). Projects on older Flutter versions will need to stay on `golden_test` 1.x.
+
 ## 1.1.1
 
 ### Fixes

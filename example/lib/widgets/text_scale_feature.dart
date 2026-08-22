@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Sample button and body text for `supportedTextScales`.
 class TextScaleFeature extends StatelessWidget {

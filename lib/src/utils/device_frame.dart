@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:golden_test/src/utils/device_frame_painter.dart';
 
 class DeviceFrame extends Decoration {

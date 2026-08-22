@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_test/src/device.dart';
 import 'package:golden_test/src/local_file_comparator_with_tolerance.dart';
