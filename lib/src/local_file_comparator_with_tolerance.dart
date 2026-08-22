@@ -3,8 +3,10 @@ import 'package:flutter_test/flutter_test.dart';
 
 class LocalFileComparatorWithTolerance extends LocalFileComparator {
   LocalFileComparatorWithTolerance(super.testFile, this.diffTolerance)
-      : assert(diffTolerance >= 0 && diffTolerance <= 100,
-            '[diffTolerance] must be within range from 0-100(%)');
+    : assert(
+        diffTolerance >= 0 && diffTolerance <= 100,
+        '[diffTolerance] must be within range from 0-100(%)',
+      );
 
   /// Tolerance above which tests will be marked as Failed.
   /// Ranges from (0-1), both inclusive.
@@ -18,24 +20,25 @@ class LocalFileComparatorWithTolerance extends LocalFileComparator {
     );
 
     if (!result.passed && result.diffPercent * 100 <= diffTolerance) {
-      debugPrint(
-        '''
+      debugPrint('''
         Difference: ${result.diffPercent * 100}%, 
         Acceptable tolerance: $diffTolerance%
-        ''',
-      );
+        ''');
 
       return true;
     }
 
     if (!result.passed) {
       final Uri goldenPathWithoutFile = golden.replace(
-        pathSegments:
-            golden.pathSegments.sublist(0, golden.pathSegments.length - 1),
+        pathSegments: golden.pathSegments.sublist(
+          0,
+          golden.pathSegments.length - 1,
+        ),
       );
 
-      final Uri updatedBasedir =
-          basedir.resolve(goldenPathWithoutFile.toString());
+      final Uri updatedBasedir = basedir.resolve(
+        goldenPathWithoutFile.toString(),
+      );
 
       final error = await generateFailureOutput(result, golden, updatedBasedir);
       throw FlutterError(error);

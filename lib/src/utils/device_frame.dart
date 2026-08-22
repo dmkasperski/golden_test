@@ -5,10 +5,7 @@ class DeviceFrame extends Decoration {
   final Brightness brightness;
   final EdgeInsets insets;
 
-  const DeviceFrame(
-    this.brightness,
-    this.insets,
-  );
+  const DeviceFrame(this.brightness, this.insets);
 
   @override
   BoxPainter createBoxPainter([VoidCallback? onChanged]) {

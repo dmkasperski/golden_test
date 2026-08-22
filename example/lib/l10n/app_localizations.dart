@@ -11,10 +11,7 @@ class AppLocalizations {
 
   static const delegate = _AppLocalizationsDelegate();
 
-  static const supportedLocales = [
-    Locale('en'),
-    Locale('es'),
-  ];
+  static const supportedLocales = [Locale('en'), Locale('es')];
 
   static final _translations = {
     'en': {

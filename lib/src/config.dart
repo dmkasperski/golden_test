@@ -136,7 +136,8 @@ void goldenTestDifferenceTolerance(double diffTolerance) {
   if (goldenFileComparator is LocalFileComparator) {
     goldenFileComparator = LocalFileComparatorWithTolerance(
       Uri.parse(
-          '${(goldenFileComparator as LocalFileComparator).basedir}/test.dart'),
+        '${(goldenFileComparator as LocalFileComparator).basedir}/test.dart',
+      ),
       diffTolerance,
     );
   }

@@ -42,10 +42,7 @@ void main() {
     name: 'ExampleScreen',
     builder: (_) => const ExampleScreen(),
     supportMultipleDevices: true,
-    supportedLocales: [
-      Locale('en'),
-      Locale('es'),
-    ],
+    supportedLocales: [Locale('en'), Locale('es')],
     supportedDevices: [Device.iphone15Pro(), Device.ipadPro12()],
   );
 }

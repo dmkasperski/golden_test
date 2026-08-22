@@ -31,13 +31,16 @@ class ExampleScreen extends StatelessWidget {
             const SizedBox(height: 28),
             _MiniChart(colorScheme: colorScheme, l10n: l10n),
             const SizedBox(height: 28),
-            Text(l10n.recentTransactions,
-                style: theme.textTheme.titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w600)),
-            const SizedBox(height: 12),
-            ..._buildTransactions(l10n).map(
-              (t) => _TransactionTile(transaction: t, theme: theme),
+            Text(
+              l10n.recentTransactions,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
             ),
+            const SizedBox(height: 12),
+            ..._buildTransactions(
+              l10n,
+            ).map((t) => _TransactionTile(transaction: t, theme: theme)),
           ],
         ),
       ),
@@ -63,28 +66,37 @@ class _Header extends StatelessWidget {
         CircleAvatar(
           radius: 22,
           backgroundColor: colorScheme.primaryContainer,
-          child:
-              Icon(Icons.person_rounded, color: colorScheme.onPrimaryContainer),
+          child: Icon(
+            Icons.person_rounded,
+            color: colorScheme.onPrimaryContainer,
+          ),
         ),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(l10n.goodMorning,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurface.withAlpha(150),
-                  )),
-              Text('Sarah Johnson',
-                  style: theme.textTheme.titleSmall
-                      ?.copyWith(fontWeight: FontWeight.w600)),
+              Text(
+                l10n.goodMorning,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurface.withAlpha(150),
+                ),
+              ),
+              Text(
+                'Sarah Johnson',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ],
           ),
         ),
         IconButton(
           onPressed: () {},
-          icon: Icon(Icons.notifications_outlined,
-              color: colorScheme.onSurface.withAlpha(180)),
+          icon: Icon(
+            Icons.notifications_outlined,
+            color: colorScheme.onSurface.withAlpha(180),
+          ),
         ),
       ],
     );
@@ -111,10 +123,7 @@ class _BalanceCard extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            colorScheme.primary,
-            colorScheme.tertiary,
-          ],
+          colors: [colorScheme.primary, colorScheme.tertiary],
         ),
         boxShadow: [
           BoxShadow(
@@ -129,8 +138,11 @@ class _BalanceCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.account_balance_wallet_rounded,
-                  color: colorScheme.onPrimary.withAlpha(200), size: 20),
+              Icon(
+                Icons.account_balance_wallet_rounded,
+                color: colorScheme.onPrimary.withAlpha(200),
+                size: 20,
+              ),
               const SizedBox(width: 8),
               Text(
                 l10n.totalBalance,
@@ -158,8 +170,11 @@ class _BalanceCard extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.trending_up_rounded,
-                    color: colorScheme.onPrimary, size: 16),
+                Icon(
+                  Icons.trending_up_rounded,
+                  color: colorScheme.onPrimary,
+                  size: 16,
+                ),
                 const SizedBox(width: 4),
                 Text(
                   l10n.thisMonth,
@@ -227,9 +242,9 @@ class _BalanceStat extends StatelessWidget {
             const SizedBox(width: 4),
             Text(
               label,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: color.withAlpha(180),
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: color.withAlpha(180)),
             ),
           ],
         ),
@@ -237,9 +252,9 @@ class _BalanceStat extends StatelessWidget {
         Text(
           value,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: color,
-                fontWeight: FontWeight.bold,
-              ),
+            color: color,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ],
     );
@@ -259,25 +274,25 @@ class _QuickActions extends StatelessWidget {
         l10n.send,
         Icons.send_rounded,
         colorScheme.primary,
-        colorScheme.primaryContainer
+        colorScheme.primaryContainer,
       ),
       (
         l10n.request,
         Icons.call_received_rounded,
         colorScheme.tertiary,
-        colorScheme.tertiaryContainer
+        colorScheme.tertiaryContainer,
       ),
       (
         l10n.topUp,
         Icons.add_rounded,
         colorScheme.secondary,
-        colorScheme.secondaryContainer
+        colorScheme.secondaryContainer,
       ),
       (
         l10n.more,
         Icons.more_horiz_rounded,
         colorScheme.outline,
-        colorScheme.surfaceContainerHighest
+        colorScheme.surfaceContainerHighest,
       ),
     ];
 
@@ -300,10 +315,7 @@ class _QuickActions extends StatelessWidget {
                   child: Icon(icon, color: iconColor, size: 24),
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  label,
-                  style: Theme.of(context).textTheme.labelMedium,
-                ),
+                Text(label, style: Theme.of(context).textTheme.labelMedium),
               ],
             ),
           ),
@@ -339,15 +351,17 @@ class _MiniChart extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Icon(Icons.bar_chart_rounded,
-                      size: 20, color: colorScheme.primary),
+                  Icon(
+                    Icons.bar_chart_rounded,
+                    size: 20,
+                    color: colorScheme.primary,
+                  ),
                   const SizedBox(width: 8),
                   Text(
                     l10n.weeklySpending,
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleSmall
-                        ?.copyWith(fontWeight: FontWeight.w600),
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ],
               ),
@@ -360,9 +374,9 @@ class _MiniChart extends StatelessWidget {
                 child: Text(
                   '\$526',
                   style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: colorScheme.onPrimaryContainer,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    color: colorScheme.onPrimaryContainer,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
@@ -392,15 +406,15 @@ class _MiniChart extends StatelessWidget {
                         const SizedBox(height: 8),
                         Text(
                           days[i],
-                          style:
-                              Theme.of(context).textTheme.labelSmall?.copyWith(
-                                    color: isHighlighted
-                                        ? colorScheme.primary
-                                        : colorScheme.onSurface.withAlpha(120),
-                                    fontWeight: isHighlighted
-                                        ? FontWeight.bold
-                                        : FontWeight.normal,
-                                  ),
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
+                                color: isHighlighted
+                                    ? colorScheme.primary
+                                    : colorScheme.onSurface.withAlpha(120),
+                                fontWeight: isHighlighted
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                              ),
                         ),
                       ],
                     ),
@@ -434,53 +448,50 @@ class _Transaction {
 }
 
 List<_Transaction> _buildTransactions(AppLocalizations l10n) => [
-      _Transaction(
-        icon: Icons.movie_rounded,
-        name: 'StreamFlix',
-        category: l10n.entertainment,
-        amount: '-\$15.99',
-        isPositive: false,
-        color: const Color(0xFFE53935),
-      ),
-      _Transaction(
-        icon: Icons.laptop_mac_rounded,
-        name: 'Tech Store',
-        category: l10n.technology,
-        amount: '-\$249.00',
-        isPositive: false,
-        color: const Color(0xFF607D8B),
-      ),
-      _Transaction(
-        icon: Icons.swap_horiz_rounded,
-        name: 'Jane Smith',
-        category: l10n.transferReceived,
-        amount: '+\$1,200.00',
-        isPositive: true,
-        color: const Color(0xFF4CAF50),
-      ),
-      _Transaction(
-        icon: Icons.local_cafe_rounded,
-        name: 'Bean Brew',
-        category: l10n.foodAndDrink,
-        amount: '-\$6.40',
-        isPositive: false,
-        color: const Color(0xFF795548),
-      ),
-      _Transaction(
-        icon: Icons.headphones_rounded,
-        name: 'Musicly',
-        category: l10n.entertainment,
-        amount: '-\$9.99',
-        isPositive: false,
-        color: const Color(0xFF26A69A),
-      ),
-    ];
+  _Transaction(
+    icon: Icons.movie_rounded,
+    name: 'StreamFlix',
+    category: l10n.entertainment,
+    amount: '-\$15.99',
+    isPositive: false,
+    color: const Color(0xFFE53935),
+  ),
+  _Transaction(
+    icon: Icons.laptop_mac_rounded,
+    name: 'Tech Store',
+    category: l10n.technology,
+    amount: '-\$249.00',
+    isPositive: false,
+    color: const Color(0xFF607D8B),
+  ),
+  _Transaction(
+    icon: Icons.swap_horiz_rounded,
+    name: 'Jane Smith',
+    category: l10n.transferReceived,
+    amount: '+\$1,200.00',
+    isPositive: true,
+    color: const Color(0xFF4CAF50),
+  ),
+  _Transaction(
+    icon: Icons.local_cafe_rounded,
+    name: 'Bean Brew',
+    category: l10n.foodAndDrink,
+    amount: '-\$6.40',
+    isPositive: false,
+    color: const Color(0xFF795548),
+  ),
+  _Transaction(
+    icon: Icons.headphones_rounded,
+    name: 'Musicly',
+    category: l10n.entertainment,
+    amount: '-\$9.99',
+    isPositive: false,
+    color: const Color(0xFF26A69A),
+  ),
+];
 
 class _TransactionTile extends StatelessWidget {
-  const _TransactionTile({
-    required this.transaction,
-    required this.theme,
-  });
+  const _TransactionTile({required this.transaction, required this.theme});
 
   final _Transaction transaction;
   final ThemeData theme;
@@ -506,9 +517,12 @@ class _TransactionTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(transaction.name,
-                    style: theme.textTheme.bodyMedium
-                        ?.copyWith(fontWeight: FontWeight.w500)),
+                Text(
+                  transaction.name,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
                 Text(
                   transaction.category,
                   style: theme.textTheme.bodySmall?.copyWith(
