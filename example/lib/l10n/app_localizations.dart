@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class AppLocalizations {
   AppLocalizations(this.locale);
@@ -11,10 +11,7 @@ class AppLocalizations {
 
   static const delegate = _AppLocalizationsDelegate();
 
-  static const supportedLocales = [
-    Locale('en'),
-    Locale('es'),
-  ];
+  static const supportedLocales = [Locale('en'), Locale('es')];
 
   static final _translations = {
     'en': {

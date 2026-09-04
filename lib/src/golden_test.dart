@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_test/src/config.dart';
@@ -108,12 +108,9 @@ bool _packageFontsLoaded = false;
 Future<void> _ensurePackageFontsLoaded() async {
   if (_packageFontsLoaded) return;
   _packageFontsLoaded = true;
-  await (FontLoader('Roboto')
-        ..addFont(
-          rootBundle.load(
-            'packages/golden_test/lib/fonts/Roboto-Regular.ttf',
-          ),
-        ))
+  await (FontLoader('Roboto')..addFont(
+        rootBundle.load('packages/golden_test/lib/fonts/Roboto-Regular.ttf'),
+      ))
       .load();
 }
 
@@ -134,8 +131,10 @@ void goldenTest({
   Object? tags,
   String? subdirectory,
 }) {
-  final testDevices =
-      _resolveTestDevices(supportedDevices, supportMultipleDevices);
+  final testDevices = _resolveTestDevices(
+    supportedDevices,
+    supportMultipleDevices,
+  );
   final testModes = _resolveTestThemes(supportedThemes);
   final testLocales = _resolveTestLocales(supportedLocales);
   final textScaleConfig = _resolveTextScales(supportedTextScales);
@@ -146,69 +145,75 @@ void goldenTest({
     for (final mode in testModes) {
       for (final device in testDevices) {
         for (final scale in testScales) {
-          testWidgets(name, (WidgetTester tester) async {
-            await _ensurePackageFontsLoaded();
-            tester.platformDispatcher.platformBrightnessTestValue = mode;
-            tester.platformDispatcher.textScaleFactorTestValue = scale;
-            debugDisableShadows = false;
-            _setupSize(device, tester);
-            try {
-              if (globalSetup != null) {
-                await globalSetup!(locale);
-              }
+          testWidgets(
+            name,
+            (WidgetTester tester) async {
+              await _ensurePackageFontsLoaded();
+              tester.platformDispatcher.platformBrightnessTestValue = mode;
+              tester.platformDispatcher.textScaleFactorTestValue = scale;
+              debugDisableShadows = false;
+              _setupSize(device, tester);
+              try {
+                if (globalSetup != null) {
+                  await globalSetup!(locale);
+                }
 
-              if (setup != null) {
-                await setup(tester);
-              }
+                if (setup != null) {
+                  await setup(tester);
+                }
 
-              final widget = _themedWidget(
-                child: Container(
-                  alignment: Alignment.topLeft,
-                  child: Builder(builder: builder),
-                ),
-                theme: mode == Brightness.light
-                    ? goldenTestThemeInTests
-                    : goldenTestDarkThemeInTests,
-                supportedLocales: [locale],
-                localizationsDelegates:
-                    localizationsDelegates ?? goldenTestLocalizationsDelegates,
-              );
+                final widget = _themedWidget(
+                  child: Container(
+                    alignment: Alignment.topLeft,
+                    child: Builder(builder: builder),
+                  ),
+                  theme: mode == Brightness.light
+                      ? goldenTestThemeInTests
+                      : goldenTestDarkThemeInTests,
+                  supportedLocales: [locale],
+                  localizationsDelegates:
+                      localizationsDelegates ??
+                      goldenTestLocalizationsDelegates,
+                );
 
-              await tester.pumpWidget(
-                DecoratedBox(
-                  position: DecorationPosition.foreground,
-                  decoration: DeviceFrame(mode, device.insets),
-                  child: widget,
-                ),
-              );
+                await tester.pumpWidget(
+                  DecoratedBox(
+                    position: DecorationPosition.foreground,
+                    decoration: DeviceFrame(mode, device.insets),
+                    child: widget,
+                  ),
+                );
 
-              if (action != null) {
+                if (action != null) {
+                  await tester.pumpAndSettle();
+                  await action(tester);
+                }
+
                 await tester.pumpAndSettle();
-                await action(tester);
-              }
+                await _precacheImages(tester);
 
-              await tester.pumpAndSettle();
-              await _precacheImages(tester);
-
-              // Include device name in path only when testing multiple devices
-              final shouldIncludeDeviceName = testDevices.length > 1;
-              final goldenPath = _buildGoldenPath(
-                locale: locale,
-                mode: mode,
-                device: device,
-                name: name,
-                includeDeviceName: shouldIncludeDeviceName,
-                textScale: includeTextScaleInPath ? scale : null,
-                subdirectory: subdirectory,
-              );
-              await _takeAScreenshot(goldenPath);
-            } finally {
-              debugDisableShadows = true;
-              if (tearDown != null) {
-                await tearDown(tester);
+                // Include device name in path only when testing multiple devices
+                final shouldIncludeDeviceName = testDevices.length > 1;
+                final goldenPath = _buildGoldenPath(
+                  locale: locale,
+                  mode: mode,
+                  device: device,
+                  name: name,
+                  includeDeviceName: shouldIncludeDeviceName,
+                  textScale: includeTextScaleInPath ? scale : null,
+                  subdirectory: subdirectory,
+                );
+                await _takeAScreenshot(goldenPath);
+              } finally {
+                debugDisableShadows = true;
+                if (tearDown != null) {
+                  await tearDown(tester);
+                }
               }
-            }
-          }, skip: skip, tags: tags);
+            },
+            skip: skip,
+            tags: tags,
+          );
         }
       }
     }
@@ -242,8 +247,9 @@ List<Device> _resolveTestDevices(
 /// Resolves which theme modes to use for testing.
 /// Priority: local parameter > global config
 List<Brightness> _resolveTestThemes(List<Brightness> supportedThemes) {
-  final testModes =
-      supportedThemes.isNotEmpty ? supportedThemes : goldenTestSupportedThemes;
+  final testModes = supportedThemes.isNotEmpty
+      ? supportedThemes
+      : goldenTestSupportedThemes;
 
   assert(testModes.isNotEmpty, 'No themes specified for testing');
   return testModes;
@@ -330,48 +336,50 @@ Widget _themedWidget({
   required ThemeData theme,
   required List<Locale> supportedLocales,
   List<LocalizationsDelegate<dynamic>>? localizationsDelegates,
-}) =>
-    MaterialApp(
-      theme: theme,
-      color: Colors.white,
-      debugShowCheckedModeBanner: false,
-      locale: supportedLocales.first,
-      supportedLocales: supportedLocales,
-      localizationsDelegates: localizationsDelegates,
-      localeResolutionCallback: ((Locale? local, Iterable<Locale> locales) =>
-          supportedLocales.first),
-      onUnknownRoute: (settings) => _unknownPage(settings),
-      home: Scaffold(body: child),
-    );
+}) => MaterialApp(
+  theme: theme,
+  color: Colors.white,
+  debugShowCheckedModeBanner: false,
+  locale: supportedLocales.first,
+  supportedLocales: supportedLocales,
+  localizationsDelegates: localizationsDelegates,
+  localeResolutionCallback: ((Locale? local, Iterable<Locale> locales) =>
+      supportedLocales.first),
+  onUnknownRoute: (settings) => _unknownPage(settings),
+  home: Scaffold(body: child),
+);
 
 /// Sets size of test device
 void _setupSize(Device device, WidgetTester tester) {
-  tester.view.physicalSize = Size(device.width * device.devicePixelRatio,
-      device.height * device.devicePixelRatio);
+  tester.view.physicalSize = Size(
+    device.width * device.devicePixelRatio,
+    device.height * device.devicePixelRatio,
+  );
   tester.view.devicePixelRatio = device.devicePixelRatio;
   FakeViewPadding padding = FakeViewPadding(
-      left: device.insets.left * device.devicePixelRatio,
-      top: device.insets.top * device.devicePixelRatio,
-      right: device.insets.right * device.devicePixelRatio,
-      bottom: device.insets.bottom * device.devicePixelRatio);
+    left: device.insets.left * device.devicePixelRatio,
+    top: device.insets.top * device.devicePixelRatio,
+    right: device.insets.right * device.devicePixelRatio,
+    bottom: device.insets.bottom * device.devicePixelRatio,
+  );
   tester.view.padding = padding;
   tester.view.viewPadding = padding;
 }
 
-Future<void> _takeAScreenshot(
-  dynamic key, {
-  int? version,
-}) async =>
+Future<void> _takeAScreenshot(dynamic key, {int? version}) async =>
     await expectLater(
-        find.byType(MaterialApp), matchesGoldenFile(key, version: version));
+      find.byType(MaterialApp),
+      matchesGoldenFile(key, version: version),
+    );
 
 /// Fallback for route generator
 PageRouteBuilder _unknownPage(RouteSettings settings) => PageRouteBuilder(
-      settings: settings,
-      pageBuilder: (context, _, __) => Text(
-          'Unknown route ${settings.toString()}',
-          style: Theme.of(context).textTheme.bodyLarge),
-    );
+  settings: settings,
+  pageBuilder: (context, _, __) => Text(
+    'Unknown route ${settings.toString()}',
+    style: Theme.of(context).textTheme.bodyLarge,
+  ),
+);
 
 /// Code from Alchemist Library (MIT License)
 /// Portions of this software are derived from the Alchemist library,

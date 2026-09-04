@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:golden_test/golden_test.dart';
 
 final red100x100PixelsImage = base64Decode(
