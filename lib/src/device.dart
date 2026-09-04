@@ -61,13 +61,13 @@ class Device {
       );
 
   Device copyWith({
-    final double? devicePixelRatio,
-    final double? width,
-    final double? height,
-    final EdgeInsets? insets,
-    final String? name,
+    double? devicePixelRatio,
+    double? width,
+    double? height,
+    EdgeInsets? insets,
+    String? name,
   }) => Device(
-    name: name,
+    name: name ?? this.name,
     devicePixelRatio: devicePixelRatio ?? this.devicePixelRatio,
     width: width ?? this.width,
     height: height ?? this.height,

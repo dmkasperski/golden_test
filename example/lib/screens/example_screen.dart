@@ -38,9 +38,8 @@ class ExampleScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-            ..._buildTransactions(
-              l10n,
-            ).map((t) => _TransactionTile(transaction: t, theme: theme)),
+            ..._buildTransactions(l10n)
+                .map((t) => _TransactionTile(transaction: t, theme: theme)),
           ],
         ),
       ),
@@ -242,19 +241,16 @@ class _BalanceStat extends StatelessWidget {
             const SizedBox(width: 4),
             Text(
               label,
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: color.withAlpha(180)),
+              style: Theme.of(context).textTheme.bodySmall
+                  ?.copyWith(color: color.withAlpha(180)),
             ),
           ],
         ),
         const SizedBox(height: 4),
         Text(
           value,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            color: color,
-            fontWeight: FontWeight.bold,
-          ),
+          style: Theme.of(context).textTheme.titleMedium
+              ?.copyWith(color: color, fontWeight: FontWeight.bold),
         ),
       ],
     );
@@ -359,9 +355,8 @@ class _MiniChart extends StatelessWidget {
                   const SizedBox(width: 8),
                   Text(
                     l10n.weeklySpending,
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: Theme.of(context).textTheme.titleSmall
+                        ?.copyWith(fontWeight: FontWeight.w600),
                   ),
                 ],
               ),

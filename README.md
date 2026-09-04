@@ -221,6 +221,18 @@ or per specific test:
         ],
     );
 ```
+
+> **Flutter 3.47+ / `material_ui`:** since Material and Cupertino moved out of the SDK, `GlobalMaterialLocalizations` and `GlobalCupertinoLocalizations` are exported by **both** `flutter_localizations` (deprecated copies) and `material_ui`/`cupertino_ui`. Importing them together fails with `ambiguous_import`. Resolve it by taking each symbol from a single library:
+>
+> ```dart
+> import 'package:cupertino_ui/cupertino_ui.dart' show GlobalCupertinoLocalizations;
+> import 'package:flutter_localizations/flutter_localizations.dart'
+>     hide GlobalMaterialLocalizations, GlobalCupertinoLocalizations;
+> import 'package:material_ui/material_ui.dart' show GlobalMaterialLocalizations;
+> ```
+>
+> `GlobalWidgetsLocalizations` is unaffected and still comes from `flutter_localizations`. Add `cupertino_ui` to your `dev_dependencies` if you need the Cupertino delegate. See [`example/test/flutter_test_config.dart`](example/test/flutter_test_config.dart) for a complete working setup.
+
 <a name="using-intl"></a>
 #### Using intl
 If your project supports localization using the [intl](https://pub.dev/packages/intl) package and your default locales are not `en_US` or you want to support multiple localizations you need to provide addtional configuration especially for intl. It's because intl has hardcoded system locales (`Intl.systemLocales`) to `en_US` while it's need to be changed per test. You can do it adding this code to your flutter config file:
