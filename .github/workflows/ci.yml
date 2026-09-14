@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  test:
+    # Goldens are generated on macOS; Flutter golden tests are sensitive to
+    # platform font rendering, so they must be verified on the same platform.
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          # Keep in sync with .fvmrc
+          flutter-version: 3.47.4
+          channel: stable
+          cache: true
+
+      - run: flutter --version
+
+      - name: Verify formatting
+        run: dart format --output=none --set-exit-if-changed .
+
+      - name: Analyze package
+        run: |
+          flutter pub get
+          flutter analyze
+
+      - name: Analyze example
+        working-directory: example
+        run: |
+          flutter pub get
+          flutter analyze
+
+      - name: Run golden tests
+        working-directory: example
+        run: flutter test
+
+      - name: Upload golden failures
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: golden-failures
+          path: example/test/failures/
+          if-no-files-found: ignore
+
+      - name: Publish dry-run
+        run: flutter pub publish --dry-run
