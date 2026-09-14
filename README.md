@@ -193,23 +193,13 @@ or specify locales in specific tests you want to run it for multiple locales.
 ```
 
 #### Localization Delegates
-To support additional localizations, include localization delegates based on the tool you use for localizations in the goldenTestLocalizationsDelegates list:
+To support additional localizations, add your app's delegates to the goldenTestLocalizationsDelegates list:
 
 ```dart
-    import 'package:cupertino_ui/cupertino_ui.dart';
-    import 'package:flutter_localizations/flutter_localizations.dart'
-        show GlobalWidgetsLocalizations;
-    import 'package:material_ui/material_ui.dart';
-
-    goldenTestLocalizationsDelegates = [
-        YourAppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-    ];
+    goldenTestLocalizationsDelegates = [YourAppLocalizations.delegate];
 ```
 
-Import `flutter_localizations` with `show GlobalWidgetsLocalizations`. Since Flutter 3.47 the Material and Cupertino delegates come from `material_ui`/`cupertino_ui`, and `flutter_localizations` still exports deprecated copies of them, so importing all of it alongside raises `ambiguous_import`.
+`GlobalMaterialLocalizations`, `GlobalWidgetsLocalizations` and `GlobalCupertinoLocalizations` are added for you, so there is no need to list them or import them. Delegates you provide are resolved first, so you can still override any of them.
 
 or per specific test:
 
@@ -221,12 +211,7 @@ or per specific test:
             const Locale('pl'),
             const Locale('en'),
         ],
-        localizationsDelegates: [
-            YourAppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-        ],
+        localizationsDelegates: [YourAppLocalizations.delegate],
     );
 ```
 <a name="using-intl"></a>

@@ -1,5 +1,9 @@
-import 'package:material_ui/material_ui.dart';
+import 'package:cupertino_ui/cupertino_ui.dart'
+    show GlobalCupertinoLocalizations;
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart'
+    show GlobalWidgetsLocalizations;
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_test/src/config.dart';
 import 'package:golden_test/src/device.dart';
@@ -342,7 +346,12 @@ Widget _themedWidget({
   debugShowCheckedModeBanner: false,
   locale: supportedLocales.first,
   supportedLocales: supportedLocales,
-  localizationsDelegates: localizationsDelegates,
+  localizationsDelegates: [
+    ...?localizationsDelegates,
+    GlobalMaterialLocalizations.delegate,
+    GlobalWidgetsLocalizations.delegate,
+    GlobalCupertinoLocalizations.delegate,
+  ],
   localeResolutionCallback: ((Locale? local, Iterable<Locale> locales) =>
       supportedLocales.first),
   onUnknownRoute: (settings) => _unknownPage(settings),
