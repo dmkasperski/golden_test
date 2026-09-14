@@ -1,5 +1,6 @@
 import 'dart:math';
-import 'package:flutter/material.dart';
+
+import 'package:material_ui/material_ui.dart';
 
 class DeviceFramePainter extends BoxPainter {
   final Brightness brightness;
@@ -24,8 +25,12 @@ class DeviceFramePainter extends BoxPainter {
 
     if (insets.right != 0) {
       canvas.drawRect(
-        Rect.fromLTWH(size.width - insets.right, insets.top, insets.right,
-            size.height - insets.top),
+        Rect.fromLTWH(
+          size.width - insets.right,
+          insets.top,
+          insets.right,
+          size.height - insets.top,
+        ),
         bgPaint,
       );
     }
@@ -145,10 +150,7 @@ class DeviceFramePainter extends BoxPainter {
 
     for (var i = 1; i <= 3; i++) {
       canvas.drawArc(
-        Rect.fromCircle(
-          center: Offset(wifiCenterX, wifiDotY),
-          radius: 3.0 * i,
-        ),
+        Rect.fromCircle(center: Offset(wifiCenterX, wifiDotY), radius: 3.0 * i),
         -pi * 3 / 4,
         pi / 2,
         false,

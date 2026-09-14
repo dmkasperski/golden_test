@@ -28,4 +28,5 @@ migrate_working_dir/
 .dart_tool/
 build/
 
-.fvmrc
+# FVM - .fvmrc is tracked so everyone builds on the pinned SDK
+.fvm/

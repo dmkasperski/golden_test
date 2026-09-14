@@ -44,11 +44,11 @@ enum AndroidFontScale {
 /// supportedTextScales: [1.0, ...androidAccessibilityTextScalePresets],
 /// ```
 List<double> get androidAccessibilityTextScalePresets => [
-      AndroidFontScale.largest.value,
-      AndroidFontScale.extraLarge.value,
-      AndroidFontScale.extraExtraLarge.value,
-      AndroidFontScale.maximum.value,
-    ];
+  AndroidFontScale.largest.value,
+  AndroidFontScale.extraLarge.value,
+  AndroidFontScale.extraExtraLarge.value,
+  AndroidFontScale.maximum.value,
+];
 
 /// iOS **Dynamic Type** content size categories.
 ///
@@ -111,9 +111,9 @@ enum IosDynamicTypeScale {
 /// supportedTextScales: [1.0, ...iosAccessibilityTextScalePresets],
 /// ```
 List<double> get iosAccessibilityTextScalePresets => [
-      IosDynamicTypeScale.accessibilityMedium.value,
-      IosDynamicTypeScale.accessibilityLarge.value,
-      IosDynamicTypeScale.accessibilityExtraLarge.value,
-      IosDynamicTypeScale.accessibilityExtraExtraLarge.value,
-      IosDynamicTypeScale.accessibilityExtraExtraExtraLarge.value,
-    ];
+  IosDynamicTypeScale.accessibilityMedium.value,
+  IosDynamicTypeScale.accessibilityLarge.value,
+  IosDynamicTypeScale.accessibilityExtraLarge.value,
+  IosDynamicTypeScale.accessibilityExtraExtraLarge.value,
+  IosDynamicTypeScale.accessibilityExtraExtraExtraLarge.value,
+];

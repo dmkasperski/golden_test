@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:golden_test/golden_test.dart';
 import 'package:golden_test_example/screens/example_screen.dart';
 
@@ -42,10 +42,7 @@ void main() {
     name: 'ExampleScreen',
     builder: (_) => const ExampleScreen(),
     supportMultipleDevices: true,
-    supportedLocales: [
-      Locale('en'),
-      Locale('es'),
-    ],
+    supportedLocales: [Locale('en'), Locale('es')],
     supportedDevices: [Device.iphone15Pro(), Device.ipadPro12()],
   );
 }
