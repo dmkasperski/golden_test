@@ -1,0 +1,37 @@
+# Replaces .gitignore when publishing rather than extending it, so its rules
+# are repeated here.
+
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.svn/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# Flutter/Dart/Pub related
+/pubspec.lock
+**/doc/api/
+.dart_tool/
+build/
+
+# FVM
+.fvm/
+.fvmrc
+
+# Not used by consumers of the published package
+example/test/goldens/
+example/pubspec.lock
+
+# Served from GitHub via absolute URLs in README.md
+doc/screenshots/
