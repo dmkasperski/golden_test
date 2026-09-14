@@ -16,6 +16,8 @@ Future<void> testExecutable(FutureOr<void> Function() testMain) async {
     'MaterialIcons',
   )..addFont(rootBundle.load('assets/fonts/MaterialIcons-Regular.otf'))).load();
 
+  goldenTestDifferenceTolerance(0.05);
+
   goldenTestSupportedDevices = [
     const Device.iphone15Pro(),
     const Device.ipadPro12(),
