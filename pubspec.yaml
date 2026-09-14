@@ -18,8 +18,11 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   flutter_test:
     sdk: flutter
+  cupertino_ui: ^1.0.0
   material_ui: ^1.0.0
   meta: ^1.15.0
 

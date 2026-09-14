@@ -9,16 +9,16 @@ import 'package:golden_test/src/local_file_comparator_with_tolerance.dart';
 /// See [goldenTest] parameter `supportedLocales`
 List<Locale> goldenTestSupportedLocales = [const Locale('en', 'US')];
 
-/// List of localizations delegates.
+/// List of localizations delegates for your own app.
 ///
-/// ```[
-///     YourAppLocalizations.delegate,
-///     ...
-///     GlobalMaterialLocalizations.delegate,
-///     GlobalWidgetsLocalizations.delegate,
-///     GlobalCupertinoLocalizations.delegate,
-///   ]
+/// ```dart
+/// goldenTestLocalizationsDelegates = [YourAppLocalizations.delegate];
 /// ```
+///
+/// `GlobalMaterialLocalizations`, `GlobalWidgetsLocalizations` and
+/// `GlobalCupertinoLocalizations` are appended automatically, so they do not
+/// need to be listed or imported. Delegates listed here are resolved first,
+/// so any of them can still be overridden.
 List<LocalizationsDelegate<dynamic>> goldenTestLocalizationsDelegates = [];
 
 /// The default device(s) used for all golden tests when no other device configuration is specified.
