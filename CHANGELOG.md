@@ -1,3 +1,12 @@
+## 2.0.0
+
+### Breaking changes
+- **Migrated to `material_ui`** — Flutter 3.47 decoupled Material (and Cupertino) from the core SDK into standalone `material_ui`/`cupertino_ui` packages on pub.dev, deprecating `package:flutter/material.dart`. `golden_test` now imports `package:material_ui/material_ui.dart` instead, and the minimum supported Flutter version is now `3.47.0` (Dart SDK `>=3.13.0`). Projects on older Flutter versions will need to stay on `golden_test` 1.x.
+- **Localization delegate imports** — `GlobalMaterialLocalizations` and `GlobalCupertinoLocalizations` now come from `material_ui`/`cupertino_ui`, but `flutter_localizations` still exports deprecated copies, so importing it wholesale alongside them raises `ambiguous_import`. Import `flutter_localizations` with `show GlobalWidgetsLocalizations` — the only delegate it still uniquely owns. See the Localization Delegates section of the README for the exact import block.
+
+### Fixes
+- **`Device.copyWith` no longer drops `name`** — omitting `name` reset it to `null`, which made the golden path fall back to `default` and caused distinct devices in one `supportedDevices` list to share a single golden file.
+
 ## 1.1.1
 
 ### Fixes

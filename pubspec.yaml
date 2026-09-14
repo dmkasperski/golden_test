@@ -1,6 +1,6 @@
 name: golden_test
 description: "A utility Flutter plugin for writing golden tests that streamlines adding golden tests to your project"
-version: 1.1.1
+version: 2.0.0
 homepage: https://github.com/dmkasperski/golden_test
 repository: https://github.com/dmkasperski/golden_test
 
@@ -12,14 +12,15 @@ topics:
   - snapshot-testing
 
 environment:
-  sdk: '>=3.3.4 <4.0.0'
-  flutter: '>=3.3.0'
+  sdk: '>=3.13.0 <4.0.0'
+  flutter: '>=3.47.0'
 
 dependencies:
   flutter:
     sdk: flutter
   flutter_test:
     sdk: flutter
+  material_ui: ^1.0.0
   meta: ^1.15.0
 
 dev_dependencies:
