@@ -128,6 +128,58 @@ Future<void> Function(Locale locale)? globalSetup;
 /// passing `supportMultipleDevices: true` to every test call.
 bool goldenTestSupportMultipleDevices = false;
 
+/// When true (default), [NetworkImage] loads during golden tests are resolved
+/// with [goldenTestNetworkImageStubPng] instead of hitting the network,
+/// preventing timeouts and ensuring deterministic output. Set to false in
+/// `flutter_test_config.dart` to disable.
+///
+/// This covers every widget that paints through a [NetworkImage] —
+/// `Image.network`, `FadeInImage`, a `DecorationImage` in a `BoxDecoration`,
+/// and so on. It does not touch other `dart:io` HTTP traffic: `flutter_test`'s
+/// own mock client keeps answering those with a 400.
+///
+/// It also does not govern image loaders registered through
+/// [goldenTestImageLoaderSetups]; those run regardless of this flag, and decide
+/// for themselves what to serve.
+bool goldenTestStubNetworkImages = true;
+
+/// Callbacks that install image-loading stubs, invoked at the start of every
+/// golden test before the widget under test is built.
+///
+/// `golden_test` stubs [NetworkImage] itself (see
+/// [goldenTestStubNetworkImages]), which covers `Image.network`, `FadeInImage`,
+/// a `DecorationImage` in a `BoxDecoration`, and anything else that ultimately
+/// paints a [NetworkImage]. Packages that load images through their own
+/// machinery instead — a cache manager, a custom [ImageProvider], a bespoke
+/// HTTP client — are out of reach, and register here.
+///
+/// Each callback runs once per test, so build fresh instances inside it rather
+/// than capturing one: that keeps cache state from leaking between tests.
+///
+/// ```dart
+/// // flutter_test_config.dart
+/// goldenTestImageLoaderSetups.add(() {
+///   SomePackage.imageLoader = MyInMemoryLoader();
+/// });
+/// ```
+///
+/// It is a list so that several packages can each register without clobbering
+/// one another. Callbacks run in registration order.
+///
+/// These run even when [goldenTestStubNetworkImages] is false. A loader with
+/// its own backend usually has no working un-stubbed mode inside Flutter's
+/// fake-async test zone — it hangs rather than fails — so leaving it
+/// unregistered is strictly worse than serving a placeholder.
+///
+/// For `cached_network_image`, use the `golden_test_cached_network_image`
+/// package, which registers a working stub for you:
+/// ```dart
+/// import 'package:golden_test_cached_network_image/golden_test_cached_network_image.dart';
+///
+/// setupGoldenTestCachedNetworkImage();
+/// ```
+List<void Function()> goldenTestImageLoaderSetups = [];
+
 /// The golden test difference tolerance at which tests are considered failing.
 /// Ranges from 0-100(%), inclusive.
 ///

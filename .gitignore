@@ -30,3 +30,6 @@ build/
 
 # FVM - .fvmrc is tracked so everyone builds on the pinned SDK
 .fvm/
+
+# Claude Code worktrees (embedded git repos, never commit these)
+.claude/worktrees/

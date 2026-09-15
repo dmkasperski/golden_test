@@ -10,12 +10,14 @@
     - [Dark Theme](#dark-theme)
   - [Text Scale (Accessibility)](#text-scale)
   - [Global Setup Callback](#global-setup-callback)
+  - [Network Image Stub](#network-image-stub)
+    - [CachedNetworkImage support](#cachednetworkimage-support)
   - [Golden File Organization](#golden-file-organization)
   - [Difference tolerance](#difference-tolerance)
 
 # golden_test
 
-**golden_test** is a lightweight, opinionated wrapper around Flutter's golden testing APIs that dramatically reduces boilerplate while adding first-class support for themes, locales, and multiple devices.
+**golden_test** is a lightweight, **zero-dependency**, opinionated wrapper around Flutter's golden testing APIs that dramatically reduces boilerplate while adding first-class support for themes, locales, and multiple devices.
 It focuses on real-world UI scenarios, making golden tests easier to write, scale, and maintain compared to lower-level solutions.
 
 <a name="introduction"></a>
@@ -310,6 +312,61 @@ The globalSetup callback allows you to define project-specific configurations, s
 ```dart
     globalSetup = (_) async => duringTestExecution = true;
 ```
+
+<a name="network-image-stub"></a>
+## Network Image Stub
+Widgets that load images over the network (`Image.network`, `FadeInImage` with a `NetworkImage`, `DecoratedBox` with a `NetworkImage`) would otherwise time out or produce flaky goldens, since there's no real network during tests. By default, Golden Test intercepts these requests and resolves them with a placeholder image, so goldens stay deterministic.
+
+The placeholder is deliberately visible rather than transparent or 1×1. An app that handles image load failures gracefully renders an empty box or nothing at all, so a golden taken without stubbing is indistinguishable from a layout that never had an image — the placeholder marks the spot and shows how much space the image takes.
+
+This covers every widget that paints through a `NetworkImage`. Other `dart:io` HTTP traffic is left alone — `flutter_test`'s own mock client keeps answering those requests with a 400, so a repository call fired from the widget tree behaves exactly as it did before.
+
+Disable this globally if needed:
+```dart
+goldenTestStubNetworkImages = false;
+```
+
+Set that if you already stub network images yourself. Golden Test installs its stub *before* each test body runs, so a `debugNetworkImageHttpClientProvider` or `HttpOverrides` assigned in `flutter_test_config.dart` would otherwise be superseded. Stubs installed inside `globalSetup` or a test's `setup` run after Golden Test's and still take precedence, so those need no change.
+
+Or override the stub image:
+```dart
+goldenTestNetworkImageStubPng = myPlaceholderPngBytes;
+```
+
+### CachedNetworkImage support
+The [`cached_network_image`](https://pub.dev/packages/cached_network_image) package doesn't go through `NetworkImage`, so the stub above doesn't cover it — it fetches through `flutter_cache_manager`, which relies on SQLite and `path_provider`, neither of which work inside Flutter's fake-async test zone. A `CachedNetworkImage` in a golden test doesn't fail, it **hangs**, until the run times out as `did not complete`.
+
+Fixing that means depending on `cached_network_image` and `flutter_cache_manager`. Golden Test has no dependencies of its own and isn't going to add three for a package most projects don't use, so the support lives in a companion package instead:
+
+```yaml
+dev_dependencies:
+  golden_test: ^2.0.0
+  golden_test_cached_network_image: ^1.0.0
+```
+
+```dart
+// flutter_test_config.dart
+import 'package:golden_test_cached_network_image/golden_test_cached_network_image.dart';
+
+Future<void> testExecutable(FutureOr<void> Function() testMain) async {
+  ...
+  setupGoldenTestCachedNetworkImage();
+  return testMain();
+}
+```
+
+Every `CachedNetworkImage` then resolves to the same placeholder as `Image.network`. See [`golden_test_cached_network_image`](https://pub.dev/packages/golden_test_cached_network_image) for the custom-cache-manager hook and the full list of caveats.
+
+### Other image loaders
+Any package that loads images through its own machinery — a cache manager, a custom `ImageProvider`, a bespoke HTTP client — is out of reach of the `NetworkImage` stub, and registers itself the same way `golden_test_cached_network_image` does:
+
+```dart
+goldenTestImageLoaderSetups.add(() {
+  SomePackage.imageLoader = MyInMemoryLoader();
+});
+```
+
+Each callback runs once per test, before the widget is built, so build fresh instances inside it rather than capturing one. It's a list, so several packages can register without clobbering each other.
 
 ## Golden File Organization
 Golden Test allows you to organize golden files into custom subdirectories per test, which is particularly useful when managing golden tests across multiple apps or design systems.
