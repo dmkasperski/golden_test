@@ -3,24 +3,13 @@ import 'dart:convert';
 import 'package:material_ui/material_ui.dart';
 import 'package:golden_test/golden_test.dart';
 
-/// A 1x1 transparent PNG, so `FadeInImage` has a placeholder that doesn't need
-/// an extra dependency or asset.
+/// A 1x1 transparent PNG, so `FadeInImage` needs no placeholder asset.
 final _transparentPixel = base64Decode(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mNgAAIAAAUAAen63NgAAAAASUVORK5CYII=',
 );
 
 void main() {
-  // Covers every route a network image can take into the widget tree. All of
-  // them ultimately paint a `NetworkImage`, so one stub installed through
-  // `debugNetworkImageHttpClientProvider` covers the lot.
-  //
-  // Loaders that bypass `NetworkImage` — `CachedNetworkImage` being the common
-  // one — register through `goldenTestImageLoaderSetups` instead, and are
-  // covered by their own package's tests rather than here, so this example
-  // stays dependency-free.
-  //
-  // Run in both themes: the checkerboard stub has to stay legible on a light
-  // and a dark background alike.
+  // Every route below paints a `NetworkImage`, so one stub covers them all.
   goldenTest(
     name: 'Network image stub',
     supportedDevices: [const Device.noInsets()],

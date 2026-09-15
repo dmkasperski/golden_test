@@ -71,9 +71,6 @@ void main() {
         await runWithNetworkImageStub(() async {
           expect(HttpOverrides.current, same(overridesBefore));
 
-          // Replacing HttpOverrides.global would hand this request to a client
-          // that only knows how to answer image GETs; flutter_test's own mock
-          // answers everything with a 400 instead.
           final request = await HttpClient().openUrl(
             'GET',
             Uri.parse('https://example.com/api'),
@@ -254,8 +251,6 @@ void main() {
         FlutterError.onError = previousOnError;
       }
 
-      // flutter_test's 400 surfaces as a plain load failure rather than the
-      // indefinite hang an un-stubbed CachedNetworkImage would produce.
       expect(listenerError, isA<NetworkImageLoadException>());
       expect((listenerError! as NetworkImageLoadException).statusCode, 400);
       expect(reported, everyElement(isA<NetworkImageLoadException>()));
@@ -283,8 +278,7 @@ void main() {
       expect(luminanceAt(32, 96), 0xFF);
       expect(luminanceAt(96, 96), 0x00);
 
-      // Each block is flat, which is what keeps the stub free of the
-      // filtering-dependent moire a fine checkerboard produces when scaled.
+      // Each block is flat.
       for (final offset in [2, 20, 40, 61]) {
         expect(
           luminanceAt(offset, offset),

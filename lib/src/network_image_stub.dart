@@ -13,17 +13,10 @@ import 'package:golden_test/src/config.dart';
 /// legible over both light and dark app backgrounds without needing separate
 /// assets.
 ///
-/// Serving something visible matters more than it first appears. An app that
-/// handles image load failures gracefully renders an empty box or nothing at
-/// all, and a golden of nothing tells the reviewer nothing — the image is
-/// indistinguishable from a layout that never had one. A placeholder positively
-/// marks the spot: an image belongs here, and it occupies this much space.
-///
-/// The squares are deliberately coarse. A fine-grained checkerboard aliases
-/// badly when scaled into an arbitrarily sized box — the interference pattern
-/// depends on the platform's image filtering, which makes goldens flaky across
-/// macOS / Linux / Windows. With only a handful of block boundaries, almost
-/// every output pixel comes from a flat region and the result is stable.
+/// Replacements should stay coarse. A fine-grained pattern aliases when scaled
+/// into an arbitrarily sized box, and the interference depends on the
+/// platform's image filtering, which makes goldens flaky across macOS / Linux /
+/// Windows.
 ///
 /// Override in `flutter_test_config.dart` to supply custom bytes, e.g.:
 /// ```dart
@@ -42,18 +35,9 @@ Uint8List goldenTestNetworkImageStubPng = base64Decode(
 /// Runs [body] with [NetworkImage] loads resolved from
 /// [goldenTestNetworkImageStubPng] instead of the network.
 ///
-/// The stub is installed through [debugNetworkImageHttpClientProvider], the
-/// hook `NetworkImage` itself consults in debug builds. It is deliberately *not*
-/// installed through [HttpOverrides.global]: that would replace the `HttpClient`
-/// for every `dart:io` consumer in the test, so a repository call or analytics
-/// ping fired from the widget tree would hit a fake client that only knows how
-/// to answer image requests. Leaving `HttpOverrides` alone keeps
-/// `flutter_test`'s own mock (which answers everything with a 400) in place for
-/// non-image traffic.
-///
-/// [debugNetworkImageHttpClientProvider] is a plain global rather than a
-/// zone-local, so the stub is also visible inside [WidgetTester.runAsync], which
-/// escapes the `FakeAsync` zone.
+/// Only [NetworkImage] is affected. [HttpOverrides] is left alone, so other
+/// `dart:io` traffic keeps reaching `flutter_test`'s own mock, which answers
+/// everything with a 400.
 ///
 /// Image stubbing is skipped when [goldenTestStubNetworkImages] is false;
 /// [goldenTestImageLoaderSetups] run either way — see their documentation for
@@ -76,12 +60,6 @@ Future<T> runWithNetworkImageStub<T>(Future<T> Function() body) async {
   }
 }
 
-/// Thrown when the widget tree reaches a part of the fake `dart:io` HTTP
-/// surface that the image stub does not implement.
-///
-/// The fakes below cover exactly what `NetworkImage._loadAsync` needs. Anything
-/// else fails loudly and by name rather than surfacing as a bare
-/// `NoSuchMethodError` from inside the package.
 Never _unimplemented(Invocation invocation, String type) {
   final symbol = invocation.memberName.toString();
   final name = RegExp(r'"(.*)"').firstMatch(symbol)?.group(1) ?? symbol;
@@ -145,7 +123,6 @@ class _FakeHttpClientRequest implements HttpClientRequest {
       _unimplemented(invocation, 'HttpClientRequest');
 }
 
-/// Accepts and discards every header `NetworkImage` sets; reads come back empty.
 class _FakeHttpHeaders implements HttpHeaders {
   @override
   bool persistentConnection = false;
