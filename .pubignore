@@ -35,3 +35,12 @@ example/pubspec.lock
 
 # Served from GitHub via absolute URLs in README.md
 doc/screenshots/
+
+# Local working notes, not part of the package
+CLAUDE.md
+TODO.md
+doc/material_decoupling_plan.md
+.claude/
+
+# Golden failure artifacts
+**/failures/
