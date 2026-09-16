@@ -30,6 +30,7 @@ build/
 .fvmrc
 
 # Not used by consumers of the published package
+test/goldens/
 example/test/goldens/
 example/pubspec.lock
 
