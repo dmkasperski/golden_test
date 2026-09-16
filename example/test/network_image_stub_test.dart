@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:golden_test/golden_test.dart';
 
@@ -9,7 +10,9 @@ final _transparentPixel = base64Decode(
 );
 
 void main() {
-  // Every route below paints a `NetworkImage`, so one stub covers them all.
+  // Image.network, FadeInImage and DecorationImage all paint a `NetworkImage`,
+  // so golden_test's own stub covers them. CachedNetworkImage does not, and is
+  // served by golden_test_cached_network_image via goldenTestImageLoaderSetups.
   goldenTest(
     name: 'Network image stub',
     supportedDevices: [const Device.noInsets()],
@@ -25,6 +28,13 @@ void main() {
             const Text('Image.network'),
             Image.network(
               'https://example.com/image.png',
+              width: 80,
+              height: 80,
+            ),
+            const SizedBox(height: 12),
+            const Text('CachedNetworkImage'),
+            CachedNetworkImage(
+              imageUrl: 'https://example.com/cached.png',
               width: 80,
               height: 80,
             ),
