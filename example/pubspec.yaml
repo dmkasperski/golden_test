@@ -42,6 +42,8 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
+  cached_network_image: ^4.0.0
+  golden_test_cached_network_image: ^1.0.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -88,3 +90,7 @@ flutter:
     - family: MaterialIcons
       fonts:
         - asset: assets/fonts/MaterialIcons-Regular.otf
+
+dependency_overrides:
+  golden_test:
+    path: ../

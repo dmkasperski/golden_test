@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_test/golden_test.dart';
+import 'package:golden_test_cached_network_image/golden_test_cached_network_image.dart';
 import 'package:golden_test_example/l10n/app_localizations.dart';
 
 Future<void> testExecutable(FutureOr<void> Function() testMain) async {
@@ -22,6 +23,8 @@ Future<void> testExecutable(FutureOr<void> Function() testMain) async {
   goldenTestSupportedLocales = AppLocalizations.supportedLocales;
 
   goldenTestLocalizationsDelegates = [AppLocalizations.delegate];
+
+  setupGoldenTestCachedNetworkImage();
 
   return testMain();
 }
