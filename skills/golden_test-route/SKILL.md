@@ -492,7 +492,10 @@ branches** (the stub always succeeds immediately, so inject a custom
   folder beside the test file:
   `test/feature/ui/goldens/en/light/FeatureScreen - Loading.png`.
 - Test name: `'ScreenName - State description'`, used verbatim as the
-  filename.
+  filename. `group('$FeatureScreen', …)` is a nice idiom — renaming the class
+  renames the group for free — but **don't interpolate a type into
+  `goldenTest(name:)`**: the name *is* the PNG filename, so a class rename
+  silently renames every golden and orphans the old files.
 - One `group('FeatureScreen', ...)` per file, with nested groups per
   scenario cluster (§6). Some codebases instead keep several topic groups as
   siblings in `main()` — either works, as long as tests aren't bare

@@ -26,7 +26,7 @@ class MockFeatureCubit extends Mock implements FeatureCubit {
 }
 
 void main() {
-  group('FeatureScreen', () {
+  group('$FeatureScreen', () {
     late MockFeatureCubit cubit;
 
     setUp(() {
@@ -151,17 +151,28 @@ For screens that resolve a dependency from a locator during construction or
 §6 warns about:
 
 ```dart
-group('FeatureScreen', () {
+group('$FeatureScreen', () {
   late MockFeatureRepository repository;
+  late MockSettingsRepository settings;
 
   setUp(() {
     getIt.pushNewScope();
+
     repository = MockFeatureRepository();
     getIt.registerLazySingleton<FeatureRepository>(() => repository);
     when(() => repository.dataStream).thenAnswer((_) => const Stream.empty());
+
+    settings = MockSettingsRepository();
+    getIt.registerLazySingleton<SettingsRepository>(() => settings);
+    when(() => settings.theme).thenReturn(AppTheme.light);
   });
 
   tearDown(() async => getIt.popScope());
+
+  // Keep each mock's construction, registration and stubbing together rather
+  // than batching all the constructors, then all the registrations, then all
+  // the `when`s. One block per dependency stays readable as they multiply,
+  // and a mock that's missing a step is obvious.
 
   goldenTest(
     name: 'FeatureScreen - Success',

@@ -130,10 +130,10 @@ class TestEnvironment {
 }
 ```
 
-`FLUTTER_TEST` is set automatically by the Flutter test runner, so this
-needs no wiring in `flutter_test_config.dart` beyond registering it in
-your DI container. Production code then checks it directly at the few
-places that need to behave differently under test:
+`FLUTTER_TEST` is set to `"true"` by the `flutter test` runner, so this
+needs no wiring in `flutter_test_config.dart` beyond registering it in your
+DI container. Production code then checks it directly at the few places that
+need to behave differently under test:
 
 ```dart
 DateTime now() =>
@@ -146,10 +146,32 @@ if (!sl<TestEnvironment>().isRunningInTests) { ... }
 Duration(milliseconds: sl<TestEnvironment>().isRunningInTests ? 0 : 500)
 ```
 
+**Know where this breaks before you build on it.** The signal is a
+`dart:io` environment variable set by the host test runner, which bounds it
+in three ways:
+
+- **It does not compile for web.** `dart:io` is unavailable there, so an app
+  that also targets web cannot import `Platform` unconditionally — you need
+  a conditional import (`dart:io` vs a web stub) or a different signal
+  entirely.
+- **It is not set when the app runs on a real device**, so an
+  `integration_test` suite driving the app on a device or emulator sees
+  `false`. That is usually what you want — an integration test *should*
+  exercise the real code path — but it does mean the flag is not "am I under
+  test", it is "am I under `flutter test` on the VM".
+- **It is read once.** If you cache it in a singleton at startup, it is a
+  per-process constant; nothing can flip it mid-run.
+
+So it's a good fit for a widget/golden suite on the VM and a poor one as a
+general "is this a test" switch.
+
 This is an alternative to per-test stubbing, not a replacement for it —
-reach for it only for the handful of things that are genuinely awkward
-to fake through a mocked dependency (a real time source, a debounce
-timer, a third-party SDK your app doesn't control).
+reach for it only for the handful of things that are genuinely awkward to
+fake through a mocked dependency (a real time source, a debounce timer, a
+third-party SDK your app doesn't control). Anything you *can* inject, inject:
+a flag checked in production code is a branch that ships to users, and every
+one of them is a place the app can behave differently in tests than in
+production without anyone noticing.
 
 ## Sizing a difference tolerance
 
