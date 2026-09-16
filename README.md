@@ -1,4 +1,5 @@
 - [Introduction](#introduction)
+  - [AI Agent Skills](#ai-agent-skills)
   - [Quick Start](#quick-start)
   - [Device Configuration](#device-configuration)
     - [Supported Devices](#supported-devices)
@@ -33,6 +34,41 @@ Supported Features:
 1. Multiple device support
 2. Dark mode support
 3. Localized Goldens
+
+<a name="ai-agent-skills"></a>
+### AI Agent Skills
+
+If you write code with an AI agent, this package ships three
+[Agent Skills](https://dart.dev/ai/package-skills) that teach it to use
+`golden_test` properly — how to wire up `flutter_test_config.dart`, what to
+cover for a component versus a screen, and how to read a failing golden.
+
+Install them into your project with:
+
+```bash
+dart run skills@ get
+```
+
+That scans your dependencies, offers the skills it finds, and installs the
+ones you pick into `.agents/skills/`. Re-run it after upgrading the package
+to pick up changes.
+
+| Skill | Use it for |
+|---|---|
+| `golden_test-setup` | One-time setup: the dependency and a `flutter_test_config.dart` wired to your app's real themes, locales and fonts. Run this first. |
+| `golden_test-widget` | Goldens for widgets and design-system components in isolation. |
+| `golden_test-route` | Goldens for full screens — every state a screen can render. |
+
+They cover more than the mechanics: which test axes are worth their cost,
+how to derive edge cases from branches in your own formatting code, when a
+failing golden is an app bug rather than a stale image, and when *not* to
+write a golden at all.
+
+Agents that read skills from a different directory can use the files
+directly — they're plain Markdown under
+[`skills/`](https://github.com/dmkasperski/golden_test/tree/master/skills)
+in this repository, and copying a skill folder into wherever your agent
+looks works just as well.
 
 <a name="quick-start"></a>
 ### Quick Start
