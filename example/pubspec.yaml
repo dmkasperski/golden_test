@@ -91,9 +91,6 @@ flutter:
       fonts:
         - asset: assets/fonts/MaterialIcons-Regular.otf
 
-# golden_test_cached_network_image declares golden_test as a hosted dependency,
-# while this example resolves it from the repo. pub refuses to mix path and
-# hosted for one package, so pin it to the local checkout.
 dependency_overrides:
   golden_test:
     path: ../
