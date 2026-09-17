@@ -187,10 +187,12 @@ void goldenTest({
                     );
 
                     await tester.pumpWidget(
-                      DecoratedBox(
-                        position: DecorationPosition.foreground,
-                        decoration: DeviceFrame(mode, device.insets),
-                        child: widget,
+                      _GoldenTestRoot(
+                        child: DecoratedBox(
+                          position: DecorationPosition.foreground,
+                          decoration: DeviceFrame(mode, device.insets),
+                          child: widget,
+                        ),
                       ),
                     );
 
@@ -384,9 +386,25 @@ void _setupSize(Device device, WidgetTester tester) {
   tester.view.viewPadding = padding;
 }
 
+/// Marks the root of the pumped tree, so the snapshot finder matches exactly
+/// one widget whatever the test builds.
+///
+/// The type is private, so it cannot collide with a widget under test. It
+/// builds no [RenderObject] of its own, so the rasterised image is unchanged:
+/// [matchesGoldenFile] captures the nearest enclosing [RepaintBoundary], which
+/// remains the view.
+class _GoldenTestRoot extends StatelessWidget {
+  const _GoldenTestRoot({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => child;
+}
+
 Future<void> _takeAScreenshot(dynamic key, {int? version}) async =>
     await expectLater(
-      find.byType(MaterialApp),
+      find.byType(_GoldenTestRoot),
       matchesGoldenFile(key, version: version),
     );
 
