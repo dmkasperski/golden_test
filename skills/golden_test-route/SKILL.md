@@ -125,13 +125,11 @@ a quota — a static settings screen needs far less than a checkout flow.
 ### Conditional states — when the screen has them
 
 - [ ] **Data-shape states** — every branch in the rendering code that changes pixels: absent fields, sentinel values, relationships between fields (see below). Usually the largest and most valuable group
-- [ ] **Domain variants** — tabs, filters, expanded/collapsed sections,
-      feature-flag branches, and tiers/roles/plans when they change the
-      visuals meaningfully (a loyalty-tier badge, an admin-only banner, a
-      plan-gated section)
-- [ ] **Independent flag combinations** — when two or more unrelated
-      booleans each affect what's on screen, snapshot the combinations that
-      matter, not one flag at a time
+- [ ] **Domain variants** — tabs, filters, expanded/collapsed sections, and
+      tiers/roles/plans when they change the visuals meaningfully (a
+      loyalty-tier badge, an admin-only banner, a plan-gated section)
+- [ ] **Flagged variants** — one golden per feature flag or kill switch that
+      changes this screen, against a baseline (see below). Not a matrix
 - [ ] **Form edge cases** — invalid input, boundary-length input, an empty
       required field
 - [ ] **Scrolled to bottom** — on a short device (§5). For *content* coverage prefer a tall device (above); keep a scrolled golden for what scrolling itself changes — a collapsing header, a sticky bar, a trailing spinner
@@ -162,17 +160,14 @@ comparison between two fields. Each branch is a candidate golden; build a
 fixture that reaches it.
 
 Three kinds, in increasing order of value and of how often they're missed:
-
-1. **Absent fields** — nullable or empty. Cheap, and there are usually many.
-   Watch for code where `null` and `''` take different paths.
-2. **Sentinel values** — a magic value the type doesn't advertise: `-1`
-   meaning free, `0` meaning unlimited, a status string that means "not
-   set". Only findable by reading the code — the type won't tell you, and
-   neither will the schema.
-3. **Relationships between fields** — a start and end on the same day, an
-   end before the start, a discount equal to the full price, a value past
-   the threshold where its unit changes. Highest value and most often
-   missed, because no single field looks interesting on its own.
+**absent fields** (nullable or empty — watch for code where `null` and `''`
+diverge); **sentinel values** (a magic value the type doesn't advertise —
+`-1` meaning free, `0` meaning unlimited — findable only by reading the
+code); and **relationships between fields** (a start and end on the same
+day, a discount equal to the full price, a value past the threshold where
+its unit changes), which are highest value and most often missed because no
+single field looks interesting alone. `references/patterns.md` works each
+through with fixtures and golden names.
 
 **Bound it — the goal is distinct renderings, not coverage of inputs.**
 
@@ -214,6 +209,35 @@ missing golden. The fixture you were about to write is the reproduction.
 `references/patterns.md` has a worked example of each of the three kinds: the branch,
 the fixtures that reach it, and the goldens that come out.
 
+### Feature flags, kill switches and experiments
+
+A flag is not an axis. Sweeping every combination is how a screen with five
+flags acquires thirty-two goldens, most for states no user is in.
+
+**Start from a baseline: the flags as production has them right now** — not
+the code defaults, not everything off. That's the app users have, and where
+a regression costs most. Set it in `setUp()` and write down what it is.
+
+Then **one golden per flag, flipped away from that baseline**, and only for
+flags that change *this* screen. Five flags means six goldens. Don't
+cross-product: two flags gating unrelated regions tell you nothing together
+that they didn't apart. Combine only where one genuinely changes the
+other's rendering.
+
+**A kill switch's tripped state is the highest-value golden on the screen**
+— it's the branch nobody looks at until the day it matters, and that day is
+an incident. Snapshot the degraded layout now, while you can look at it
+calmly.
+
+Two things keep this from rotting: a flag that doesn't change pixels gets no
+golden, and **when the baseline moves, move the goldens with it** — a flag
+rolled out to 100% and deleted means regenerating the baseline and deleting
+the now-unreachable variant.
+
+Baseline in `setUp()`, the single flip in that golden's own `setup:`. Worked
+example, and the same reasoning for A/B arms and remote config, in
+[`references/patterns.md`](references/patterns.md).
+
 ### Size each golden to what it is testing
 
 A phone-sized device captures one screenful; a tall device captures
@@ -253,12 +277,11 @@ won't find it at all. Work down this list:
    `Key`, so reach for `find.byType` or a text finder first. Adding a `Key` to production code purely so a test can scroll to
    it is a real cost — fine if the widget is hard to find another way, not
    something to do by reflex.
-3. **Scrolling can't isolate it** — the screen isn't scrollable, or the
-   content is shorter than the viewport so there's nothing to scroll. Raise
-   the height instead, and leave a comment saying why, so the next person
-   doesn't "fix" it back to a phone device.
+3. **Scrolling can't isolate it** — not scrollable, or content shorter than
+   the viewport. Raise the height, and comment why, so nobody "fixes" it
+   back to a phone.
 4. **The region is taller than the viewport** — raise the height until it
-   fits. A golden that clips the thing under test is worse than a tall one.
+   fits. Clipping the thing under test is worse than a tall image.
 
 **Then check the image — both ends of the mistake.** Open the PNG:
 

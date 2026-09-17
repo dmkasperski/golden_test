@@ -196,6 +196,11 @@ them:
 
   Name these after the data condition — `free of charge`, `subtitle missing`
   — not after the widget. `references/patterns.md` works each kind through in full.
+- **Feature flags a component reads itself**, if it does: one row for the
+  baseline (what production currently has) and one per flag flipped away
+  from it — never the cross-product. A component reaching for a flag service
+  during build is usually a design smell worth noting; a prop would make it
+  testable without the stub.
 
 If the cross-product is genuinely unmanageable, that's a finding about the
 component, not licence to thin the coverage: a widget with that many

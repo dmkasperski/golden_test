@@ -433,6 +433,69 @@ action: (WidgetTester tester) async {
 },
 ```
 
+## Feature flags, kill switches and experiments
+
+A flag is not an axis. Sweeping every combination is how a screen with five
+flags acquires thirty-two goldens, most of them for states no user is in.
+
+**Start from a baseline: the flags as production has them right now.** Not
+the code defaults, not everything off, not everything on — what is actually
+rolled out today. That's the app the users have, and it's the state where a
+regression costs the most. Set it once in `setUp()` (or globally, if it's
+the same across the suite) so every golden inherits it, and *write down*
+what the baseline is, because it will not be obvious in six months.
+
+Then **one golden per flag, flipped away from the baseline**, and only for
+flags that change *this* screen. A flag currently off gets one on-golden; a
+flag at 100% that hasn't been cleaned up yet gets one off-golden. Five flags
+means six goldens, not thirty-two.
+
+Don't cross-product them. Two flags that gate unrelated regions don't
+interact, and the pair tells you nothing the two singles didn't. Combine
+only where one genuinely changes the other's rendering — a flag that hides
+the section another flag's banner lives in. That's the same rule as
+independent data shapes, for the same reason.
+
+**A kill switch's tripped state is the highest-value golden on the screen.**
+It's the branch nobody looks at until the day it matters, and the day it
+matters is an incident. Whatever the app degrades to — a disabled section, a
+maintenance banner, a fallback layout — snapshot it now, while you can look
+at it calmly.
+
+Two things that keep this from rotting:
+
+- **A flag that doesn't change pixels gets no golden.** Backend routing,
+  an analytics bucket, a request timeout — no branch, nothing to snapshot.
+- **When the baseline moves, move the goldens with it.** A flag rolled out
+  to 100% and deleted from the code means the baseline is now that state:
+  regenerate the baseline goldens, and delete the variant golden for the
+  branch that no longer exists. Otherwise you keep a picture of a state the
+  app can't reach — the same dead weight as an RTL golden in an app with no
+  RTL locale.
+
+Wiring follows the usual split: the baseline in `setUp()`, the single flip
+in that golden's own `setup:`, so each test says exactly what it changes.
+
+```dart
+setUp(() {
+  // Baseline: matches the production rollout as of 2026-09.
+  when(() => flags.isEnabled(any())).thenReturn(false);
+  when(() => flags.isEnabled(Flag.newCheckout)).thenReturn(true);
+});
+
+goldenTest(
+  name: 'FeatureScreen - promo banner enabled',
+  setup: (_) async {
+    when(() => flags.isEnabled(Flag.promoBanner)).thenReturn(true);
+  },
+  builder: (_) => build(),
+);
+```
+
+The same reasoning covers A/B experiments and remote config: baseline is the
+variant most users get, each other arm is one golden, and an arm that only
+changes copy in a language you don't render is not a golden at all.
+
 ## Tall device — the whole page in one golden
 
 ```dart

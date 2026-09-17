@@ -17,11 +17,21 @@ void _mockCrossCuttingServices() {
   when(() => analytics.logEvent(any())).thenAnswer((_) async {});
   getIt.registerSingleton<AnalyticsService>(analytics);
 
+  // This is the suite's flag baseline, so make it mirror what production
+  // actually has rolled out — not a blanket false. A blanket false quietly
+  // tests a configuration no user is in, and every golden inherits it.
   final featureFlags = MockFeatureFlagsService();
   when(() => featureFlags.isEnabled(any())).thenReturn(false);
+  when(() => featureFlags.isEnabled(Flag.newCheckout)).thenReturn(true);
   getIt.registerSingleton<FeatureFlagsService>(featureFlags);
 }
 ```
+
+Record the date the baseline was last checked against the real rollout,
+next to the stubs. Flags move and goldens don't; without a note there is
+nothing to tell a reader whether the baseline is current or three years
+stale. Individual tests then flip one flag in their own `setup:` — see the
+route skill for how many of those are worth writing.
 
 If a design-system component itself reads something out of DI during
 build (an app-config object, a theme-mode service), mock that here too —
