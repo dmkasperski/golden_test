@@ -1,3 +1,8 @@
+## 1.1.2
+
+### Fixes
+- **Goldens no longer fail when the widget under test builds its own app** — the screenshot was taken of `find.byType(MaterialApp)`, which matched both the harness's app and the one under test. The test failed with `matched too many widgets` and no golden was written, including under `--update-goldens`. Server-driven UI, storybook-style harnesses and nested navigators all hit this. The snapshot is now anchored to a private root widget, so it resolves to a single widget whatever the builder returns. Existing goldens are byte-identical and do not need regenerating.
+
 ## 1.1.1
 
 ### Fixes
