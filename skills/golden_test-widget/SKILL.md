@@ -26,7 +26,7 @@ import 'package:golden_test/golden_test.dart';
 
 void main() {
   goldenTest(
-    name: 'MyChip - variants',
+    name: '$MyChip - variants',
     supportedDevices: [const Device.noInsets()],
     builder: (_) => const MyChip(label: 'Label'),
   );
@@ -375,7 +375,7 @@ file, skipped, with the bug and the un-skip condition named:
 
 ```dart
 goldenTest(
-  name: 'FeatureScreen - contact without a display name',
+  name: '$FeatureScreen - contact without a display name',
   // BLOCKED: detail_header.dart:29 force-unwraps `contact.name`, which the
   // summary row guards as nullable. Un-skip once that null is handled.
   skip: true,
@@ -458,9 +458,22 @@ checkerboard placeholder instead of hanging. No `HttpOverrides`, no
 - Mirror the source path: `lib/design_system/atoms/my_chip.dart` →
   `test/design_system/atoms/my_chip_test.dart`. Goldens land in a `goldens/`
   folder beside the test file.
-- Test name: `'ComponentName - variant description'`, used verbatim as the
-  filename.
-- One `group('ComponentName', ...)` per file — even for a single golden
+- Test name: `'$ComponentName - variant description'`, used verbatim as the
+  filename. Interpolating the type — in both `group('$ComponentName', …)`
+  and `goldenTest(name: '$ComponentName - …')` — means a class rename
+  renames the group and every golden's expected name for free, instead of
+  leaving a stale string someone has to remember to update by hand.
+
+  The tradeoff: because `name` is also the golden's filename, a rename does
+  **not** rename or delete the old PNG on disk — it only changes what the
+  *next* `--update-goldens` run writes. The old file is simply orphaned:
+  still in the repo, checked by no test, and easy to mistake for a real
+  golden. After renaming a component, check `git status` following
+  `--update-goldens` and delete whatever it lists as no longer referenced.
+  If you'd rather not take on that cleanup step, keep `name` a plain string
+  instead — `group()` can still interpolate the type safely, since a
+  group's name isn't written to disk.
+- One `group('$ComponentName', ...)` per file — even for a single golden
   today, since a second almost always follows. Split unrelated concerns into
   sibling groups with their own `setUp()`.
 - Shared fixtures and DI harnesses go in `test/fixtures/` and
