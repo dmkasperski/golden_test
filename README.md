@@ -21,6 +21,8 @@
 **golden_test** is a lightweight, **zero-dependency**, opinionated wrapper around Flutter's golden testing APIs that dramatically reduces boilerplate while adding first-class support for themes, locales, and multiple devices.
 It focuses on real-world UI scenarios, making golden tests easier to write, scale, and maintain compared to lower-level solutions.
 
+See it in action at **[goldentest.dev](https://goldentest.dev)**: the theme, locale, device and text-scale matrix, a real failing diff, and every text-scale preset, all rendered by this package.
+
 <a name="introduction"></a>
 ### Introduction
 
