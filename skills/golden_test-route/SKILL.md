@@ -27,9 +27,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_test/golden_test.dart';
 
 void main() {
-  group('FeatureScreen', () {
+  group('$FeatureScreen', () {
     goldenTest(
-      name: 'FeatureScreen - Loading',
+      name: '$FeatureScreen - Loading',
       setup: (_) async {
         // stub whatever state the screen reads (§3)
       },
@@ -514,12 +514,22 @@ branches** (the stub always succeeds immediately, so inject a custom
   `test/feature/ui/feature_screen_test.dart`. Goldens land in a `goldens/`
   folder beside the test file:
   `test/feature/ui/goldens/en/light/FeatureScreen - Loading.png`.
-- Test name: `'ScreenName - State description'`, used verbatim as the
-  filename. `group('$FeatureScreen', …)` is a nice idiom — renaming the class
-  renames the group for free — but **don't interpolate a type into
-  `goldenTest(name:)`**: the name *is* the PNG filename, so a class rename
-  silently renames every golden and orphans the old files.
-- One `group('FeatureScreen', ...)` per file, with nested groups per
+- Test name: `'$FeatureScreen - State description'`, used verbatim as the
+  filename. Interpolating the type — in both `group('$FeatureScreen', …)`
+  and `goldenTest(name: '$FeatureScreen - …')` — means a class rename
+  renames the group and every golden's expected name for free, instead of
+  leaving a stale string someone has to remember to update by hand.
+
+  The tradeoff: because `name` is also the golden's filename, a rename does
+  **not** rename or delete the old PNG on disk — it only changes what the
+  *next* `--update-goldens` run writes. The old file is simply orphaned:
+  still in the repo, checked by no test, and easy to mistake for a real
+  golden. After renaming a screen, check `git status` following
+  `--update-goldens` and delete whatever it lists as no longer referenced.
+  If you'd rather not take on that cleanup step, keep `name` a plain string
+  instead — `group()` can still interpolate the type safely, since a
+  group's name isn't written to disk.
+- One `group('$FeatureScreen', ...)` per file, with nested groups per
   scenario cluster (§6). Some codebases instead keep several topic groups as
   siblings in `main()` — either works, as long as tests aren't bare
   top-level calls.

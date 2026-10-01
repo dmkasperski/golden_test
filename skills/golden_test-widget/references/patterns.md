@@ -51,7 +51,7 @@ const List<Device> _widths = [
 ];
 
 goldenTest(
-  name: 'MyCard - reflow',
+  name: '$MyCard - reflow',
   supportedDevices: _widths,
   supportMultipleDevices: true,
   builder: (_) => const MyCard(),
@@ -76,7 +76,7 @@ reviewable image, each row captioned.
 
 ```dart
 goldenTest(
-  name: 'MyChip - variants',
+  name: '$MyChip - variants',
   supportedDevices: [const Device(name: 'showcase', width: 420, height: 1600)],
   supportedThemes: [Brightness.light, Brightness.dark],
   builder: (_) => Scaffold(
@@ -128,7 +128,7 @@ show. One labelled golden, same as above.
 
 ```dart
 goldenTest(
-  name: 'MyChip - data shapes',
+  name: '$MyChip - data shapes',
   supportedDevices: [const Device(name: 'showcase', width: 420, height: 1200)],
   supportedThemes: [Brightness.light, Brightness.dark],
   builder: (_) => Scaffold(
@@ -183,7 +183,7 @@ variants rather than a locale sweep:
 
 ```dart
 goldenTest(
-  name: 'MyChip - content shapes',
+  name: '$MyChip - content shapes',
   supportedDevices: [const Device(name: 'showcase', width: 420, height: 1000)],
   supportedThemes: [Brightness.light, Brightness.dark],
   supportedTextScales: [1.0, AndroidFontScale.maximum.value],
@@ -221,7 +221,7 @@ expansion. One `action:` drives one tree, so each gets its own golden.
 
 ```dart
 goldenTest(
-  name: 'AmountInput - focused with value',
+  name: '$AmountInput - focused with value',
   supportedDevices: [const Device.noInsets()],
   action: (WidgetTester tester) async {
     await tester.enterText(find.byType(TextField), '0.50');
@@ -275,7 +275,7 @@ class _InputWrapperState extends State<_InputWrapper> {
 
 // Drive text input in action:
 goldenTest(
-  name: 'MyInput - with value',
+  name: '$MyInput - with value',
   supportedDevices: [const Device.noInsets()],
   action: (tester) async {
     final state = tester.state<EditableTextState>(
@@ -310,7 +310,7 @@ class MockMyCubit extends Mock implements MyCubit {
 void main() {
   late MockMyCubit cubit;
 
-  group('MyWidget', () {
+  group('$MyWidget', () {
     setUpAll(() {
       registerFallbackValue(const MyInitial());
     });
@@ -325,7 +325,7 @@ void main() {
     });
 
     goldenTest(
-      name: 'MyWidget - success',
+      name: '$MyWidget - success',
       supportedDevices: [const Device.noInsets()],
       // setup: only overrides what's different for this golden — the
       // happy-path baseline already lives in setUp() above.
@@ -378,7 +378,7 @@ One golden, not a locale sweep.
 
 ```dart
 goldenTest(
-  name: 'MyListTile - RTL',
+  name: '$MyListTile - RTL',
   supportedDevices: [const Device.noInsets()],
   builder: (_) => const Directionality(
     textDirection: TextDirection.rtl,
@@ -421,7 +421,7 @@ Widget wrapForGolden(
 
 // usage
 goldenTest(
-  name: 'MyChip - RTL',
+  name: '$MyChip - RTL',
   supportedDevices: [const Device.noInsets()],
   builder: (_) => wrapForGolden(
     const MyChip(label: 'Label'),
@@ -444,7 +444,7 @@ inset is part of what you're checking.
 
 ```dart
 goldenTest(
-  name: 'MySheet - default',
+  name: '$MySheet - default',
   supportedDevices: [const Device.iphone15Pro()],
   supportedThemes: [Brightness.light, Brightness.dark],
   builder: (_) => Scaffold(
@@ -468,7 +468,7 @@ checkerboard placeholder by default, so a URL-taking component renders determini
 
 ```dart
 goldenTest(
-  name: 'UserAvatar - variants',
+  name: '$UserAvatar - variants',
   supportedDevices: [const Device.noInsets()],
   builder: (_) => const Row(
     mainAxisAlignment: MainAxisAlignment.center,
@@ -499,9 +499,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_test/golden_test.dart';
 
 void main() {
-  group('MyComponent', () {
+  group('$MyComponent', () {
     goldenTest(
-      name: 'MyComponent - variants',
+      name: '$MyComponent - variants',
       supportedDevices: [
         const Device(name: 'showcase', width: 420, height: 1200),
       ],

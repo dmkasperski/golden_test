@@ -43,7 +43,7 @@ void main() {
     );
 
     goldenTest(
-      name: 'FeatureScreen - Loading',
+      name: '$FeatureScreen - Loading',
       tags: 'golden_test',
       setup: (_) async {
         when(() => cubit.state).thenReturn(const FeatureLoading());
@@ -53,7 +53,7 @@ void main() {
     );
 
     goldenTest(
-      name: 'FeatureScreen - Success',
+      name: '$FeatureScreen - Success',
       tags: 'golden_test',
       setup: (_) async {
         when(() => cubit.state).thenReturn(FeatureSuccess(items: _items()));
@@ -62,7 +62,7 @@ void main() {
     );
 
     goldenTest(
-      name: 'FeatureScreen - Empty',
+      name: '$FeatureScreen - Empty',
       tags: 'golden_test',
       setup: (_) async {
         when(() => cubit.state).thenReturn(const FeatureSuccess(items: []));
@@ -71,7 +71,7 @@ void main() {
     );
 
     goldenTest(
-      name: 'FeatureScreen - Error',
+      name: '$FeatureScreen - Error',
       tags: 'golden_test',
       setup: (_) async {
         when(() => cubit.state).thenReturn(const FeatureError());
@@ -82,7 +82,7 @@ void main() {
     // One stress variant on the richest state, not across all four.
     // This one only earns its place if the app ships an RTL locale.
     goldenTest(
-      name: 'FeatureScreen - Success, RTL',
+      name: '$FeatureScreen - Success, RTL',
       tags: 'golden_test',
       setup: (_) async {
         when(() => cubit.state).thenReturn(FeatureSuccess(items: _items()));
@@ -175,7 +175,7 @@ group('$FeatureScreen', () {
   // and a mock that's missing a step is obvious.
 
   goldenTest(
-    name: 'FeatureScreen - Success',
+    name: '$FeatureScreen - Success',
     // Only what differs — the baseline lives in setUp().
     setup: (_) async {
       when(() => repository.getStatus()).thenAnswer((_) async => Status.ready);
@@ -196,7 +196,7 @@ hand-roll a bootstrap widget:
 
 ```dart
 goldenTest(
-  name: 'FeatureScreen - as pushed route (shows back button)',
+  name: '$FeatureScreen - as pushed route (shows back button)',
   builder: (_) => simulateRouteStack(const FeatureScreen()),
 );
 ```
@@ -236,19 +236,19 @@ differs in each.
 
 ```dart
 goldenTest(
-  name: 'FeatureScreen - item without image',
+  name: '$FeatureScreen - item without image',
   setup: (_) async => _stub(_items(imageUrl: null)),
   builder: (_) => build(),
 );
 
 goldenTest(
-  name: 'FeatureScreen - item without subtitle',
+  name: '$FeatureScreen - item without subtitle',
   setup: (_) async => _stub(_items(subtitle: null)),
   builder: (_) => build(),
 );
 
 goldenTest(
-  name: 'FeatureScreen - item with title only',
+  name: '$FeatureScreen - item with title only',
   setup: (_) async => _stub(_items(imageUrl: null, subtitle: null)),
   builder: (_) => build(),
 );
@@ -262,7 +262,7 @@ golden pins which of the two the code actually does:
 
 ```dart
 goldenTest(
-  name: 'FeatureScreen - item with empty subtitle',
+  name: '$FeatureScreen - item with empty subtitle',
   setup: (_) async => _stub(_items(subtitle: '')),
   builder: (_) => build(),
 );
@@ -291,7 +291,7 @@ for (final (name, amount) in const [
   ('large amount', 9999999),
 ])
   goldenTest(
-    name: 'FeatureScreen - $name',
+    name: '$FeatureScreen - $name',
     setup: (_) async => _stub(_items(amountMinor: amount)),
     builder: (_) => build(),
   );
@@ -319,19 +319,19 @@ reach them by varying `start` and `end` *together*:
 
 ```dart
 goldenTest(
-  name: 'FeatureScreen - no end date',
+  name: '$FeatureScreen - no end date',
   setup: (_) async => _stub(_items(start: _t(10, 0), end: null)),
   builder: (_) => build(),
 );
 
 goldenTest(
-  name: 'FeatureScreen - same-day range',
+  name: '$FeatureScreen - same-day range',
   setup: (_) async => _stub(_items(start: _t(10, 0), end: _t(18, 30))),
   builder: (_) => build(),
 );
 
 goldenTest(
-  name: 'FeatureScreen - multi-day range',
+  name: '$FeatureScreen - multi-day range',
   setup: (_) async =>
       _stub(_items(start: _t(10, 0), end: _t(10, 0).add(const Duration(days: 3)))),
   builder: (_) => build(),
@@ -342,7 +342,7 @@ Then the one nobody writes: the *invalid* relation the API can still return.
 
 ```dart
 goldenTest(
-  name: 'FeatureScreen - end before start',
+  name: '$FeatureScreen - end before start',
   setup: (_) async =>
       _stub(_items(start: _t(18, 0), end: _t(10, 0))),
   builder: (_) => build(),
@@ -366,7 +366,7 @@ For a screen, bundle independent shapes rather than pairing them:
 ```dart
 // One fixture, three unrelated absent fields, one PNG to review.
 goldenTest(
-  name: 'FeatureScreen - sparse item',
+  name: '$FeatureScreen - sparse item',
   setup: (_) async => _stub(_items(
     imageUrl: null,
     subtitle: null,
@@ -388,7 +388,7 @@ interact — both collapsing and leaving the container empty, say.
 
 ```dart
 goldenTest(
-  name: 'FeatureScreen - Scrolled',
+  name: '$FeatureScreen - Scrolled',
   supportedDevices: [
     const Device(name: 'short', width: 390, height: 400, devicePixelRatio: 3),
   ],
@@ -484,7 +484,7 @@ setUp(() {
 });
 
 goldenTest(
-  name: 'FeatureScreen - promo banner enabled',
+  name: '$FeatureScreen - promo banner enabled',
   setup: (_) async {
     when(() => flags.isEnabled(Flag.promoBanner)).thenReturn(true);
   },
@@ -503,14 +503,14 @@ const _tall = Device(name: 'tall', width: 393, height: 4000,
     devicePixelRatio: 3, insets: EdgeInsets.zero);
 
 goldenTest(
-  name: 'FeatureScreen - loaded',
+  name: '$FeatureScreen - loaded',
   supportedDevices: [_tall],
   builder: (_) => const FeatureScreen(),
 );
 
 // Large text needs even more room — the content roughly doubles.
 goldenTest(
-  name: 'FeatureScreen - loaded, large text',
+  name: '$FeatureScreen - loaded, large text',
   supportedDevices: [_tall.copyWith(name: 'tall-xl', height: 8000)],
   supportedTextScales: [AndroidFontScale.maximum.value],
   builder: (_) => const FeatureScreen(),
@@ -537,7 +537,7 @@ reads better framed on that region — same phone device, scrolled into view:
 
 ```dart
 goldenTest(
-  name: 'FeatureScreen - no end date',
+  name: '$FeatureScreen - no end date',
   action: (tester) async {
     await tester.scrollUntilVisible(find.byKey(const Key('dateChip')), 300);
     await tester.pumpAndSettle();
@@ -553,7 +553,7 @@ doesn't undo it:
 
 ```dart
 goldenTest(
-  name: 'FeatureScreen - sparse item',
+  name: '$FeatureScreen - sparse item',
   // Taller than a phone: with most fields absent the page still doesn't
   // scroll, so there is nothing to scroll *to* — the whole state fits in
   // one frame and this is the smallest height that holds it.
@@ -578,7 +578,7 @@ in all of them.
 
 ```dart
 goldenTest(
-  name: 'FeatureScreen - safe area variants',
+  name: '$FeatureScreen - safe area variants',
   supportedDevices: const [
     Device(name: 'standard', width: 390, height: 844,
         insets: EdgeInsets.only(top: 44, bottom: 34), devicePixelRatio: 3),
@@ -608,7 +608,7 @@ dimension under test, size the other one to the content.
 
 ```dart
 goldenTest(
-  name: 'FeatureScreen - tight layout',
+  name: '$FeatureScreen - tight layout',
   supportedDevices: [
     Device.iphone15Pro().copyWith(
       name: 'tight',
@@ -626,7 +626,7 @@ RTL belongs here **only if the app ships an RTL locale** — see SKILL.md §4.
 
 ```dart
 goldenTest(
-  name: 'FeatureScreen - large text',
+  name: '$FeatureScreen - large text',
   // At 2.0 the content roughly doubles; a phone-height canvas would show a
   // heading and nothing else. Size to the scaled content, then trim.
   supportedDevices: [
@@ -693,7 +693,7 @@ file, skipped, with the bug and the un-skip condition named:
 
 ```dart
 goldenTest(
-  name: 'FeatureScreen - contact without a display name',
+  name: '$FeatureScreen - contact without a display name',
   // BLOCKED: detail_header.dart:29 force-unwraps `contact.name`, which the
   // summary row guards as nullable. Un-skip once that null is handled.
   skip: true,
