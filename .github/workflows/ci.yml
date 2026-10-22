@@ -37,7 +37,10 @@ jobs:
           flutter pub get
           flutter analyze
 
-      - name: Run golden tests
+      - name: Run package tests
+        run: flutter test
+
+      - name: Run example golden tests
         working-directory: example
         run: flutter test
 
@@ -46,7 +49,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: golden-failures
-          path: example/test/failures/
+          path: |
+            test/failures/
+            example/test/failures/
           if-no-files-found: ignore
 
       - name: Publish dry-run
