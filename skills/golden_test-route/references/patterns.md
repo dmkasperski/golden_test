@@ -185,14 +185,13 @@ group('$FeatureScreen', () {
 });
 ```
 
-### Dialogs and sheets on the root navigator
+### Dialogs, sheets and other pushed routes
 
-`showDialog` pushes on the root navigator by default, and so does a sheet
-or page opened with `useRootNavigator: true` or
-`Navigator.of(context, rootNavigator: true)`. That route is built next to
-the screen, not below it, so a provider in `builder:` does not reach it and
-the route fails to build. Provide the state in `navigatorBuilder:`, which
-wraps the root navigator. The screen still sees it:
+In the harness the root navigator is the only one, so every route the
+screen pushes (dialogs, sheets, menus, pages) is built next to it, not below
+it. A provider in `builder:` does not reach that route, and the route fails
+to build. Provide the state in `navigatorBuilder:`, which wraps the root
+navigator. The screen still sees it:
 
 ```dart
 goldenTest(

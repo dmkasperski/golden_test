@@ -94,10 +94,10 @@ Copy-pasteable recipes for Cubit/BLoC, Riverpod, Provider, plain
 `ChangeNotifier` and a service locator are in `references/patterns.md`. Pick one,
 ignore the rest.
 
-A dialog, sheet or page the golden opens on the root navigator (`showDialog`
-does by default) is built next to the screen, not below it, so providers
-from `builder:` do not reach it. Provide them in `navigatorBuilder:` instead
-(`references/patterns.md`).
+Every route the screen pushes (dialogs, sheets, menus, pages) is built next
+to it, not below it, because in the harness the root navigator is the only
+one. Providers from `builder:` do not reach those routes. Provide them in
+`navigatorBuilder:` instead (`references/patterns.md`).
 
 ## 4. States are the unit; axes multiply them
 
@@ -572,6 +572,6 @@ suite: `--exclude-tags=golden_test` vs `--tags=golden_test`.
 
 [`references/patterns.md`](references/patterns.md) — a full worked file covering every core
 state, state-injection recipes (Cubit/BLoC, Riverpod, Provider,
-ChangeNotifier, service locator), dialogs and sheets on the root navigator,
+ChangeNotifier, service locator), dialogs, sheets and other pushed routes,
 `simulateRouteStack`, RTL, safe-area and tight-layout stress, fixture
 conventions, and anti-patterns.

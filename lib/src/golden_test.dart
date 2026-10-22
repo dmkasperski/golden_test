@@ -49,8 +49,8 @@ import 'package:meta/meta.dart';
 ///
 /// * [navigatorBuilder]: An optional builder that wraps the app's root [Navigator].
 ///   It is passed to [MaterialApp.builder], so what it provides is also visible
-///   to dialogs, bottom sheets and other routes pushed on the root navigator.
-///   When `null`, [goldenTestNavigatorBuilder] is used.
+///   to every route pushed from the widget under test, such as dialogs, sheets
+///   and menus. When `null`, [goldenTestNavigatorBuilder] is used.
 ///
 /// * [setup]: An optional asynchronous function that can be used to perform setup tasks before the test runs.
 ///

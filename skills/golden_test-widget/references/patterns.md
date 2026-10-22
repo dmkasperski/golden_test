@@ -370,15 +370,13 @@ builder: (_) => MyWidget(
 ),
 ```
 
-### Dialogs and sheets on the root navigator
+### Dialogs, sheets and other pushed routes
 
-`showDialog` pushes on the root navigator by default, and so does a sheet
-or page opened with `useRootNavigator: true` or
-`Navigator.of(context, rootNavigator: true)`. That route is built next to
-the widget under test, not below it, so a provider in `builder:` does not
-reach it and the route fails to build. Provide the state in
-`navigatorBuilder:`, which wraps the root navigator. The widget under test
-still sees it:
+In the harness the root navigator is the only one, so every route pushed
+from the widget under test (dialogs, sheets, menus, pages) is built next to
+it, not below it. A provider in `builder:` does not reach that route, and
+the route fails to build. Provide the state in `navigatorBuilder:`, which
+wraps the root navigator. The widget under test still sees it:
 
 ```dart
 goldenTest(
@@ -397,7 +395,15 @@ goldenTest(
 ```
 
 A provider that every golden needs belongs in `goldenTestNavigatorBuilder`,
-set once in `flutter_test_config.dart`.
+set once in `flutter_test_config.dart`. A golden's own `navigatorBuilder:`
+replaces it, so call the global one to keep it:
+
+```dart
+navigatorBuilder: (context, navigator) => goldenTestNavigatorBuilder!(
+  context,
+  BlocProvider<MyCubit>.value(value: cubit, child: navigator!),
+),
+```
 
 ---
 

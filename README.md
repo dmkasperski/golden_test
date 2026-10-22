@@ -352,7 +352,7 @@ The globalSetup callback allows you to define project-specific configurations, s
 
 <a name="navigator-builder"></a>
 ## Navigator Builder
-The widget from `builder` lives in the first route of the app's root `Navigator`. Dialogs, bottom sheets and pages pushed on the root navigator are built next to that route, not below it, so providers returned from `builder` do not reach them. `showDialog` uses the root navigator by default, and so does any code that calls `Navigator.of(context, rootNavigator: true)`. Such a route fails to build, for example with a `ProviderNotFoundException`.
+The widget from `builder` lives in the home route of the app's root `Navigator`, and in the harness that navigator is the only one. Every route pushed from the widget under test (dialogs, sheets, menus, pages) is therefore built next to it, not below it, so providers returned from `builder` do not reach those routes. Such a route fails to build, for example with a `ProviderNotFoundException`.
 
 `navigatorBuilder` wraps the root navigator. It is passed to `MaterialApp.builder`, so what it returns sits above every route. The theme, `MediaQuery` and localizations are still available in its `context`.
 
@@ -373,6 +373,19 @@ To wrap every test, set it globally. A test's own `navigatorBuilder` replaces th
 
 ```dart
 goldenTestNavigatorBuilder = (context, navigator) => AppScope(child: navigator!);
+```
+
+To keep the global scope and add a provider for one test, call the global builder from the test's own:
+
+```dart
+goldenTest(
+  name: 'Example Page',
+  builder: (_) => const ExamplePage(),
+  navigatorBuilder: (context, navigator) => goldenTestNavigatorBuilder!(
+    context,
+    BlocProvider<ExampleCubit>.value(value: cubit, child: navigator!),
+  ),
+);
 ```
 
 <a name="network-image-stub"></a>
