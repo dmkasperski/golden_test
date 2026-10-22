@@ -51,6 +51,7 @@ goldenTest(
   supportedLocales: [Locale('en')],      // overrides global
   supportedTextScales: [1.0, 1.5],       // overrides global
   localizationsDelegates: [...],
+  navigatorBuilder: (context, navigator) => ...,  // wraps the root Navigator
   setup: (WidgetTester tester) async {},     // before build
   action: (WidgetTester tester) async {},    // after first settle, before shot
   tearDown: (WidgetTester tester) async {},  // after shot
@@ -92,6 +93,11 @@ usually worth it — it makes every pattern here unnecessary.
 Copy-pasteable recipes for Cubit/BLoC, Riverpod, Provider, plain
 `ChangeNotifier` and a service locator are in `references/patterns.md`. Pick one,
 ignore the rest.
+
+A dialog, sheet or page the golden opens on the root navigator (`showDialog`
+does by default) is built next to the screen, not below it, so providers
+from `builder:` do not reach it. Provide them in `navigatorBuilder:` instead
+(`references/patterns.md`).
 
 ## 4. States are the unit; axes multiply them
 
@@ -566,5 +572,6 @@ suite: `--exclude-tags=golden_test` vs `--tags=golden_test`.
 
 [`references/patterns.md`](references/patterns.md) — a full worked file covering every core
 state, state-injection recipes (Cubit/BLoC, Riverpod, Provider,
-ChangeNotifier, service locator), `simulateRouteStack`, RTL, safe-area and
-tight-layout stress, fixture conventions, and anti-patterns.
+ChangeNotifier, service locator), dialogs and sheets on the root navigator,
+`simulateRouteStack`, RTL, safe-area and tight-layout stress, fixture
+conventions, and anti-patterns.

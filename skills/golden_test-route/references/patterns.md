@@ -185,6 +185,30 @@ group('$FeatureScreen', () {
 });
 ```
 
+### Dialogs and sheets on the root navigator
+
+`showDialog` pushes on the root navigator by default, and so does a sheet
+or page opened with `useRootNavigator: true` or
+`Navigator.of(context, rootNavigator: true)`. That route is built next to
+the screen, not below it, so a provider in `builder:` does not reach it and
+the route fails to build. Provide the state in `navigatorBuilder:`, which
+wraps the root navigator. The screen still sees it:
+
+```dart
+goldenTest(
+  name: '$FeatureScreen - Delete dialog',
+  navigatorBuilder: (_, navigator) => BlocProvider<FeatureCubit>.value(
+    value: cubit,
+    child: navigator!,
+  ),
+  builder: (_) => const FeatureScreen(),
+  action: (tester) async {
+    await tester.tap(find.byIcon(Icons.delete));
+    await tester.pumpAndSettle();
+  },
+);
+```
+
 ---
 
 ## Simulating a pushed route (back button, `canPop`)
