@@ -20,11 +20,8 @@ void main() {
       supportedDevices: [const Device.iphone15Pro()],
       navigatorBuilder: (_, navigator) =>
           _Message(text: 'from navigatorBuilder', child: navigator!),
-      builder: (_) => const _RootRouteButton(),
-      action: (tester) => tester.tap(find.byType(TextButton)),
-      tearDown: (_) async {
-        expect(find.text('from navigatorBuilder'), findsOneWidget);
-      },
+      builder: (_) => const _DialogButton(),
+      action: _openDialogShowing('from navigatorBuilder'),
     );
 
     goldenTest(
@@ -32,41 +29,54 @@ void main() {
       supportedLocales: [const Locale('en')],
       supportedThemes: [Brightness.light],
       supportedDevices: [const Device.iphone15Pro()],
-      builder: (_) => const _RootRouteButton(),
-      action: (tester) => tester.tap(find.byType(TextButton)),
-      tearDown: (_) async {
-        expect(find.text('from goldenTestNavigatorBuilder'), findsOneWidget);
-      },
+      builder: (_) => const _DialogButton(),
+      action: _openDialogShowing('from goldenTestNavigatorBuilder'),
     );
   });
 }
+
+Future<void> Function(WidgetTester) _openDialogShowing(String text) =>
+    (tester) async {
+      await tester.tap(find.text('Open dialog'));
+      await tester.pumpAndSettle();
+      expect(find.text(text), findsOneWidget);
+    };
 
 class _Message extends InheritedWidget {
   const _Message({required this.text, required super.child});
 
   final String text;
 
-  static String of(BuildContext context) =>
-      context.dependOnInheritedWidgetOfExactType<_Message>()?.text ??
-      'no message above the root navigator';
+  static String of(BuildContext context) {
+    final message = context.dependOnInheritedWidgetOfExactType<_Message>();
+    if (message == null) {
+      throw FlutterError('No _Message found above this context.');
+    }
+    return message.text;
+  }
 
   @override
   bool updateShouldNotify(_Message oldWidget) => text != oldWidget.text;
 }
 
-class _RootRouteButton extends StatelessWidget {
-  const _RootRouteButton();
+class _DialogButton extends StatelessWidget {
+  const _DialogButton();
 
   @override
-  Widget build(BuildContext context) => Center(
-    child: TextButton(
-      onPressed: () => Navigator.of(context, rootNavigator: true).push(
-        MaterialPageRoute<void>(
-          builder: (context) =>
-              Scaffold(body: Center(child: Text(_Message.of(context)))),
+  Widget build(BuildContext context) => SafeArea(
+    child: Align(
+      alignment: Alignment.topCenter,
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: FilledButton(
+          onPressed: () => showDialog<void>(
+            context: context,
+            builder: (context) =>
+                AlertDialog(content: Text(_Message.of(context))),
+          ),
+          child: const Text('Open dialog'),
         ),
       ),
-      child: const Text('Open'),
     ),
   );
 }
