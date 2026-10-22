@@ -11,6 +11,7 @@
     - [Dark Theme](#dark-theme)
   - [Text Scale (Accessibility)](#text-scale)
   - [Global Setup Callback](#global-setup-callback)
+  - [Navigator Builder](#navigator-builder)
   - [Network Image Stub](#network-image-stub)
     - [CachedNetworkImage support](#cachednetworkimage-support)
   - [Golden File Organization](#golden-file-organization)
@@ -347,6 +348,31 @@ The globalSetup callback allows you to define project-specific configurations, s
 
 ```dart
     globalSetup = (_) async => duringTestExecution = true;
+```
+
+<a name="navigator-builder"></a>
+## Navigator Builder
+The widget from `builder` lives in the first route of the app's root `Navigator`. Dialogs, bottom sheets and pages pushed on the root navigator are built next to that route, not below it, so providers returned from `builder` do not reach them. `showDialog` uses the root navigator by default, and so does any code that calls `Navigator.of(context, rootNavigator: true)`. Such a route fails to build, for example with a `ProviderNotFoundException`.
+
+`navigatorBuilder` wraps the root navigator. It is passed to `MaterialApp.builder`, so what it returns sits above every route. The theme, `MediaQuery` and localizations are still available in its `context`.
+
+```dart
+goldenTest(
+  name: 'Example Page',
+  builder: (_) => const ExamplePage(),
+  navigatorBuilder: (context, navigator) => BlocProvider<ExampleCubit>.value(
+    value: cubit,
+    child: navigator!,
+  ),
+);
+```
+
+`navigator` is never `null`, because Golden Test always sets a home route.
+
+To wrap every test, set it globally. A test's own `navigatorBuilder` replaces the global one:
+
+```dart
+goldenTestNavigatorBuilder = (context, navigator) => AppScope(child: navigator!);
 ```
 
 <a name="network-image-stub"></a>

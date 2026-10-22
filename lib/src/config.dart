@@ -21,6 +21,23 @@ List<Locale> goldenTestSupportedLocales = [const Locale('en', 'US')];
 /// so any of them can still be overridden.
 List<LocalizationsDelegate<dynamic>> goldenTestLocalizationsDelegates = [];
 
+/// Wraps the root [Navigator] of the app that each golden test builds.
+///
+/// It is passed to [MaterialApp.builder], so `child` is the root navigator.
+/// Widgets placed above it are visible to every route, including dialogs,
+/// bottom sheets and pages pushed with `rootNavigator: true`. Providers
+/// returned from a test's `builder` are not, because those routes are not
+/// built below it. Theme, [MediaQuery] and localizations are available in
+/// `context`.
+///
+/// ```dart
+/// goldenTestNavigatorBuilder = (context, navigator) =>
+///     AppScope(child: navigator!);
+/// ```
+///
+/// A test's own `navigatorBuilder` parameter replaces it.
+TransitionBuilder? goldenTestNavigatorBuilder;
+
 /// The default device(s) used for all golden tests when no other device configuration is specified.
 ///
 /// This is the device configuration used by default unless:
