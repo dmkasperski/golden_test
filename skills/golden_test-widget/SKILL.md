@@ -45,6 +45,7 @@ goldenTest(
   supportedLocales: [Locale('en')],      // overrides global
   supportedTextScales: [1.0, 1.5],       // overrides global
   localizationsDelegates: [...],
+  navigatorBuilder: (context, navigator) => ...,  // wraps the root Navigator
   setup: (WidgetTester tester) async {},     // before build
   action: (WidgetTester tester) async {},    // after first settle, before shot
   tearDown: (WidgetTester tester) async {},  // after shot
@@ -258,7 +259,9 @@ Full runnable code for each in `references/patterns.md`.
   needs its own testing seam.
 - **State management** — inject a mocked state however your project does
   DI. `references/patterns.md` has interchangeable BLoC/Cubit, Riverpod, Provider and
-  plain `ChangeNotifier` examples.
+  plain `ChangeNotifier` examples. Every route the widget under test pushes
+  (dialogs, sheets, menus, pages) is built next to it, so that route sees
+  only what `navigatorBuilder:` provides.
 
 ## 7. Lifecycle hooks
 
@@ -506,5 +509,5 @@ suite: `--exclude-tags=golden_test` vs `--tags=golden_test`.
 
 [`references/patterns.md`](references/patterns.md) — device sets, the full labeled showcase and
 content-shape examples, stateful wrapper, Riverpod / Provider /
-ChangeNotifier equivalents, RTL, harness, bottom sheets, and the golden
-output path structure.
+ChangeNotifier equivalents, dialogs, sheets and other pushed routes, RTL,
+harness, bottom sheets, and the golden output path structure.

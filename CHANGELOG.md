@@ -1,3 +1,8 @@
+## 2.1.0
+
+### New features
+- **Navigator builder**: `goldenTest` takes a `navigatorBuilder`, and `goldenTestNavigatorBuilder` sets one for every test. In the harness the root navigator is the only one, so every route pushed from the widget under test (dialogs, sheets, menus, pages) is built next to it. Providers returned from `builder` never reached those routes, so they failed to build. `navigatorBuilder` is passed to `MaterialApp.builder` and wraps the root navigator, so what it provides is visible to every route. See [README § Navigator Builder](README.md#navigator-builder).
+
 ## 2.0.1
 
 ### Fixes
