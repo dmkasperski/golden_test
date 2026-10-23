@@ -32,3 +32,16 @@ Performance: Be mindful of performance implications when making changes.
 Code Owners: Please note that your changes may not be accepted if they do not align with the project's goals, coding standards, or the maintainers' vision.
 
 By following these guidelines, you can contribute effectively to the Golden Test Flutter plugin and help make it a better tool for developers.
+
+## Releasing
+Releases are published to pub.dev by GitHub Actions, not from a local machine.
+
+1. Merge a pull request that sets `version` in `pubspec.yaml` and adds the matching `CHANGELOG.md` entry.
+2. Tag that commit on `master` with `v` and the version, and push the tag:
+   ```bash
+   git tag v2.1.0 origin/master
+   git push origin v2.1.0
+   ```
+3. The **Publish** workflow runs the full CI suite on the tag and then publishes. pub.dev rejects the upload if the tag does not match `version`.
+
+Running **Publish** by hand from the Actions tab builds and checks the package archive without publishing.
