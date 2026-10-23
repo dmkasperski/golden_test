@@ -198,7 +198,7 @@ goldenTest(
   name: '$FeatureScreen - Delete dialog',
   navigatorBuilder: (_, navigator) => BlocProvider<FeatureCubit>.value(
     value: cubit,
-    child: navigator!,
+    child: navigator,
   ),
   builder: (_) => const FeatureScreen(),
   action: (tester) async {

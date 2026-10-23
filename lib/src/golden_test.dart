@@ -47,10 +47,10 @@ import 'package:meta/meta.dart';
 ///
 /// * [localizationsDelegates]: An optional list of LocalizationsDelegate objects providing localization support for the test.
 ///
-/// * [navigatorBuilder]: An optional builder that wraps the app's root [Navigator].
-///   It is passed to [MaterialApp.builder], so what it provides is also visible
-///   to every route pushed from the widget under test, such as dialogs, sheets
-///   and menus. When `null`, [goldenTestNavigatorBuilder] is used.
+/// * [navigatorBuilder]: An optional builder that wraps the app's root [Navigator],
+///   so what it provides is also visible to every route pushed from the widget
+///   under test, such as dialogs, sheets and menus. When `null`,
+///   [goldenTestNavigatorBuilder] is used.
 ///
 /// * [setup]: An optional asynchronous function that can be used to perform setup tasks before the test runs.
 ///
@@ -134,7 +134,7 @@ void goldenTest({
   List<Locale> supportedLocales = const [],
   List<double> supportedTextScales = const [],
   List<LocalizationsDelegate<dynamic>>? localizationsDelegates,
-  TransitionBuilder? navigatorBuilder,
+  GoldenTestNavigatorBuilder? navigatorBuilder,
   Future<void> Function(WidgetTester tester)? setup,
   Future<void> Function(WidgetTester tester)? tearDown,
   Future<void> Function(WidgetTester tester)? action,
@@ -359,12 +359,14 @@ Widget _themedWidget({
   required ThemeData theme,
   required List<Locale> supportedLocales,
   List<LocalizationsDelegate<dynamic>>? localizationsDelegates,
-  TransitionBuilder? navigatorBuilder,
+  GoldenTestNavigatorBuilder? navigatorBuilder,
 }) => MaterialApp(
   theme: theme,
   color: Colors.white,
   debugShowCheckedModeBanner: false,
-  builder: navigatorBuilder,
+  builder: navigatorBuilder == null
+      ? null
+      : (context, navigator) => navigatorBuilder(context, navigator!),
   locale: supportedLocales.first,
   supportedLocales: supportedLocales,
   localizationsDelegates: [

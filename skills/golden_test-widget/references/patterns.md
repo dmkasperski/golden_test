@@ -384,7 +384,7 @@ goldenTest(
   supportedDevices: [const Device.iphone15Pro()],
   navigatorBuilder: (_, navigator) => BlocProvider<MyCubit>.value(
     value: cubit,
-    child: navigator!,
+    child: navigator,
   ),
   builder: (_) => const MyDropdown(),
   action: (tester) async {
@@ -401,7 +401,7 @@ replaces it, so call the global one to keep it:
 ```dart
 navigatorBuilder: (context, navigator) => goldenTestNavigatorBuilder!(
   context,
-  BlocProvider<MyCubit>.value(value: cubit, child: navigator!),
+  BlocProvider<MyCubit>.value(value: cubit, child: navigator),
 ),
 ```
 

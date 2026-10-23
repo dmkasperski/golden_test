@@ -354,7 +354,7 @@ The globalSetup callback allows you to define project-specific configurations, s
 ## Navigator Builder
 The widget from `builder` lives in the home route of the app's root `Navigator`, and in the harness that navigator is the only one. Every route pushed from the widget under test (dialogs, sheets, menus, pages) is therefore built next to it, not below it, so providers returned from `builder` do not reach those routes. Such a route fails to build, for example with a `ProviderNotFoundException`.
 
-`navigatorBuilder` wraps the root navigator. It is passed to `MaterialApp.builder`, so what it returns sits above every route. The theme, `MediaQuery` and localizations are still available in its `context`.
+`navigatorBuilder` wraps the root navigator, so what it returns sits above every route. The app's `MediaQuery`, localizations and theme are still available in its `context`.
 
 ```dart
 goldenTest(
@@ -362,17 +362,15 @@ goldenTest(
   builder: (_) => const ExamplePage(),
   navigatorBuilder: (context, navigator) => BlocProvider<ExampleCubit>.value(
     value: cubit,
-    child: navigator!,
+    child: navigator,
   ),
 );
 ```
 
-`navigator` is never `null`, because Golden Test always sets a home route.
-
 To wrap every test, set it globally. A test's own `navigatorBuilder` replaces the global one:
 
 ```dart
-goldenTestNavigatorBuilder = (context, navigator) => AppScope(child: navigator!);
+goldenTestNavigatorBuilder = (context, navigator) => AppScope(child: navigator);
 ```
 
 To keep the global scope and add a provider for one test, call the global builder from the test's own:
@@ -383,7 +381,7 @@ goldenTest(
   builder: (_) => const ExamplePage(),
   navigatorBuilder: (context, navigator) => goldenTestNavigatorBuilder!(
     context,
-    BlocProvider<ExampleCubit>.value(value: cubit, child: navigator!),
+    BlocProvider<ExampleCubit>.value(value: cubit, child: navigator),
   ),
 );
 ```
