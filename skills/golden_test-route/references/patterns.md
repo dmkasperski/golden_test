@@ -185,6 +185,29 @@ group('$FeatureScreen', () {
 });
 ```
 
+### Dialogs, sheets and other pushed routes
+
+In the harness the root navigator is the only one, so every route the
+screen pushes (dialogs, sheets, menus, pages) is built next to it, not below
+it. A provider in `builder:` does not reach that route, and the route fails
+to build. Provide the state in `navigatorBuilder:`, which wraps the root
+navigator. The screen still sees it:
+
+```dart
+goldenTest(
+  name: '$FeatureScreen - Delete dialog',
+  navigatorBuilder: (_, navigator) => BlocProvider<FeatureCubit>.value(
+    value: cubit,
+    child: navigator!,
+  ),
+  builder: (_) => const FeatureScreen(),
+  action: (tester) async {
+    await tester.tap(find.byIcon(Icons.delete));
+    await tester.pumpAndSettle();
+  },
+);
+```
+
 ---
 
 ## Simulating a pushed route (back button, `canPop`)

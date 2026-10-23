@@ -370,6 +370,41 @@ builder: (_) => MyWidget(
 ),
 ```
 
+### Dialogs, sheets and other pushed routes
+
+In the harness the root navigator is the only one, so every route pushed
+from the widget under test (dialogs, sheets, menus, pages) is built next to
+it, not below it. A provider in `builder:` does not reach that route, and
+the route fails to build. Provide the state in `navigatorBuilder:`, which
+wraps the root navigator. The widget under test still sees it:
+
+```dart
+goldenTest(
+  name: '$MyDropdown - open',
+  supportedDevices: [const Device.iphone15Pro()],
+  navigatorBuilder: (_, navigator) => BlocProvider<MyCubit>.value(
+    value: cubit,
+    child: navigator!,
+  ),
+  builder: (_) => const MyDropdown(),
+  action: (tester) async {
+    await tester.tap(find.byType(MyDropdown));
+    await tester.pumpAndSettle();
+  },
+);
+```
+
+A provider that every golden needs belongs in `goldenTestNavigatorBuilder`,
+set once in `flutter_test_config.dart`. A golden's own `navigatorBuilder:`
+replaces it, so call the global one to keep it:
+
+```dart
+navigatorBuilder: (context, navigator) => goldenTestNavigatorBuilder!(
+  context,
+  BlocProvider<MyCubit>.value(value: cubit, child: navigator!),
+),
+```
+
 ---
 
 ## Pattern: RTL variant
