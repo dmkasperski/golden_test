@@ -15,7 +15,7 @@ void main() {
         'Meeting moved to 3 PM',
         'Welcome to the team',
       ]),
-      child: navigator!,
+      child: navigator,
     ),
     builder: (_) => const InboxScreen(),
     action: (tester) async {

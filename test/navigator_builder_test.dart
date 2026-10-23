@@ -8,7 +8,7 @@ void main() {
   group('navigatorBuilder', () {
     setUp(() {
       goldenTestNavigatorBuilder = (_, navigator) =>
-          _Message(text: 'from goldenTestNavigatorBuilder', child: navigator!);
+          _Message(text: 'from goldenTestNavigatorBuilder', child: navigator);
     });
 
     tearDown(() => goldenTestNavigatorBuilder = null);
@@ -19,7 +19,7 @@ void main() {
       supportedThemes: [Brightness.light],
       supportedDevices: [const Device.iphone15Pro()],
       navigatorBuilder: (_, navigator) =>
-          _Message(text: 'from navigatorBuilder', child: navigator!),
+          _Message(text: 'from navigatorBuilder', child: navigator),
       builder: (_) => const _DialogButton(),
       action: _openDialogShowing('from navigatorBuilder'),
     );
