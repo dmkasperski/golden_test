@@ -42,6 +42,6 @@ Releases are published to pub.dev by GitHub Actions, not from a local machine.
    git tag v2.1.0 origin/master
    git push origin v2.1.0
    ```
-3. The **Publish** workflow runs the full CI suite on the tag and then publishes. pub.dev rejects the upload if the tag does not match `version`.
+3. The **Publish** workflow runs the full CI suite on the tag, then waits in the `pub.dev` environment for a maintainer to approve the deployment on the run's page. Once approved, it publishes. pub.dev rejects the upload if the tag does not match `version`.
 
-Running **Publish** by hand from the Actions tab builds and checks the package archive without publishing.
+Running **Publish** by hand from the Actions tab builds and checks the package archive without publishing. It also needs the approval.
