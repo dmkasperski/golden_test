@@ -57,3 +57,22 @@ jobs:
 
       - name: Publish dry-run
         run: flutter pub publish --dry-run
+
+  pana:
+    # pub.dev scores with the latest stable SDK and the latest pana, so
+    # neither is pinned here.
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install pana
+        run: dart pub global activate pana
+
+      - name: Score with pana
+        run: dart pub global run pana . --no-warning --exit-code-threshold 0
