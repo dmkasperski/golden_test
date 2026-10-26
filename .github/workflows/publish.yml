@@ -23,7 +23,7 @@ jobs:
     needs: test
     permissions:
       id-token: write
-    uses: dart-lang/setup-dart/.github/workflows/publish.yml@v1
+    uses: dart-lang/setup-dart/.github/workflows/publish.yml@953e9604f31f14b7fb8d90dd913e6205a6c8eeeb # main, until a v1 release includes test-run
     with:
       environment: pub.dev
       test-run: ${{ github.event_name == 'workflow_dispatch' }}
