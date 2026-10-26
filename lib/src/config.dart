@@ -21,24 +21,35 @@ List<Locale> goldenTestSupportedLocales = [const Locale('en', 'US')];
 /// so any of them can still be overridden.
 List<LocalizationsDelegate<dynamic>> goldenTestLocalizationsDelegates = [];
 
+/// Builds a widget that wraps `navigator`, the root [Navigator] of the app
+/// that a golden test builds.
+///
+/// See [goldenTestNavigatorBuilder].
+typedef GoldenTestNavigatorBuilder = Widget Function(
+  BuildContext context,
+  Widget navigator,
+);
+
 /// Wraps the root [Navigator] of the app that each golden test builds.
 ///
-/// It is passed to [MaterialApp.builder], so `child` is the root navigator.
 /// In the harness that navigator is the only one, so every route pushed from
 /// the widget under test (dialogs, sheets, menus, pages) is built next to that
 /// widget, not below it. Providers returned from a test's `builder` do not
 /// reach those routes, while widgets placed above the navigator here reach
-/// every route. Theme, [MediaQuery] and localizations are available in
-/// `context`.
+/// every route.
+///
+/// The returned widget sits above every route and below the app's
+/// [MediaQuery] and [Localizations], which are available in `context`. So is
+/// [Theme], from the Material app the harness builds by default.
 ///
 /// ```dart
 /// goldenTestNavigatorBuilder = (context, navigator) =>
-///     AppScope(child: navigator!);
+///     AppScope(child: navigator);
 /// ```
 ///
 /// A test's own `navigatorBuilder` parameter replaces it. To keep it and add
 /// to it, call it from the test's own builder.
-TransitionBuilder? goldenTestNavigatorBuilder;
+GoldenTestNavigatorBuilder? goldenTestNavigatorBuilder;
 
 /// The default device(s) used for all golden tests when no other device configuration is specified.
 ///
