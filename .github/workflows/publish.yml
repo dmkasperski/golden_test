@@ -4,6 +4,10 @@ name: Publish
 # only from this repository, for tags matching `v{{version}}`, and from the
 # `pub.dev` environment (package Admin tab → Automated publishing).
 #
+# Before that, `version` checks that the release is the next one on its major
+# line and that the public API change fits the bump. A release for an older
+# major line also waits for approval in `pub.dev-maintenance`.
+#
 # Running it by hand verifies the package archive without publishing.
 
 on:
@@ -19,8 +23,52 @@ jobs:
   test:
     uses: ./.github/workflows/ci.yml
 
+  version:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.check.outputs.version }}
+      maintenance: ${{ steps.check.outputs.maintenance }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check the version
+        id: check
+        run: .github/scripts/check_release.sh
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Check the bump against the public API
+        run: |
+          dart pub global activate dart_apitool
+          dart pub global run dart_apitool:main diff \
+            --old "pub://golden_test/${{ steps.check.outputs.previous }}" \
+            --new . \
+            --force-use-flutter
+
+  maintenance-approval:
+    needs: version
+    if: needs.version.outputs.maintenance == 'true'
+    environment: pub.dev-maintenance
+    runs-on: ubuntu-latest
+
+    steps:
+      - run: echo "Approved maintenance release ${{ needs.version.outputs.version }}."
+
   publish:
-    needs: test
+    needs: [test, version, maintenance-approval]
+    if: >-
+      !cancelled() &&
+      needs.test.result == 'success' &&
+      (needs.version.result == 'success' ||
+        (github.event_name == 'workflow_dispatch' && needs.version.result == 'skipped')) &&
+      contains(fromJSON('["success", "skipped"]'), needs.maintenance-approval.result)
     permissions:
       id-token: write
     uses: dart-lang/setup-dart/.github/workflows/publish.yml@953e9604f31f14b7fb8d90dd913e6205a6c8eeeb # main, until a v1 release includes test-run
