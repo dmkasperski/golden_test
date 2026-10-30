@@ -346,6 +346,11 @@ maintenance cost against zero coverage.
 - **Tight layout** — shrink a real device preset by ~30% with
   `.copyWith(width: ..., height: ...)` to force overflow before an unusually
   small real device does.
+- **Keyboard open** — **only for screens with a text field.** One golden
+  with `keyboard: const GoldenKeyboard(type: ...)`, the type the screen's
+  main field requests. It catches a submit button pushed off screen, a
+  field hidden under the keyboard, and a column that overflows once the
+  body shrinks (`references/patterns.md`).
 - **Large text** — one golden at `AndroidFontScale.maximum.value` or similar,
   if you didn't turn on the text-scale axis. **Give it a tall device**: at
   2.0 a phone-height canvas shows a heading and little else.

@@ -645,6 +645,24 @@ goldenTest(
 
 RTL belongs here **only if the app ships an RTL locale** — see SKILL.md §4.
 
+### Keyboard open
+
+```dart
+goldenTest(
+  name: '$FeatureScreen - keyboard',
+  builder: (_) => const FeatureScreen(),
+  // The type the screen's main field requests. Style follows the device.
+  keyboard: const GoldenKeyboard(type: TextInputType.emailAddress),
+);
+```
+
+No field needs focus: the keyboard is reported as `viewInsets`, so the
+screen's own `Scaffold` decides whether to resize. If the screen sets
+`resizeToAvoidBottomInset: false`, the golden shows what the keyboard
+covers — that is the behaviour to review, not a harness artefact. An
+overflow fails the test with a `RenderFlex overflowed` error, before any
+image is compared.
+
 ### Large text
 
 ```dart

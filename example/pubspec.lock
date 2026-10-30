@@ -200,7 +200,7 @@ packages:
       path: ".."
       relative: true
     source: path
-    version: "2.1.0"
+    version: "2.2.0"
   golden_test_cached_network_image:
     dependency: "direct dev"
     description:

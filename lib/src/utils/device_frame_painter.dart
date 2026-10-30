@@ -1,12 +1,14 @@
 import 'dart:math';
 
+import 'package:golden_test/src/utils/keyboard_painter.dart';
 import 'package:material_ui/material_ui.dart';
 
 class DeviceFramePainter extends BoxPainter {
   final Brightness brightness;
   final EdgeInsets insets;
+  final ResolvedKeyboard? keyboard;
 
-  DeviceFramePainter(this.brightness, this.insets);
+  DeviceFramePainter(this.brightness, this.insets, {this.keyboard});
 
   Color get _contentColor =>
       brightness == Brightness.light ? Colors.black : Colors.white;
@@ -37,6 +39,22 @@ class DeviceFramePainter extends BoxPainter {
 
     if (insets.top != 0) {
       _drawStatusBar(canvas, size);
+    }
+
+    final keyboard = this.keyboard;
+    if (keyboard != null) {
+      paintKeyboard(
+        canvas,
+        Rect.fromLTRB(
+          0,
+          size.height - keyboard.height,
+          size.width,
+          size.height,
+        ),
+        keyboard,
+        brightness,
+        configuration.devicePixelRatio ?? 1,
+      );
     }
 
     if (insets.bottom != 0) {
