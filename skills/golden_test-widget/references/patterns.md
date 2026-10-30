@@ -494,6 +494,15 @@ goldenTest(
 );
 ```
 
+**A sheet with a text field** gets one more golden with
+`keyboard: const GoldenKeyboard()`. The `Scaffold` above resizes, so the
+content sits on the keyboard, as a sheet shown with
+`isScrollControlled: true` and padded by `viewInsets` does. That checks the
+content still fits in what is left: if it cannot scroll, it overflows and
+the test fails. Whether the sheet actually lifts is up to the
+`showModalBottomSheet` call that opens it, so cover that in the screen's
+keyboard golden (golden_test-route).
+
 ---
 
 ## Pattern: components that load images

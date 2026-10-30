@@ -138,6 +138,13 @@ a quota — a static settings screen needs far less than a checkout flow.
       changes this screen, against a baseline (see below). Not a matrix
 - [ ] **Form edge cases** — invalid input, boundary-length input, an empty
       required field
+- [ ] **Keyboard open** — **every screen with a text field.** Two goldens
+      with `keyboard:`: the keyboard over the screen as it opens, and the
+      same screen scrolled to the bottom, asserting that the last control
+      ends above the keyboard. The second is the one that matters: a screen
+      that cannot scroll overflows, and one that scrolls *under* the keyboard
+      hides its submit button — which the image alone does not flag, so the
+      assertion has to (`references/patterns.md`)
 - [ ] **Scrolled to bottom** — on a short device (§5). For *content* coverage prefer a tall device (above); keep a scrolled golden for what scrolling itself changes — a collapsing header, a sticky bar, a trailing spinner
 - [ ] **Pushed-route chrome** — if a back arrow or close affordance appears
       only when `Navigator.canPop(context)` is true, wrap in
@@ -346,11 +353,6 @@ maintenance cost against zero coverage.
 - **Tight layout** — shrink a real device preset by ~30% with
   `.copyWith(width: ..., height: ...)` to force overflow before an unusually
   small real device does.
-- **Keyboard open** — **only for screens with a text field.** One golden
-  with `keyboard: const GoldenKeyboard(type: ...)`, the type the screen's
-  main field requests. It catches a submit button pushed off screen, a
-  field hidden under the keyboard, and a column that overflows once the
-  body shrinks (`references/patterns.md`).
 - **Large text** — one golden at `AndroidFontScale.maximum.value` or similar,
   if you didn't turn on the text-scale axis. **Give it a tall device**: at
   2.0 a phone-height canvas shows a heading and little else.

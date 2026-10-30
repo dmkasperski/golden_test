@@ -456,6 +456,60 @@ action: (WidgetTester tester) async {
 },
 ```
 
+## Keyboard — every screen with a text field
+
+A screen with an input has to stay usable while the keyboard is up: every
+field and the submit button must still be reachable by scrolling. Two
+goldens cover it.
+
+```dart
+/// Fails when [finder] ends below the top of the simulated keyboard.
+void expectAboveKeyboard(WidgetTester tester, Finder finder) {
+  final view = tester.view;
+  final keyboardTop =
+      (view.physicalSize.height - view.viewInsets.bottom) /
+      view.devicePixelRatio;
+  expect(tester.getRect(finder).bottom, lessThanOrEqualTo(keyboardTop));
+}
+
+// Letters are the tallest keyboard, so they leave the least room. Use them
+// unless the screen's only field asks for a number pad.
+const keyboard = GoldenKeyboard(type: TextInputType.emailAddress);
+
+goldenTest(
+  name: '$FeatureScreen - keyboard',
+  keyboard: keyboard,
+  builder: (_) => const FeatureScreen(),
+);
+
+goldenTest(
+  name: '$FeatureScreen - keyboard scrolled',
+  keyboard: keyboard,
+  builder: (_) => const FeatureScreen(),
+  action: (WidgetTester tester) async {
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -3000));
+    await tester.pumpAndSettle();
+    // The last thing a user has to reach, usually the submit button.
+    expectAboveKeyboard(tester, find.byKey(const Key('submit')));
+  },
+);
+```
+
+No field needs focus. The keyboard is reported as `viewInsets`, so the
+screen's own `Scaffold` decides whether to resize, exactly as on a device.
+
+What each layout does with the keyboard up:
+
+| Screen | Result |
+|---|---|
+| Fields in a `Column`, no scroll view | `RenderFlex overflowed` — the test fails before any image is compared |
+| Scroll view, `resizeToAvoidBottomInset: false`, no bottom padding for the inset | Scrolls, but the end of the content stays under the keyboard. `expectAboveKeyboard` fails; the golden alone just shows a keyboard where the button should be |
+| Scroll view in a `Scaffold` that resizes, or padded by `MediaQuery.viewInsetsOf(context).bottom` | Passes |
+
+The keyboard is painted, not a widget, so it does not block hit testing:
+`tester.tap` on a button under it still succeeds. That is why the check is a
+rect comparison, not a tap.
+
 ## Feature flags, kill switches and experiments
 
 A flag is not an axis. Sweeping every combination is how a screen with five
@@ -644,24 +698,6 @@ goldenTest(
 ```
 
 RTL belongs here **only if the app ships an RTL locale** — see SKILL.md §4.
-
-### Keyboard open
-
-```dart
-goldenTest(
-  name: '$FeatureScreen - keyboard',
-  builder: (_) => const FeatureScreen(),
-  // The type the screen's main field requests. Style follows the device.
-  keyboard: const GoldenKeyboard(type: TextInputType.emailAddress),
-);
-```
-
-No field needs focus: the keyboard is reported as `viewInsets`, so the
-screen's own `Scaffold` decides whether to resize. If the screen sets
-`resizeToAvoidBottomInset: false`, the golden shows what the keyboard
-covers — that is the behaviour to review, not a harness artefact. An
-overflow fails the test with a `RenderFlex overflowed` error, before any
-image is compared.
 
 ### Large text
 
