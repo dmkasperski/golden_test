@@ -91,6 +91,42 @@ void main() {
       },
     );
 
+    goldenTest(
+      name: 'No keyboard for TextInputType.none',
+      supportedLocales: [const Locale('en')],
+      supportedThemes: [Brightness.light],
+      supportedDevices: [_iphone],
+      builder: (_) => const _Form(),
+      action: (tester) async {
+        await tester.tap(find.byKey(_Form.pinField));
+        await tester.pumpAndSettle();
+        final BuildContext context = tester.element(find.byType(_Form));
+        expect(MediaQuery.viewInsetsOf(context).bottom, 0);
+        expect(tester.testTextInput.isVisible, isTrue);
+      },
+    );
+
+    goldenTest(
+      name: 'No keyboard on a desktop device',
+      supportedLocales: [const Locale('en')],
+      supportedThemes: [Brightness.light],
+      supportedDevices: [
+        const Device(
+          name: 'desktop',
+          width: 1024,
+          height: 768,
+          platform: TargetPlatform.macOS,
+        ),
+      ],
+      builder: (_) => const _Form(),
+      action: (tester) async {
+        await tester.tap(find.byKey(_Form.emailField));
+        await tester.pumpAndSettle();
+        final BuildContext context = tester.element(find.byType(_Form));
+        expect(MediaQuery.viewInsetsOf(context).bottom, 0);
+      },
+    );
+
     group('turned off', () {
       setUp(() => goldenTestSimulateKeyboard = false);
       tearDown(() => goldenTestSimulateKeyboard = true);
@@ -119,6 +155,7 @@ class _Form extends StatelessWidget {
   static const body = Key('body');
   static const emailField = Key('email');
   static const amountField = Key('amount');
+  static const pinField = Key('pin');
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -144,6 +181,16 @@ class _Form extends StatelessWidget {
               decoration: InputDecoration(
                 border: OutlineInputBorder(),
                 labelText: 'Amount',
+              ),
+            ),
+            const SizedBox(height: 16),
+            // A field with its own input UI, which opens no system keyboard.
+            const TextField(
+              key: pinField,
+              keyboardType: TextInputType.none,
+              decoration: InputDecoration(
+                border: OutlineInputBorder(),
+                labelText: 'PIN',
               ),
             ),
             const Spacer(),

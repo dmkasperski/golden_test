@@ -55,9 +55,16 @@ class GoldenKeyboard {
 
   /// The keyboard layout, as the field that opened it would request it.
   ///
-  /// [TextInputType.number] and [TextInputType.phone] draw a number pad;
-  /// [TextInputType.emailAddress] and [TextInputType.url] add their own keys
+  /// [TextInputType.number] and [TextInputType.phone] draw a number pad, with
+  /// the decimal key on iOS for `numberWithOptions(decimal: true)`.
+  /// [TextInputType.datetime] and a signed number draw digits and punctuation
+  /// on iOS, which has no minus on its number pad, and a number pad on
+  /// Android. [TextInputType.emailAddress], [TextInputType.url],
+  /// [TextInputType.twitter] and [TextInputType.webSearch] add their own keys
   /// to the letter layout; every other type draws the letter layout.
+  ///
+  /// [TextInputType.none] still draws the letter layout here: this keyboard
+  /// is shown because the test asks for it, not because a field opened it.
   final TextInputType type;
 
   /// The keyboard's height in logical pixels, measured from the bottom edge

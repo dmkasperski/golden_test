@@ -119,7 +119,13 @@ class KeyboardSimulation {
         return;
     }
 
-    final ResolvedKeyboard? shownKeyboard = _isVisible
+    // A device ignores TextInput.show for TextInputType.none, which fields
+    // with their own input UI use, and a desktop has no keyboard to show.
+    final bool opensKeyboard =
+        _isVisible &&
+        _keyboardType.index != TextInputType.none.index &&
+        hasSoftwareKeyboard(_device);
+    final ResolvedKeyboard? shownKeyboard = opensKeyboard
         ? ResolvedKeyboard.of(GoldenKeyboard(type: _keyboardType), _device)
         : null;
     setKeyboardInsets(

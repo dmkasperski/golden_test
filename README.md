@@ -382,10 +382,12 @@ Either way the keyboard is simulated, not opened. The view reports it as a botto
 | <img src="https://raw.githubusercontent.com/dmkasperski/golden_test/master/doc/screenshots/keyboard_ios_email.png" width="200"> | <img src="https://raw.githubusercontent.com/dmkasperski/golden_test/master/doc/screenshots/keyboard_android_number.png" width="200"> |
 
 - `style`: `GoldenKeyboardStyle.ios` or `.android`. Leave it out and it follows the device's `platform`, so a test over `Device.iphone15Pro()` and `Device.pixel9ProXL()` draws each its own keyboard. A device without a platform falls back to `defaultTargetPlatform`.
-- `type`: the `TextInputType` the field requests. `number` and `phone` draw a number pad (`numberWithOptions(decimal: true)` adds the decimal key on iOS), `emailAddress` and `url` add their own keys, and every other type draws the letter layout.
+- `type`: the `TextInputType` the field requests. `number` and `phone` draw a number pad (`numberWithOptions(decimal: true)` adds the decimal key on iOS). `datetime` and `numberWithOptions(signed: true)` draw digits and punctuation on iOS, whose number pad has no minus, and a number pad on Android. `emailAddress`, `url`, `twitter` and `webSearch` add their own keys to the letter layout, and every other type draws the letter layout.
 - `height`: overrides the keyboard's height in logical pixels, measured from the bottom of the screen. By default it is the height of that keyboard on a phone in portrait, including the device's bottom inset.
 
 The keys are the English QWERTY layout whatever the test's locale, so a keyboard golden changes only when the screen does. The layouts are those of a phone; on a tablet preset the keys stretch to its width.
+
+The keyboards are the iOS and Android ones, and the simulation follows what those platforms do: a field with `TextInputType.none`, which brings its own input UI, opens nothing, and neither does any field on a device whose `platform` is `macOS`, `linux` or `windows`, where input comes from a hardware keyboard. A device without a `platform`, such as `Device.browser()`, follows `defaultTargetPlatform`, which is Android under `flutter test`. `keyboard:` draws what it is given on any device.
 
 <a name="global-config"></a>
 ## Global Setup Callback

@@ -11,12 +11,14 @@ class ResolvedKeyboard {
   const ResolvedKeyboard._({
     required this.style,
     required this.type,
+    required this.layout,
     required this.height,
     required this.bottomArea,
   });
 
   factory ResolvedKeyboard.of(GoldenKeyboard keyboard, Device device) {
     final style = keyboard.style ?? _styleOf(device);
+    final layout = _layoutOf(style, keyboard.type);
     final bottomArea = switch (style) {
       // An iPhone without a home button keeps a row for the globe and
       // dictation keys below the letters, over the home indicator.
@@ -27,23 +29,63 @@ class ResolvedKeyboard {
     return ResolvedKeyboard._(
       style: style,
       type: keyboard.type,
+      layout: layout,
       height:
-          keyboard.height ??
-          _heightAboveBottomArea(style, keyboard.type) + bottomArea,
+          keyboard.height ?? _heightAboveBottomArea(style, layout) + bottomArea,
       bottomArea: bottomArea,
     );
   }
 
   final GoldenKeyboardStyle style;
   final TextInputType type;
+  final KeyboardLayout layout;
 
   /// Height from the bottom edge of the screen, in logical pixels.
   final double height;
 
   /// Height of the area below the keys, inside [height].
   final double bottomArea;
+}
 
-  bool get _isNumberPad => _isNumberPadType(type);
+/// Whether [device] shows a software keyboard at all. Desktop platforms take
+/// input from a hardware keyboard, so a focused field opens nothing there.
+bool hasSoftwareKeyboard(Device device) =>
+    switch (device.platform ?? defaultTargetPlatform) {
+      TargetPlatform.android ||
+      TargetPlatform.iOS ||
+      TargetPlatform.fuchsia => true,
+      TargetPlatform.linux ||
+      TargetPlatform.macOS ||
+      TargetPlatform.windows => false,
+    };
+
+/// The arrangement of keys a keyboard shows for a text input type.
+enum KeyboardLayout {
+  /// QWERTY letters with the type's extra keys in the bottom row.
+  letters,
+
+  /// Digits in a 3- or 4-column grid.
+  numberPad,
+
+  /// Digits and punctuation on full-width rows: the iOS `123` layer, which iOS
+  /// opens for types the number pad cannot serve.
+  symbols,
+}
+
+KeyboardLayout _layoutOf(GoldenKeyboardStyle style, TextInputType type) {
+  final ios = style == GoldenKeyboardStyle.ios;
+  if (type.index == TextInputType.phone.index) return KeyboardLayout.numberPad;
+  // The iOS number pad has no minus key, so a signed number gets the symbols.
+  if (type.index == TextInputType.number.index) {
+    return ios && (type.signed ?? false)
+        ? KeyboardLayout.symbols
+        : KeyboardLayout.numberPad;
+  }
+  if (type.index == TextInputType.datetime.index) {
+    return ios ? KeyboardLayout.symbols : KeyboardLayout.numberPad;
+  }
+
+  return KeyboardLayout.letters;
 }
 
 GoldenKeyboardStyle _styleOf(Device device) =>
@@ -55,18 +97,17 @@ GoldenKeyboardStyle _styleOf(Device device) =>
       TargetPlatform.windows => GoldenKeyboardStyle.android,
     };
 
-bool _isNumberPadType(TextInputType type) =>
-    type.index == TextInputType.number.index ||
-    type.index == TextInputType.phone.index;
-
 const double _iosSuggestionBar = 45;
 const double _iosRowPitch = 54;
 const double _androidSuggestionStrip = 48;
 const double _androidRowPitch = 56;
 const double _androidRowsPadding = 4;
 
-double _heightAboveBottomArea(GoldenKeyboardStyle style, TextInputType type) {
-  final numberPad = _isNumberPadType(type);
+double _heightAboveBottomArea(
+  GoldenKeyboardStyle style,
+  KeyboardLayout layout,
+) {
+  final numberPad = layout == KeyboardLayout.numberPad;
 
   return switch (style) {
     GoldenKeyboardStyle.ios =>
@@ -106,14 +147,21 @@ void paintKeyboard({
     area.bottom,
   );
 
-  switch ((keyboard.style, keyboard._isNumberPad)) {
-    case (GoldenKeyboardStyle.ios, false):
+  switch ((keyboard.style, keyboard.layout)) {
+    case (GoldenKeyboardStyle.ios, KeyboardLayout.letters):
       painter.iosLetters(keysArea, keyboard.type);
-    case (GoldenKeyboardStyle.ios, true):
+    case (GoldenKeyboardStyle.ios, KeyboardLayout.numberPad):
       painter.iosNumberPad(keysArea, keyboard.type);
-    case (GoldenKeyboardStyle.android, false):
+    case (GoldenKeyboardStyle.ios, KeyboardLayout.symbols):
+      painter.iosSymbols(keysArea);
+    case (GoldenKeyboardStyle.android, KeyboardLayout.letters):
       painter.androidLetters(keysArea, keyboard.type);
-    case (GoldenKeyboardStyle.android, true):
+    // Gboard has a number pad for every numeric type, so the symbols layout
+    // is never resolved for Android.
+    case (
+      GoldenKeyboardStyle.android,
+      KeyboardLayout.numberPad || KeyboardLayout.symbols,
+    ):
       painter.androidNumberPad(keysArea, keyboard.type);
   }
 
@@ -227,13 +275,6 @@ class _KeyboardPainter {
   // iOS ----------------------------------------------------------------------
 
   void iosLetters(Rect area, TextInputType type) {
-    _suggestionDividers(
-      Rect.fromLTWH(area.left, area.top, area.width, _iosSuggestionBar),
-    );
-
-    const margin = 3.0;
-    const gap = 6.0;
-    final unit = (area.width - 2 * margin - 9 * gap) / 10;
     final bottomRow = switch (type) {
       _ when type.index == TextInputType.emailAddress.index => [
         const _Key('@'),
@@ -244,9 +285,17 @@ class _KeyboardPainter {
         const _Key('/'),
         const _Key.stretch('.com'),
       ],
+      _ when type.index == TextInputType.twitter.index => [
+        const _Key('@'),
+        const _Key('#'),
+      ],
+      _ when type.index == TextInputType.webSearch.index => [const _Key('.')],
       _ => const <_Key>[],
     };
-    final rows = [
+    final actionKey = type.index == TextInputType.webSearch.index
+        ? const _Key('go', flex: 2.5, kind: _KeyKind.action)
+        : const _Key.icon(_Icon.enter, flex: 2.5, kind: _KeyKind.action);
+    _iosRows(area, [
       _letters(_letterRows[0]),
       _letters(_letterRows[1]),
       [
@@ -260,9 +309,41 @@ class _KeyboardPainter {
         const _Key('123', flex: 2.5, kind: _KeyKind.function),
         if (type.index != TextInputType.url.index) const _Key.stretch(null),
         ...bottomRow,
+        actionKey,
+      ],
+    ]);
+  }
+
+  /// The iOS `123` layer: digits, then punctuation, then more punctuation.
+  void iosSymbols(Rect area) {
+    _iosRows(area, [
+      _letters('1234567890'),
+      _letters('-/:;()\$&@"'),
+      [
+        const _Key('#+=', flex: 1.3, kind: _KeyKind.function),
+        const _Key.spacer(),
+        ..._letters(".,?!'"),
+        const _Key.spacer(),
+        const _Key.icon(_Icon.backspace, flex: 1.3),
+      ],
+      [
+        const _Key('ABC', flex: 2.5, kind: _KeyKind.function),
+        const _Key.stretch(null),
         const _Key.icon(_Icon.enter, flex: 2.5, kind: _KeyKind.action),
       ],
-    ];
+    ]);
+  }
+
+  /// Four rows of keys under the suggestion bar, as every full-width iOS
+  /// layout has them. The 10 keys of the first row set the unit width.
+  void _iosRows(Rect area, List<List<_Key>> rows) {
+    _suggestionDividers(
+      Rect.fromLTWH(area.left, area.top, area.width, _iosSuggestionBar),
+    );
+
+    const margin = 3.0;
+    const gap = 6.0;
+    final unit = (area.width - 2 * margin - 9 * gap) / 10;
 
     for (var i = 0; i < rows.length; i++) {
       final top = area.top + _iosSuggestionBar + i * _iosRowPitch + 6;
@@ -422,7 +503,11 @@ class _KeyboardPainter {
     const margin = 4.0;
     const gap = 6.0;
     final unit = (area.width - 2 * margin - 3 * gap) / 4;
-    final phone = type.index == TextInputType.phone.index;
+    final (leftKey, rightKey) = switch (type) {
+      _ when type.index == TextInputType.phone.index => ('*', '#'),
+      _ when type.index == TextInputType.datetime.index => ('/', ':'),
+      _ => (',', '.'),
+    };
     final rows = [
       [
         const _Key('1'),
@@ -443,9 +528,9 @@ class _KeyboardPainter {
         const _Key.icon(_Icon.backspace),
       ],
       [
-        _Key(phone ? '*' : ',', kind: _KeyKind.function),
+        _Key(leftKey, kind: _KeyKind.function),
         const _Key('0'),
-        _Key(phone ? '#' : '.', kind: _KeyKind.function),
+        _Key(rightKey, kind: _KeyKind.function),
         const _Key.icon(_Icon.enter, kind: _KeyKind.action),
       ],
     ];

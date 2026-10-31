@@ -16,7 +16,11 @@ void main() {
         (TextInputType.url, 'url'),
         (TextInputType.number, 'number'),
         (const TextInputType.numberWithOptions(decimal: true), 'decimal'),
+        (const TextInputType.numberWithOptions(signed: true), 'signed'),
         (TextInputType.phone, 'phone'),
+        (TextInputType.datetime, 'datetime'),
+        (TextInputType.webSearch, 'webSearch'),
+        (TextInputType.twitter, 'twitter'),
       ]) {
         for (final mode in [
           Brightness.light,

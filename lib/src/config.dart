@@ -59,6 +59,10 @@ GoldenTestNavigatorBuilder? goldenTestNavigatorBuilder;
 /// [Device.platform]. A test that sets its own `keyboard` turns the
 /// simulation off for that test, so the keyboard it sets is the one shown.
 ///
+/// As on a device, nothing appears for a field with [TextInputType.none],
+/// which has its own input UI, or on a device whose [Device.platform] is a
+/// desktop, where input comes from a hardware keyboard.
+///
 /// Set it to `false` to show a keyboard only in tests that set `keyboard`.
 bool goldenTestSimulateKeyboard = true;
 
