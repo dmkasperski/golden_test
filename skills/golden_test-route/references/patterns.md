@@ -495,8 +495,18 @@ goldenTest(
 );
 ```
 
-No field needs focus. The keyboard is reported as `viewInsets`, so the
-screen's own `Scaffold` decides whether to resize, exactly as on a device.
+No field needs focus: `keyboard:` shows one keyboard for the whole test and
+turns the focus-driven simulation off for it. The keyboard is reported as
+`viewInsets`, so the screen's own `Scaffold` decides whether to resize,
+exactly as on a device.
+
+Without `keyboard:`, the keyboard comes by itself: it appears when a field
+gains focus (`tester.tap` on it, `enterText`, `autofocus`) and matches that
+field's `keyboardType`, and it hides when the field loses focus. Use that for
+goldens of typing itself — a field with text, a validation error while
+editing, a screen that moves its buttons out of the keyboard's way — and
+never set `tester.view.viewInsets` by hand. `tester.testTextInput.isVisible`
+says whether the app has closed it.
 
 What each layout does with the keyboard up:
 

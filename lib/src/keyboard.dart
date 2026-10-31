@@ -11,7 +11,13 @@ enum GoldenKeyboardStyle {
   android,
 }
 
-/// A software keyboard shown over the bottom of the screen in a golden test.
+/// A software keyboard shown over the bottom of the screen for the whole of a
+/// golden test.
+///
+/// Without it, the keyboard appears by itself when a text field gains focus
+/// and follows the field's `keyboardType`, while `goldenTestSimulateKeyboard`
+/// is `true`. Setting it turns that simulation off for the test, so this
+/// keyboard is the one shown whatever the fields do.
 ///
 /// The keyboard is simulated, not opened: the view gets a bottom
 /// `viewInsets` of the keyboard's height, exactly as a device reports an open
