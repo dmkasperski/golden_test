@@ -4,7 +4,6 @@ import 'package:golden_test/src/device.dart';
 
 /// The look of the software keyboard drawn by [GoldenKeyboard].
 enum GoldenKeyboardStyle {
-  /// The iOS system keyboard.
   ios,
 
   /// Gboard, the default Android keyboard.
@@ -18,7 +17,9 @@ enum GoldenKeyboardStyle {
 /// keyboard, and the keyboard is painted into that area like the status bar.
 /// The widget under test lays out the way it would on a device, so a
 /// `Scaffold` with `resizeToAvoidBottomInset` shrinks its body and anything
-/// that does not fit overflows. Nothing needs to have focus.
+/// that does not fit overflows. Nothing needs to have focus. The keyboard
+/// takes the taps over its area, as on a device, so `tester.tap` on a control
+/// it covers does not reach the control.
 ///
 /// ```dart
 /// goldenTest(
@@ -59,6 +60,11 @@ class GoldenKeyboard {
   ///
   /// When `null`, it is the height of the platform's keyboard of [type] on a
   /// phone in portrait, including the device's bottom inset.
+  ///
+  /// The keys keep their size and sit on the bottom of the keyboard; the
+  /// suggestion bar above them takes up the difference. The height can be no
+  /// lower than the [style]'s number pad on the device, which has no
+  /// suggestion bar.
   final double? height;
 
   @override

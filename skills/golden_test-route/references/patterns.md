@@ -506,9 +506,11 @@ What each layout does with the keyboard up:
 | Scroll view, `resizeToAvoidBottomInset: false`, no bottom padding for the inset | Scrolls, but the end of the content stays under the keyboard. `expectAboveKeyboard` fails; the golden alone just shows a keyboard where the button should be |
 | Scroll view in a `Scaffold` that resizes, or padded by `MediaQuery.viewInsetsOf(context).bottom` | Passes |
 
-The keyboard is painted, not a widget, so it does not block hit testing:
-`tester.tap` on a button under it still succeeds. That is why the check is a
-rect comparison, not a tap.
+The keyboard takes the taps over its area, as on a device: `tester.tap` on a
+button under it does not reach the button, and `flutter_test` only prints a
+warning that the tap missed. A test that taps submit and then expects
+navigation fails, but for a reason that is easy to misread — the rect
+comparison says what is wrong.
 
 ## Feature flags, kill switches and experiments
 

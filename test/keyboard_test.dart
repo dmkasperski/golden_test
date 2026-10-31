@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_test/golden_test.dart';
+import 'package:golden_test/src/utils/keyboard_painter.dart';
 import 'package:material_ui/material_ui.dart';
 
 const _iphone = Device.iphone15Pro();
@@ -9,16 +10,22 @@ void main() {
   goldenTestDifferenceTolerance(0.05);
 
   group('keyboard', () {
-    for (final (device, style) in [(_iphone, 'iOS'), (_pixel, 'Android')]) {
-      for (final (type, typeName) in [
-        (TextInputType.text, 'text'),
-        (TextInputType.emailAddress, 'email'),
-        (TextInputType.url, 'url'),
-        (TextInputType.number, 'number'),
-        (const TextInputType.numberWithOptions(decimal: true), 'decimal'),
-        (TextInputType.phone, 'phone'),
-      ]) {
-        for (final mode in [
+    int submitted = 0;
+
+    for (final (Device device, String style) in <(Device, String)>[
+      (_iphone, 'iOS'),
+      (_pixel, 'Android'),
+    ]) {
+      for (final (TextInputType type, String typeName)
+          in <(TextInputType, String)>[
+            (TextInputType.text, 'text'),
+            (TextInputType.emailAddress, 'email'),
+            (TextInputType.url, 'url'),
+            (TextInputType.number, 'number'),
+            (const TextInputType.numberWithOptions(decimal: true), 'decimal'),
+            (TextInputType.phone, 'phone'),
+          ]) {
+        for (final Brightness mode in [
           Brightness.light,
           if (typeName == 'text' || typeName == 'number') Brightness.dark,
         ]) {
@@ -44,6 +51,24 @@ void main() {
     );
 
     goldenTest(
+      name: 'Keyboard iOS without a bottom inset',
+      supportedLocales: [const Locale('en')],
+      supportedThemes: [Brightness.light],
+      supportedDevices: [const Device.noInsets()],
+      keyboard: const GoldenKeyboard(style: GoldenKeyboardStyle.ios),
+      builder: (_) => const _Form(),
+    );
+
+    goldenTest(
+      name: 'Keyboard on a device without a platform',
+      supportedLocales: [const Locale('en')],
+      supportedThemes: [Brightness.light],
+      supportedDevices: [const Device.noInsets()],
+      keyboard: const GoldenKeyboard(),
+      builder: (_) => const _Form(),
+    );
+
+    goldenTest(
       name: 'Keyboard reported as view insets',
       supportedLocales: [const Locale('en')],
       supportedThemes: [Brightness.light],
@@ -51,7 +76,7 @@ void main() {
       keyboard: const GoldenKeyboard(),
       builder: (_) => const _Form(),
       action: (tester) async {
-        final context = tester.element(find.byType(_Form));
+        final BuildContext context = tester.element(find.byType(_Form));
         expect(MediaQuery.viewInsetsOf(context).bottom, 336);
         expect(MediaQuery.viewPaddingOf(context).bottom, 34);
         expect(MediaQuery.paddingOf(context).bottom, 0);
@@ -65,9 +90,12 @@ void main() {
       supportedThemes: [Brightness.light],
       supportedDevices: [_iphone],
       keyboard: const GoldenKeyboard(),
-      builder: (_) => const _Form(resizeToAvoidBottomInset: false),
+      builder: (_) =>
+          _Form(resizeToAvoidBottomInset: false, onSubmit: () => submitted++),
       action: (tester) async {
         expect(tester.getSize(find.byKey(_Form.body)).height, 852);
+        await tester.tap(find.byType(FilledButton), warnIfMissed: false);
+        expect(submitted, 0, reason: 'the keyboard covers the button');
       },
     );
 
@@ -82,10 +110,20 @@ void main() {
       ),
       builder: (_) => const _Form(),
       action: (tester) async {
-        final context = tester.element(find.byType(_Form));
+        final BuildContext context = tester.element(find.byType(_Form));
         expect(MediaQuery.viewInsetsOf(context).bottom, 300);
       },
     );
+
+    test('A height lower than the keys fails', () {
+      expect(
+        () => ResolvedKeyboard.of(
+          const GoldenKeyboard(style: GoldenKeyboardStyle.ios, height: 250),
+          _iphone,
+        ),
+        throwsAssertionError,
+      );
+    });
 
     goldenTest(
       name: 'No keyboard',
@@ -94,7 +132,7 @@ void main() {
       supportedDevices: [_iphone],
       builder: (_) => const _Form(),
       action: (tester) async {
-        final context = tester.element(find.byType(_Form));
+        final BuildContext context = tester.element(find.byType(_Form));
         expect(MediaQuery.viewInsetsOf(context).bottom, 0);
         expect(MediaQuery.paddingOf(context).bottom, 34);
         expect(tester.getSize(find.byKey(_Form.body)).height, 852);
@@ -104,11 +142,12 @@ void main() {
 }
 
 class _Form extends StatelessWidget {
-  const _Form({this.resizeToAvoidBottomInset = true});
+  const _Form({this.resizeToAvoidBottomInset = true, this.onSubmit});
 
-  static const body = Key('body');
+  static const Key body = Key('body');
 
   final bool resizeToAvoidBottomInset;
+  final VoidCallback? onSubmit;
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -124,7 +163,10 @@ class _Form extends StatelessWidget {
               decoration: InputDecoration(border: OutlineInputBorder()),
             ),
             const Spacer(),
-            FilledButton(onPressed: () {}, child: const SizedBox(height: 24)),
+            FilledButton(
+              onPressed: onSubmit ?? () {},
+              child: const SizedBox(height: 24),
+            ),
           ],
         ),
       ),

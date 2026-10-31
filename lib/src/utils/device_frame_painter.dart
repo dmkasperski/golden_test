@@ -41,7 +41,7 @@ class DeviceFramePainter extends BoxPainter {
       _drawStatusBar(canvas, size);
     }
 
-    final keyboard = this.keyboard;
+    final ResolvedKeyboard? keyboard = this.keyboard;
     if (keyboard != null) {
       paintKeyboard(
         canvas,

@@ -23,6 +23,14 @@ class ResolvedKeyboard {
       GoldenKeyboardStyle.ios => device.insets.bottom > 0 ? 75.0 : 0.0,
       GoldenKeyboardStyle.android => device.insets.bottom,
     };
+    assert(
+      keyboard.height == null ||
+          keyboard.height! >= _rowsHeight(style) + bottomArea,
+      'GoldenKeyboard.height ${keyboard.height} leaves no room for the keys '
+      'on ${device.name}: it must be at least '
+      '${_rowsHeight(style) + bottomArea}.',
+    );
+
     return ResolvedKeyboard._(
       style: style,
       type: keyboard.type,
@@ -61,16 +69,21 @@ const double _androidSuggestionStrip = 48;
 const double _androidRowPitch = 56;
 const double _androidRowsPadding = 4;
 
+/// Height of the four rows of keys, which sit on the bottom of the keys area
+/// whatever the keyboard's height.
+double _rowsHeight(GoldenKeyboardStyle style) => switch (style) {
+  GoldenKeyboardStyle.ios => 4 * _iosRowPitch,
+  GoldenKeyboardStyle.android => 4 * _androidRowPitch + 2 * _androidRowsPadding,
+};
+
 double _heightAboveBottomArea(GoldenKeyboardStyle style, TextInputType type) {
-  final numberPad = _isNumberPadType(type);
-  return switch (style) {
-    GoldenKeyboardStyle.ios =>
-      (numberPad ? 0 : _iosSuggestionBar) + 4 * _iosRowPitch,
-    GoldenKeyboardStyle.android =>
-      (numberPad ? 0 : _androidSuggestionStrip) +
-          4 * _androidRowPitch +
-          2 * _androidRowsPadding,
+  final bool numberPad = _isNumberPadType(type);
+  final double bar = switch (style) {
+    GoldenKeyboardStyle.ios => _iosSuggestionBar,
+    GoldenKeyboardStyle.android => _androidSuggestionStrip,
   };
+
+  return (numberPad ? 0 : bar) + _rowsHeight(style);
 }
 
 /// Paints [keyboard] into [area], the bottom of the screen.
@@ -221,8 +234,9 @@ class _KeyboardPainter {
   // iOS ----------------------------------------------------------------------
 
   void iosLetters(Rect area, TextInputType type) {
+    final double rowsTop = area.bottom - _rowsHeight(GoldenKeyboardStyle.ios);
     _suggestionDividers(
-      Rect.fromLTWH(area.left, area.top, area.width, _iosSuggestionBar),
+      Rect.fromLTRB(area.left, area.top, area.right, rowsTop),
     );
 
     const margin = 3.0;
@@ -259,12 +273,11 @@ class _KeyboardPainter {
     ];
 
     for (var i = 0; i < rows.length; i++) {
-      final top = area.top + _iosSuggestionBar + i * _iosRowPitch + 6;
       _row(
         rows[i],
         left: area.left + margin,
         right: area.right - margin,
-        top: top,
+        top: rowsTop + i * _iosRowPitch + 6,
         height: 42,
         unit: unit,
         gap: gap,
@@ -278,6 +291,7 @@ class _KeyboardPainter {
     const margin = 6.0;
     const gap = 6.0;
     final unit = (area.width - 2 * margin - 2 * gap) / 3;
+    final double rowsTop = area.bottom - _rowsHeight(GoldenKeyboardStyle.ios);
     final phone = type.index == TextInputType.phone.index;
     final rows = [
       [
@@ -312,7 +326,7 @@ class _KeyboardPainter {
         rows[i],
         left: area.left + margin,
         right: area.right - margin,
-        top: area.top + i * _iosRowPitch + 4,
+        top: rowsTop + i * _iosRowPitch + 4,
         height: 46,
         unit: unit,
         gap: gap,
@@ -353,6 +367,7 @@ class _KeyboardPainter {
   }
 
   void _suggestionDividers(Rect bar) {
+    if (bar.height < _iosSuggestionBar / 2) return;
     final paint = Paint()..color = colors.functionKey;
     for (final fraction in [1 / 3, 2 / 3]) {
       final x = _snap(bar.left + bar.width * fraction);
@@ -366,9 +381,9 @@ class _KeyboardPainter {
   // Android ------------------------------------------------------------------
 
   void androidLetters(Rect area, TextInputType type) {
-    _suggestionStrip(
-      Rect.fromLTWH(area.left, area.top, area.width, _androidSuggestionStrip),
-    );
+    final double rowsTop =
+        area.bottom - _rowsHeight(GoldenKeyboardStyle.android);
+    _suggestionStrip(Rect.fromLTRB(area.left, area.top, area.right, rowsTop));
 
     const margin = 4.0;
     const gap = 6.0;
@@ -397,12 +412,7 @@ class _KeyboardPainter {
         rows[i],
         left: area.left + margin,
         right: area.right - margin,
-        top:
-            area.top +
-            _androidSuggestionStrip +
-            _androidRowsPadding +
-            i * _androidRowPitch +
-            5,
+        top: rowsTop + _androidRowsPadding + i * _androidRowPitch + 5,
         height: 46,
         unit: unit,
         gap: gap,
@@ -416,6 +426,8 @@ class _KeyboardPainter {
     const margin = 4.0;
     const gap = 6.0;
     final unit = (area.width - 2 * margin - 3 * gap) / 4;
+    final double rowsTop =
+        area.bottom - _rowsHeight(GoldenKeyboardStyle.android);
     final phone = type.index == TextInputType.phone.index;
     final rows = [
       [
@@ -449,7 +461,7 @@ class _KeyboardPainter {
         rows[i],
         left: area.left + margin,
         right: area.right - margin,
-        top: area.top + _androidRowsPadding + i * _androidRowPitch + 5,
+        top: rowsTop + _androidRowsPadding + i * _androidRowPitch + 5,
         height: 46,
         unit: unit,
         gap: gap,
@@ -460,6 +472,7 @@ class _KeyboardPainter {
   }
 
   void _suggestionStrip(Rect strip) {
+    if (strip.height < _androidSuggestionStrip / 2) return;
     final paint = Paint()..color = colors.label;
     final center = Offset(strip.left + 28, strip.center.dy);
     for (final dx in [-4.5, 1.5]) {
