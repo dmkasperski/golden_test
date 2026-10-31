@@ -44,16 +44,16 @@ class DeviceFramePainter extends BoxPainter {
     final keyboard = this.keyboard;
     if (keyboard != null) {
       paintKeyboard(
-        canvas,
-        Rect.fromLTRB(
+        canvas: canvas,
+        area: Rect.fromLTRB(
           0,
           size.height - keyboard.height,
           size.width,
           size.height,
         ),
-        keyboard,
-        brightness,
-        configuration.devicePixelRatio ?? 1,
+        keyboard: keyboard,
+        brightness: brightness,
+        devicePixelRatio: configuration.devicePixelRatio ?? 1,
       );
     }
 

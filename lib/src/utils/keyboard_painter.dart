@@ -23,6 +23,7 @@ class ResolvedKeyboard {
       GoldenKeyboardStyle.ios => device.insets.bottom > 0 ? 75.0 : 0.0,
       GoldenKeyboardStyle.android => device.insets.bottom,
     };
+
     return ResolvedKeyboard._(
       style: style,
       type: keyboard.type,
@@ -48,7 +49,10 @@ class ResolvedKeyboard {
 GoldenKeyboardStyle _styleOf(Device device) =>
     switch (device.platform ?? defaultTargetPlatform) {
       TargetPlatform.iOS || TargetPlatform.macOS => GoldenKeyboardStyle.ios,
-      _ => GoldenKeyboardStyle.android,
+      TargetPlatform.android ||
+      TargetPlatform.fuchsia ||
+      TargetPlatform.linux ||
+      TargetPlatform.windows => GoldenKeyboardStyle.android,
     };
 
 bool _isNumberPadType(TextInputType type) =>
@@ -63,6 +67,7 @@ const double _androidRowsPadding = 4;
 
 double _heightAboveBottomArea(GoldenKeyboardStyle style, TextInputType type) {
   final numberPad = _isNumberPadType(type);
+
   return switch (style) {
     GoldenKeyboardStyle.ios =>
       (numberPad ? 0 : _iosSuggestionBar) + 4 * _iosRowPitch,
@@ -77,13 +82,13 @@ double _heightAboveBottomArea(GoldenKeyboardStyle style, TextInputType type) {
 ///
 /// Every edge is snapped to a physical pixel, so keys do not straddle pixel
 /// boundaries and only rounded corners, icons and labels are anti-aliased.
-void paintKeyboard(
-  Canvas canvas,
-  Rect area,
-  ResolvedKeyboard keyboard,
-  Brightness brightness,
-  double devicePixelRatio,
-) {
+void paintKeyboard({
+  required Canvas canvas,
+  required Rect area,
+  required ResolvedKeyboard keyboard,
+  required Brightness brightness,
+  required double devicePixelRatio,
+}) {
   final colors = _KeyboardColors.of(keyboard.style, brightness);
   final painter = _KeyboardPainter(canvas, colors, devicePixelRatio);
   canvas.drawRect(area, Paint()..color = colors.background);
@@ -135,6 +140,7 @@ class _KeyboardColors {
 
   factory _KeyboardColors.of(GoldenKeyboardStyle style, Brightness brightness) {
     final light = brightness == Brightness.light;
+
     return switch (style) {
       GoldenKeyboardStyle.ios => _KeyboardColors(
         background: Color(light ? 0xFFD1D3D9 : 0xFF2C2C2E),
@@ -476,12 +482,12 @@ class _KeyboardPainter {
   }
 
   void androidNavigationArea(Rect area) {
-    final c = Offset(area.left + 36, area.top + area.height / 2 - 2);
+    final center = Offset(area.left + 36, area.top + area.height / 2 - 2);
     canvas.drawPath(
       Path()
-        ..moveTo(c.dx - 6, c.dy - 3)
-        ..lineTo(c.dx, c.dy + 3)
-        ..lineTo(c.dx + 6, c.dy - 3),
+        ..moveTo(center.dx - 6, center.dy - 3)
+        ..lineTo(center.dx, center.dy + 3)
+        ..lineTo(center.dx + 6, center.dy - 3),
       _iconPaint(colors.label),
     );
   }
@@ -512,21 +518,26 @@ class _KeyboardPainter {
     for (final key in keys) {
       final width = key.stretch ? stretchWidth : fixedWidth(key);
       _key(
-        key,
-        Rect.fromLTRB(
+        key: key,
+        rect: Rect.fromLTRB(
           _snap(x),
           _snap(top),
           _snap(x + width),
           _snap(top + height),
         ),
-        radius,
-        fontSize,
+        radius: radius,
+        fontSize: fontSize,
       );
       x += width + gap;
     }
   }
 
-  void _key(_Key key, Rect rect, double radius, double fontSize) {
+  void _key({
+    required _Key key,
+    required Rect rect,
+    required double radius,
+    required double fontSize,
+  }) {
     final fill = switch (key.kind) {
       _KeyKind.letter => colors.key,
       _KeyKind.function => colors.functionKey,
@@ -558,10 +569,19 @@ class _KeyboardPainter {
     if (label == null) return;
 
     final isWord = label.length > 1 && key.sublabel == null;
-    final main = _text(label, isWord ? 15 : fontSize, content);
+    final main = _text(
+      text: label,
+      fontSize: isWord ? 15 : fontSize,
+      color: content,
+    );
     final sub = key.sublabel == null || key.sublabel!.isEmpty
         ? null
-        : _text(key.sublabel!, 10, content, letterSpacing: 1.5);
+        : _text(
+            text: key.sublabel!,
+            fontSize: 10,
+            color: content,
+            letterSpacing: 1.5,
+          );
     final subHeight = key.sublabel == null ? 0.0 : 12.0;
     final top = rect.center.dy - (main.height + subHeight) / 2;
 
@@ -578,10 +598,10 @@ class _KeyboardPainter {
     );
   }
 
-  TextPainter _text(
-    String text,
-    double fontSize,
-    Color color, {
+  TextPainter _text({
+    required String text,
+    required double fontSize,
+    required Color color,
     double? letterSpacing,
   }) => TextPainter(
     text: TextSpan(
@@ -604,44 +624,44 @@ class _KeyboardPainter {
     ..strokeCap = StrokeCap.round
     ..strokeJoin = StrokeJoin.round;
 
-  void _icon(_Icon icon, Offset c, Color color) {
+  void _icon(_Icon icon, Offset center, Color color) {
     final path = switch (icon) {
       _Icon.shift =>
         Path()
-          ..moveTo(c.dx, c.dy - 8)
-          ..lineTo(c.dx + 8, c.dy)
-          ..lineTo(c.dx + 4, c.dy)
-          ..lineTo(c.dx + 4, c.dy + 7)
-          ..lineTo(c.dx - 4, c.dy + 7)
-          ..lineTo(c.dx - 4, c.dy)
-          ..lineTo(c.dx - 8, c.dy)
+          ..moveTo(center.dx, center.dy - 8)
+          ..lineTo(center.dx + 8, center.dy)
+          ..lineTo(center.dx + 4, center.dy)
+          ..lineTo(center.dx + 4, center.dy + 7)
+          ..lineTo(center.dx - 4, center.dy + 7)
+          ..lineTo(center.dx - 4, center.dy)
+          ..lineTo(center.dx - 8, center.dy)
           ..close(),
       _Icon.backspace =>
         Path()
-          ..moveTo(c.dx - 10, c.dy)
-          ..lineTo(c.dx - 4, c.dy - 7)
-          ..lineTo(c.dx + 10, c.dy - 7)
-          ..lineTo(c.dx + 10, c.dy + 7)
-          ..lineTo(c.dx - 4, c.dy + 7)
+          ..moveTo(center.dx - 10, center.dy)
+          ..lineTo(center.dx - 4, center.dy - 7)
+          ..lineTo(center.dx + 10, center.dy - 7)
+          ..lineTo(center.dx + 10, center.dy + 7)
+          ..lineTo(center.dx - 4, center.dy + 7)
           ..close()
-          ..moveTo(c.dx, c.dy - 3)
-          ..lineTo(c.dx + 6, c.dy + 3)
-          ..moveTo(c.dx, c.dy + 3)
-          ..lineTo(c.dx + 6, c.dy - 3),
+          ..moveTo(center.dx, center.dy - 3)
+          ..lineTo(center.dx + 6, center.dy + 3)
+          ..moveTo(center.dx, center.dy + 3)
+          ..lineTo(center.dx + 6, center.dy - 3),
       _Icon.enter =>
         Path()
-          ..moveTo(c.dx + 8, c.dy - 7)
-          ..lineTo(c.dx + 8, c.dy + 2)
-          ..lineTo(c.dx - 8, c.dy + 2)
-          ..moveTo(c.dx - 4, c.dy - 2)
-          ..lineTo(c.dx - 8, c.dy + 2)
-          ..lineTo(c.dx - 4, c.dy + 6),
+          ..moveTo(center.dx + 8, center.dy - 7)
+          ..lineTo(center.dx + 8, center.dy + 2)
+          ..lineTo(center.dx - 8, center.dy + 2)
+          ..moveTo(center.dx - 4, center.dy - 2)
+          ..lineTo(center.dx - 8, center.dy + 2)
+          ..lineTo(center.dx - 4, center.dy + 6),
       _Icon.space =>
         Path()
-          ..moveTo(c.dx - 8, c.dy - 2)
-          ..lineTo(c.dx - 8, c.dy + 3)
-          ..lineTo(c.dx + 8, c.dy + 3)
-          ..lineTo(c.dx + 8, c.dy - 2),
+          ..moveTo(center.dx - 8, center.dy - 2)
+          ..lineTo(center.dx - 8, center.dy + 3)
+          ..lineTo(center.dx + 8, center.dy + 3)
+          ..lineTo(center.dx + 8, center.dy - 2),
     };
     canvas.drawPath(path, _iconPaint(color));
   }
