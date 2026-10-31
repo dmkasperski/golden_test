@@ -18,20 +18,26 @@ class ResolvedKeyboard {
 
   factory ResolvedKeyboard.of(GoldenKeyboard keyboard, Device device) {
     final style = keyboard.style ?? _styleOf(device);
-    final layout = _layoutOf(style, keyboard.type);
+    final KeyboardLayout layout = _layoutOf(
+      style: style,
+      type: keyboard.type,
+    );
     final bottomArea = switch (style) {
       // An iPhone without a home button keeps a row for the globe and
       // dictation keys below the letters, over the home indicator.
       GoldenKeyboardStyle.ios => device.insets.bottom > 0 ? 75.0 : 0.0,
       GoldenKeyboardStyle.android => device.insets.bottom,
     };
+    final double keysHeight = _heightAboveBottomArea(
+      style: style,
+      layout: layout,
+    );
 
     return ResolvedKeyboard._(
       style: style,
       type: keyboard.type,
       layout: layout,
-      height:
-          keyboard.height ?? _heightAboveBottomArea(style, layout) + bottomArea,
+      height: keyboard.height ?? keysHeight + bottomArea,
       bottomArea: bottomArea,
     );
   }
@@ -72,8 +78,11 @@ enum KeyboardLayout {
   symbols,
 }
 
-KeyboardLayout _layoutOf(GoldenKeyboardStyle style, TextInputType type) {
-  final ios = style == GoldenKeyboardStyle.ios;
+KeyboardLayout _layoutOf({
+  required GoldenKeyboardStyle style,
+  required TextInputType type,
+}) {
+  final bool ios = style == GoldenKeyboardStyle.ios;
   if (type.index == TextInputType.phone.index) return KeyboardLayout.numberPad;
   // The iOS number pad has no minus key, so a signed number gets the symbols.
   if (type.index == TextInputType.number.index) {
@@ -103,11 +112,11 @@ const double _androidSuggestionStrip = 48;
 const double _androidRowPitch = 56;
 const double _androidRowsPadding = 4;
 
-double _heightAboveBottomArea(
-  GoldenKeyboardStyle style,
-  KeyboardLayout layout,
-) {
-  final numberPad = layout == KeyboardLayout.numberPad;
+double _heightAboveBottomArea({
+  required GoldenKeyboardStyle style,
+  required KeyboardLayout layout,
+}) {
+  final bool numberPad = layout == KeyboardLayout.numberPad;
 
   return switch (style) {
     GoldenKeyboardStyle.ios =>
@@ -292,51 +301,60 @@ class _KeyboardPainter {
       _ when type.index == TextInputType.webSearch.index => [const _Key('.')],
       _ => const <_Key>[],
     };
-    final actionKey = type.index == TextInputType.webSearch.index
+    final _Key actionKey = type.index == TextInputType.webSearch.index
         ? const _Key('go', flex: 2.5, kind: _KeyKind.action)
         : const _Key.icon(_Icon.enter, flex: 2.5, kind: _KeyKind.action);
-    _iosRows(area, [
-      _letters(_letterRows[0]),
-      _letters(_letterRows[1]),
-      [
-        const _Key.icon(_Icon.shift, flex: 1.3),
-        const _Key.spacer(),
-        ..._letters(_letterRows[2]),
-        const _Key.spacer(),
-        const _Key.icon(_Icon.backspace, flex: 1.3),
+    _iosRows(
+      area: area,
+      rows: [
+        _letters(_letterRows[0]),
+        _letters(_letterRows[1]),
+        [
+          const _Key.icon(_Icon.shift, flex: 1.3),
+          const _Key.spacer(),
+          ..._letters(_letterRows[2]),
+          const _Key.spacer(),
+          const _Key.icon(_Icon.backspace, flex: 1.3),
+        ],
+        [
+          const _Key('123', flex: 2.5, kind: _KeyKind.function),
+          if (type.index != TextInputType.url.index) const _Key.stretch(null),
+          ...bottomRow,
+          actionKey,
+        ],
       ],
-      [
-        const _Key('123', flex: 2.5, kind: _KeyKind.function),
-        if (type.index != TextInputType.url.index) const _Key.stretch(null),
-        ...bottomRow,
-        actionKey,
-      ],
-    ]);
+    );
   }
 
   /// The iOS `123` layer: digits, then punctuation, then more punctuation.
   void iosSymbols(Rect area) {
-    _iosRows(area, [
-      _letters('1234567890'),
-      _letters('-/:;()\$&@"'),
-      [
-        const _Key('#+=', flex: 1.3, kind: _KeyKind.function),
-        const _Key.spacer(),
-        ..._letters(".,?!'"),
-        const _Key.spacer(),
-        const _Key.icon(_Icon.backspace, flex: 1.3),
+    _iosRows(
+      area: area,
+      rows: [
+        _letters('1234567890'),
+        _letters('-/:;()\$&@"'),
+        [
+          const _Key('#+=', flex: 1.3, kind: _KeyKind.function),
+          const _Key.spacer(),
+          ..._letters(".,?!'"),
+          const _Key.spacer(),
+          const _Key.icon(_Icon.backspace, flex: 1.3),
+        ],
+        [
+          const _Key('ABC', flex: 2.5, kind: _KeyKind.function),
+          const _Key.stretch(null),
+          const _Key.icon(_Icon.enter, flex: 2.5, kind: _KeyKind.action),
+        ],
       ],
-      [
-        const _Key('ABC', flex: 2.5, kind: _KeyKind.function),
-        const _Key.stretch(null),
-        const _Key.icon(_Icon.enter, flex: 2.5, kind: _KeyKind.action),
-      ],
-    ]);
+    );
   }
 
   /// Four rows of keys under the suggestion bar, as every full-width iOS
   /// layout has them. The 10 keys of the first row set the unit width.
-  void _iosRows(Rect area, List<List<_Key>> rows) {
+  void _iosRows({
+    required Rect area,
+    required List<List<_Key>> rows,
+  }) {
     _suggestionDividers(
       Rect.fromLTWH(area.left, area.top, area.width, _iosSuggestionBar),
     );
@@ -567,7 +585,10 @@ class _KeyboardPainter {
   }
 
   void androidNavigationArea(Rect area) {
-    final center = Offset(area.left + 36, area.top + area.height / 2 - 2);
+    final Offset center = Offset(
+      area.left + 36,
+      area.top + area.height / 2 - 2,
+    );
     canvas.drawPath(
       Path()
         ..moveTo(center.dx - 6, center.dy - 3)
@@ -646,7 +667,11 @@ class _KeyboardPainter {
     }
 
     if (key.icon != null) {
-      _icon(key.icon!, rect.center, content);
+      _icon(
+        icon: key.icon!,
+        center: rect.center,
+        color: content,
+      );
       return;
     }
 
@@ -654,7 +679,7 @@ class _KeyboardPainter {
     if (label == null) return;
 
     final isWord = label.length > 1 && key.sublabel == null;
-    final main = _text(
+    final TextPainter main = _text(
       text: label,
       fontSize: isWord ? 15 : fontSize,
       color: content,
@@ -709,7 +734,11 @@ class _KeyboardPainter {
     ..strokeCap = StrokeCap.round
     ..strokeJoin = StrokeJoin.round;
 
-  void _icon(_Icon icon, Offset center, Color color) {
+  void _icon({
+    required _Icon icon,
+    required Offset center,
+    required Color color,
+  }) {
     final path = switch (icon) {
       _Icon.shift =>
         Path()

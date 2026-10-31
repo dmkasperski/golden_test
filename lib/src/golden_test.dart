@@ -183,7 +183,10 @@ void goldenTest({
               tester.platformDispatcher.platformBrightnessTestValue = mode;
               tester.platformDispatcher.textScaleFactorTestValue = scale;
               debugDisableShadows = false;
-              _setupSize(device, tester);
+              _setupSize(
+                device: device,
+                tester: tester,
+              );
               final ResolvedKeyboard? fixedKeyboard = keyboard == null
                   ? null
                   : ResolvedKeyboard.of(keyboard, device);
@@ -438,7 +441,10 @@ Widget _themedWidget({
 
 /// Sets size of test device. The keyboard, which changes `padding` and
 /// `viewInsets`, is applied separately with [setKeyboardInsets].
-void _setupSize(Device device, WidgetTester tester) {
+void _setupSize({
+  required Device device,
+  required WidgetTester tester,
+}) {
   final ratio = device.devicePixelRatio;
   tester.view.physicalSize = Size(device.width * ratio, device.height * ratio);
   tester.view.devicePixelRatio = ratio;

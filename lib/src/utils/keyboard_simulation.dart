@@ -37,12 +37,12 @@ void setKeyboardInsets({
 /// device frame to paint. Every message is forwarded to the handler
 /// `flutter_test` has for the channel, so `enterText` keeps working.
 class KeyboardSimulation {
-  KeyboardSimulation._(
-    this._tester,
-    this._device,
-    this._messenger,
-    this._previousHandler,
-  );
+  KeyboardSimulation._({
+    required this._tester,
+    required this._device,
+    required this._messenger,
+    required this._previousHandler,
+  });
 
   /// Installs the simulation for the current test. Call [dispose] when the
   /// test ends, so the next test starts from the messenger it had.
@@ -53,10 +53,10 @@ class KeyboardSimulation {
     final TestDefaultBinaryMessenger messenger =
         tester.binding.defaultBinaryMessenger;
     final KeyboardSimulation simulation = KeyboardSimulation._(
-      tester,
-      device,
-      messenger,
-      messenger.allMessagesHandler,
+      tester: tester,
+      device: device,
+      messenger: messenger,
+      previousHandler: messenger.allMessagesHandler,
     );
     messenger.allMessagesHandler = simulation._handleMessage;
 
