@@ -1,3 +1,8 @@
+## 2.1.1
+
+### Fixes
+- **Failure images no longer overwrite each other across variants** — without `goldenTestDifferenceTolerance`, Flutter's own comparator was used. It writes every failure to one `failures/` folder next to the test file, named after the golden file only. All locales, themes, devices and text scales of a test share that name, so each failing variant overwrote the previous one and only the last one was left. `goldenTest` now uses the package comparator with a tolerance of 0 unless the project set its own comparator, so failure images always land next to each variant's golden file, e.g. `goldens/en/light/failures/`. `goldenTestDifferenceTolerance` still sets the tolerance.
+
 ## 2.1.0
 
 ### New features
