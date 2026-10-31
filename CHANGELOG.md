@@ -1,3 +1,9 @@
+## 2.2.0
+
+### New features
+- **Keyboard**: `goldenTest` takes a `keyboard`, which shows the software keyboard over the bottom of the screen, so a golden captures how a screen lays out while someone is typing. The view reports it as a bottom `viewInsets`, as a device does, so a `Scaffold` with `resizeToAvoidBottomInset` shrinks its body, one without it is covered, and content that no longer fits overflows. It takes the taps over its area, as on a device. `GoldenKeyboard` picks the `TextInputType` (letters, email, URL, number pad, phone pad), the style (`GoldenKeyboardStyle.ios` or `.android`) and optionally the height. See [README § Keyboard](README.md#keyboard).
+- **`Device.platform`**: devices carry an optional `TargetPlatform`, which picks the keyboard drawn when `GoldenKeyboard` has no style of its own. `Device.iphone15Pro()` and `Device.ipadPro12()` are iOS, `Device.pixel9ProXL()` is Android. It does not change the platform the widget under test is built for.
+
 ## 2.1.0
 
 ### New features

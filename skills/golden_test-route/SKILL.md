@@ -138,6 +138,13 @@ a quota — a static settings screen needs far less than a checkout flow.
       changes this screen, against a baseline (see below). Not a matrix
 - [ ] **Form edge cases** — invalid input, boundary-length input, an empty
       required field
+- [ ] **Keyboard open** — **every screen with a text field.** Two goldens
+      with `keyboard:`: the keyboard over the screen as it opens, and the
+      same screen scrolled to the bottom, asserting that the last control
+      ends above the keyboard. The second is the one that matters: a screen
+      that cannot scroll overflows, and one that scrolls *under* the keyboard
+      hides its submit button — which the image alone does not flag, so the
+      assertion has to (`references/patterns.md`)
 - [ ] **Scrolled to bottom** — on a short device (§5). For *content* coverage prefer a tall device (above); keep a scrolled golden for what scrolling itself changes — a collapsing header, a sticky bar, a trailing spinner
 - [ ] **Pushed-route chrome** — if a back arrow or close affordance appears
       only when `Navigator.canPop(context)` is true, wrap in

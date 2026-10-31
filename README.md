@@ -207,6 +207,8 @@ The following devices are configured for testing, but you can always create your
     Device.browser() - simulates a generic web browser
 ```
 
+The iPhone, iPad and Pixel presets set `platform`, which picks the [keyboard](#keyboard) they draw. A custom `Device` can set it too.
+
 <a name="localized-goldens"></a>
 ## Localized Goldens
 Golden tests support multiple locales to verify the app's appearance and behavior across different languages. The list of supported locales and localization delegates can be modified based on the app's specific needs.
@@ -343,6 +345,30 @@ goldenTest(
   ],
 );
 ```
+
+<a name="keyboard"></a>
+## Keyboard
+`keyboard` shows the software keyboard over the bottom of the screen, to check how a screen lays out while someone is typing: whether the submit button stays visible, whether the focused field scrolls into view, whether anything overflows.
+
+```dart
+goldenTest(
+  name: 'SignIn keyboard',
+  builder: (_) => const SignInScreen(),
+  keyboard: const GoldenKeyboard(type: TextInputType.emailAddress),
+);
+```
+
+The keyboard is simulated, not opened, so no field needs focus. The view reports it as a bottom `viewInsets`, the way a device reports an open keyboard, and the keyboard is drawn into that area like the status bar. Everything else follows from Flutter's own handling of the inset: a `Scaffold` with `resizeToAvoidBottomInset` shrinks its body, one without it is covered, and content that no longer fits overflows and fails the test. `MediaQuery.paddingOf(context).bottom` drops to `0`, since the keyboard covers the bottom safe area. The keyboard takes the taps over its area, as on a device, so `tester.tap` on a control it covers does not reach the control.
+
+| iOS, `emailAddress` | Android, `number` |
+| ------------------- | ----------------- |
+| <img src="https://raw.githubusercontent.com/dmkasperski/golden_test/master/doc/screenshots/keyboard_ios_email.png" width="200"> | <img src="https://raw.githubusercontent.com/dmkasperski/golden_test/master/doc/screenshots/keyboard_android_number.png" width="200"> |
+
+- `style`: `GoldenKeyboardStyle.ios` or `.android`. Leave it out and it follows the device's `platform`, so a test over `Device.iphone15Pro()` and `Device.pixel9ProXL()` draws each its own keyboard. A device without a platform falls back to `defaultTargetPlatform`.
+- `type`: the `TextInputType` the field requests. `number` and `phone` draw a number pad (`numberWithOptions(decimal: true)` adds the decimal key on iOS), `emailAddress` and `url` add their own keys, and every other type draws the letter layout.
+- `height`: overrides the keyboard's height in logical pixels, measured from the bottom of the screen. By default it is the height of that keyboard on a phone in portrait, including the device's bottom inset. The keys keep their size at the bottom and the suggestion bar takes up the difference, so the height can be no lower than that style's number pad on the device.
+
+The keys are the English QWERTY layout whatever the test's locale, so a keyboard golden changes only when the screen does. The layouts are those of a phone; on a tablet preset the keys stretch to its width.
 
 <a name="global-config"></a>
 ## Global Setup Callback
