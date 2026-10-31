@@ -11,49 +11,100 @@ class ResolvedKeyboard {
   const ResolvedKeyboard._({
     required this.style,
     required this.type,
+    required this.layout,
     required this.height,
     required this.bottomArea,
   });
 
   factory ResolvedKeyboard.of(GoldenKeyboard keyboard, Device device) {
     final style = keyboard.style ?? _styleOf(device);
+    final KeyboardLayout layout = _layoutOf(
+      style: style,
+      type: keyboard.type,
+    );
     final bottomArea = switch (style) {
       // An iPhone without a home button keeps a row for the globe and
       // dictation keys below the letters, over the home indicator.
       GoldenKeyboardStyle.ios => device.insets.bottom > 0 ? 75.0 : 0.0,
       GoldenKeyboardStyle.android => device.insets.bottom,
     };
+    final double keysHeight = _heightAboveBottomArea(
+      style: style,
+      layout: layout,
+    );
+
     return ResolvedKeyboard._(
       style: style,
       type: keyboard.type,
-      height:
-          keyboard.height ??
-          _heightAboveBottomArea(style, keyboard.type) + bottomArea,
+      layout: layout,
+      height: keyboard.height ?? keysHeight + bottomArea,
       bottomArea: bottomArea,
     );
   }
 
   final GoldenKeyboardStyle style;
   final TextInputType type;
+  final KeyboardLayout layout;
 
   /// Height from the bottom edge of the screen, in logical pixels.
   final double height;
 
   /// Height of the area below the keys, inside [height].
   final double bottomArea;
+}
 
-  bool get _isNumberPad => _isNumberPadType(type);
+/// Whether [device] shows a software keyboard at all. Desktop platforms take
+/// input from a hardware keyboard, so a focused field opens nothing there.
+bool hasSoftwareKeyboard(Device device) =>
+    switch (device.platform ?? defaultTargetPlatform) {
+      TargetPlatform.android ||
+      TargetPlatform.iOS ||
+      TargetPlatform.fuchsia => true,
+      TargetPlatform.linux ||
+      TargetPlatform.macOS ||
+      TargetPlatform.windows => false,
+    };
+
+/// The arrangement of keys a keyboard shows for a text input type.
+enum KeyboardLayout {
+  /// QWERTY letters with the type's extra keys in the bottom row.
+  letters,
+
+  /// Digits in a 3- or 4-column grid.
+  numberPad,
+
+  /// Digits and punctuation on full-width rows: the iOS `123` layer, which iOS
+  /// opens for types the number pad cannot serve.
+  symbols,
+}
+
+KeyboardLayout _layoutOf({
+  required GoldenKeyboardStyle style,
+  required TextInputType type,
+}) {
+  final bool ios = style == GoldenKeyboardStyle.ios;
+  if (type.index == TextInputType.phone.index) return KeyboardLayout.numberPad;
+  // The iOS number pad has no minus key, so a signed number gets the symbols.
+  if (type.index == TextInputType.number.index) {
+    return ios && (type.signed ?? false)
+        ? KeyboardLayout.symbols
+        : KeyboardLayout.numberPad;
+  }
+  if (type.index == TextInputType.datetime.index) {
+    return ios ? KeyboardLayout.symbols : KeyboardLayout.numberPad;
+  }
+
+  return KeyboardLayout.letters;
 }
 
 GoldenKeyboardStyle _styleOf(Device device) =>
     switch (device.platform ?? defaultTargetPlatform) {
       TargetPlatform.iOS || TargetPlatform.macOS => GoldenKeyboardStyle.ios,
-      _ => GoldenKeyboardStyle.android,
+      TargetPlatform.android ||
+      TargetPlatform.fuchsia ||
+      TargetPlatform.linux ||
+      TargetPlatform.windows => GoldenKeyboardStyle.android,
     };
-
-bool _isNumberPadType(TextInputType type) =>
-    type.index == TextInputType.number.index ||
-    type.index == TextInputType.phone.index;
 
 const double _iosSuggestionBar = 45;
 const double _iosRowPitch = 54;
@@ -61,8 +112,12 @@ const double _androidSuggestionStrip = 48;
 const double _androidRowPitch = 56;
 const double _androidRowsPadding = 4;
 
-double _heightAboveBottomArea(GoldenKeyboardStyle style, TextInputType type) {
-  final numberPad = _isNumberPadType(type);
+double _heightAboveBottomArea({
+  required GoldenKeyboardStyle style,
+  required KeyboardLayout layout,
+}) {
+  final bool numberPad = layout == KeyboardLayout.numberPad;
+
   return switch (style) {
     GoldenKeyboardStyle.ios =>
       (numberPad ? 0 : _iosSuggestionBar) + 4 * _iosRowPitch,
@@ -77,13 +132,13 @@ double _heightAboveBottomArea(GoldenKeyboardStyle style, TextInputType type) {
 ///
 /// Every edge is snapped to a physical pixel, so keys do not straddle pixel
 /// boundaries and only rounded corners, icons and labels are anti-aliased.
-void paintKeyboard(
-  Canvas canvas,
-  Rect area,
-  ResolvedKeyboard keyboard,
-  Brightness brightness,
-  double devicePixelRatio,
-) {
+void paintKeyboard({
+  required Canvas canvas,
+  required Rect area,
+  required ResolvedKeyboard keyboard,
+  required Brightness brightness,
+  required double devicePixelRatio,
+}) {
   final colors = _KeyboardColors.of(keyboard.style, brightness);
   final painter = _KeyboardPainter(canvas, colors, devicePixelRatio);
   canvas.drawRect(area, Paint()..color = colors.background);
@@ -101,14 +156,21 @@ void paintKeyboard(
     area.bottom,
   );
 
-  switch ((keyboard.style, keyboard._isNumberPad)) {
-    case (GoldenKeyboardStyle.ios, false):
+  switch ((keyboard.style, keyboard.layout)) {
+    case (GoldenKeyboardStyle.ios, KeyboardLayout.letters):
       painter.iosLetters(keysArea, keyboard.type);
-    case (GoldenKeyboardStyle.ios, true):
+    case (GoldenKeyboardStyle.ios, KeyboardLayout.numberPad):
       painter.iosNumberPad(keysArea, keyboard.type);
-    case (GoldenKeyboardStyle.android, false):
+    case (GoldenKeyboardStyle.ios, KeyboardLayout.symbols):
+      painter.iosSymbols(keysArea);
+    case (GoldenKeyboardStyle.android, KeyboardLayout.letters):
       painter.androidLetters(keysArea, keyboard.type);
-    case (GoldenKeyboardStyle.android, true):
+    // Gboard has a number pad for every numeric type, so the symbols layout
+    // is never resolved for Android.
+    case (
+      GoldenKeyboardStyle.android,
+      KeyboardLayout.numberPad || KeyboardLayout.symbols,
+    ):
       painter.androidNumberPad(keysArea, keyboard.type);
   }
 
@@ -135,6 +197,7 @@ class _KeyboardColors {
 
   factory _KeyboardColors.of(GoldenKeyboardStyle style, Brightness brightness) {
     final light = brightness == Brightness.light;
+
     return switch (style) {
       GoldenKeyboardStyle.ios => _KeyboardColors(
         background: Color(light ? 0xFFD1D3D9 : 0xFF2C2C2E),
@@ -221,13 +284,6 @@ class _KeyboardPainter {
   // iOS ----------------------------------------------------------------------
 
   void iosLetters(Rect area, TextInputType type) {
-    _suggestionDividers(
-      Rect.fromLTWH(area.left, area.top, area.width, _iosSuggestionBar),
-    );
-
-    const margin = 3.0;
-    const gap = 6.0;
-    final unit = (area.width - 2 * margin - 9 * gap) / 10;
     final bottomRow = switch (type) {
       _ when type.index == TextInputType.emailAddress.index => [
         const _Key('@'),
@@ -238,25 +294,74 @@ class _KeyboardPainter {
         const _Key('/'),
         const _Key.stretch('.com'),
       ],
+      _ when type.index == TextInputType.twitter.index => [
+        const _Key('@'),
+        const _Key('#'),
+      ],
+      _ when type.index == TextInputType.webSearch.index => [const _Key('.')],
       _ => const <_Key>[],
     };
-    final rows = [
-      _letters(_letterRows[0]),
-      _letters(_letterRows[1]),
-      [
-        const _Key.icon(_Icon.shift, flex: 1.3),
-        const _Key.spacer(),
-        ..._letters(_letterRows[2]),
-        const _Key.spacer(),
-        const _Key.icon(_Icon.backspace, flex: 1.3),
+    final _Key actionKey = type.index == TextInputType.webSearch.index
+        ? const _Key('go', flex: 2.5, kind: _KeyKind.action)
+        : const _Key.icon(_Icon.enter, flex: 2.5, kind: _KeyKind.action);
+    _iosRows(
+      area: area,
+      rows: [
+        _letters(_letterRows[0]),
+        _letters(_letterRows[1]),
+        [
+          const _Key.icon(_Icon.shift, flex: 1.3),
+          const _Key.spacer(),
+          ..._letters(_letterRows[2]),
+          const _Key.spacer(),
+          const _Key.icon(_Icon.backspace, flex: 1.3),
+        ],
+        [
+          const _Key('123', flex: 2.5, kind: _KeyKind.function),
+          if (type.index != TextInputType.url.index) const _Key.stretch(null),
+          ...bottomRow,
+          actionKey,
+        ],
       ],
-      [
-        const _Key('123', flex: 2.5, kind: _KeyKind.function),
-        if (type.index != TextInputType.url.index) const _Key.stretch(null),
-        ...bottomRow,
-        const _Key.icon(_Icon.enter, flex: 2.5, kind: _KeyKind.action),
+    );
+  }
+
+  /// The iOS `123` layer: digits, then punctuation, then more punctuation.
+  void iosSymbols(Rect area) {
+    _iosRows(
+      area: area,
+      rows: [
+        _letters('1234567890'),
+        _letters('-/:;()\$&@"'),
+        [
+          const _Key('#+=', flex: 1.3, kind: _KeyKind.function),
+          const _Key.spacer(),
+          ..._letters(".,?!'"),
+          const _Key.spacer(),
+          const _Key.icon(_Icon.backspace, flex: 1.3),
+        ],
+        [
+          const _Key('ABC', flex: 2.5, kind: _KeyKind.function),
+          const _Key.stretch(null),
+          const _Key.icon(_Icon.enter, flex: 2.5, kind: _KeyKind.action),
+        ],
       ],
-    ];
+    );
+  }
+
+  /// Four rows of keys under the suggestion bar, as every full-width iOS
+  /// layout has them. The 10 keys of the first row set the unit width.
+  void _iosRows({
+    required Rect area,
+    required List<List<_Key>> rows,
+  }) {
+    _suggestionDividers(
+      Rect.fromLTWH(area.left, area.top, area.width, _iosSuggestionBar),
+    );
+
+    const margin = 3.0;
+    const gap = 6.0;
+    final unit = (area.width - 2 * margin - 9 * gap) / 10;
 
     for (var i = 0; i < rows.length; i++) {
       final top = area.top + _iosSuggestionBar + i * _iosRowPitch + 6;
@@ -416,7 +521,11 @@ class _KeyboardPainter {
     const margin = 4.0;
     const gap = 6.0;
     final unit = (area.width - 2 * margin - 3 * gap) / 4;
-    final phone = type.index == TextInputType.phone.index;
+    final (leftKey, rightKey) = switch (type) {
+      _ when type.index == TextInputType.phone.index => ('*', '#'),
+      _ when type.index == TextInputType.datetime.index => ('/', ':'),
+      _ => (',', '.'),
+    };
     final rows = [
       [
         const _Key('1'),
@@ -437,9 +546,9 @@ class _KeyboardPainter {
         const _Key.icon(_Icon.backspace),
       ],
       [
-        _Key(phone ? '*' : ',', kind: _KeyKind.function),
+        _Key(leftKey, kind: _KeyKind.function),
         const _Key('0'),
-        _Key(phone ? '#' : '.', kind: _KeyKind.function),
+        _Key(rightKey, kind: _KeyKind.function),
         const _Key.icon(_Icon.enter, kind: _KeyKind.action),
       ],
     ];
@@ -476,12 +585,15 @@ class _KeyboardPainter {
   }
 
   void androidNavigationArea(Rect area) {
-    final c = Offset(area.left + 36, area.top + area.height / 2 - 2);
+    final Offset center = Offset(
+      area.left + 36,
+      area.top + area.height / 2 - 2,
+    );
     canvas.drawPath(
       Path()
-        ..moveTo(c.dx - 6, c.dy - 3)
-        ..lineTo(c.dx, c.dy + 3)
-        ..lineTo(c.dx + 6, c.dy - 3),
+        ..moveTo(center.dx - 6, center.dy - 3)
+        ..lineTo(center.dx, center.dy + 3)
+        ..lineTo(center.dx + 6, center.dy - 3),
       _iconPaint(colors.label),
     );
   }
@@ -512,21 +624,26 @@ class _KeyboardPainter {
     for (final key in keys) {
       final width = key.stretch ? stretchWidth : fixedWidth(key);
       _key(
-        key,
-        Rect.fromLTRB(
+        key: key,
+        rect: Rect.fromLTRB(
           _snap(x),
           _snap(top),
           _snap(x + width),
           _snap(top + height),
         ),
-        radius,
-        fontSize,
+        radius: radius,
+        fontSize: fontSize,
       );
       x += width + gap;
     }
   }
 
-  void _key(_Key key, Rect rect, double radius, double fontSize) {
+  void _key({
+    required _Key key,
+    required Rect rect,
+    required double radius,
+    required double fontSize,
+  }) {
     final fill = switch (key.kind) {
       _KeyKind.letter => colors.key,
       _KeyKind.function => colors.functionKey,
@@ -550,7 +667,11 @@ class _KeyboardPainter {
     }
 
     if (key.icon != null) {
-      _icon(key.icon!, rect.center, content);
+      _icon(
+        icon: key.icon!,
+        center: rect.center,
+        color: content,
+      );
       return;
     }
 
@@ -558,10 +679,19 @@ class _KeyboardPainter {
     if (label == null) return;
 
     final isWord = label.length > 1 && key.sublabel == null;
-    final main = _text(label, isWord ? 15 : fontSize, content);
+    final TextPainter main = _text(
+      text: label,
+      fontSize: isWord ? 15 : fontSize,
+      color: content,
+    );
     final sub = key.sublabel == null || key.sublabel!.isEmpty
         ? null
-        : _text(key.sublabel!, 10, content, letterSpacing: 1.5);
+        : _text(
+            text: key.sublabel!,
+            fontSize: 10,
+            color: content,
+            letterSpacing: 1.5,
+          );
     final subHeight = key.sublabel == null ? 0.0 : 12.0;
     final top = rect.center.dy - (main.height + subHeight) / 2;
 
@@ -578,10 +708,10 @@ class _KeyboardPainter {
     );
   }
 
-  TextPainter _text(
-    String text,
-    double fontSize,
-    Color color, {
+  TextPainter _text({
+    required String text,
+    required double fontSize,
+    required Color color,
     double? letterSpacing,
   }) => TextPainter(
     text: TextSpan(
@@ -604,44 +734,48 @@ class _KeyboardPainter {
     ..strokeCap = StrokeCap.round
     ..strokeJoin = StrokeJoin.round;
 
-  void _icon(_Icon icon, Offset c, Color color) {
+  void _icon({
+    required _Icon icon,
+    required Offset center,
+    required Color color,
+  }) {
     final path = switch (icon) {
       _Icon.shift =>
         Path()
-          ..moveTo(c.dx, c.dy - 8)
-          ..lineTo(c.dx + 8, c.dy)
-          ..lineTo(c.dx + 4, c.dy)
-          ..lineTo(c.dx + 4, c.dy + 7)
-          ..lineTo(c.dx - 4, c.dy + 7)
-          ..lineTo(c.dx - 4, c.dy)
-          ..lineTo(c.dx - 8, c.dy)
+          ..moveTo(center.dx, center.dy - 8)
+          ..lineTo(center.dx + 8, center.dy)
+          ..lineTo(center.dx + 4, center.dy)
+          ..lineTo(center.dx + 4, center.dy + 7)
+          ..lineTo(center.dx - 4, center.dy + 7)
+          ..lineTo(center.dx - 4, center.dy)
+          ..lineTo(center.dx - 8, center.dy)
           ..close(),
       _Icon.backspace =>
         Path()
-          ..moveTo(c.dx - 10, c.dy)
-          ..lineTo(c.dx - 4, c.dy - 7)
-          ..lineTo(c.dx + 10, c.dy - 7)
-          ..lineTo(c.dx + 10, c.dy + 7)
-          ..lineTo(c.dx - 4, c.dy + 7)
+          ..moveTo(center.dx - 10, center.dy)
+          ..lineTo(center.dx - 4, center.dy - 7)
+          ..lineTo(center.dx + 10, center.dy - 7)
+          ..lineTo(center.dx + 10, center.dy + 7)
+          ..lineTo(center.dx - 4, center.dy + 7)
           ..close()
-          ..moveTo(c.dx, c.dy - 3)
-          ..lineTo(c.dx + 6, c.dy + 3)
-          ..moveTo(c.dx, c.dy + 3)
-          ..lineTo(c.dx + 6, c.dy - 3),
+          ..moveTo(center.dx, center.dy - 3)
+          ..lineTo(center.dx + 6, center.dy + 3)
+          ..moveTo(center.dx, center.dy + 3)
+          ..lineTo(center.dx + 6, center.dy - 3),
       _Icon.enter =>
         Path()
-          ..moveTo(c.dx + 8, c.dy - 7)
-          ..lineTo(c.dx + 8, c.dy + 2)
-          ..lineTo(c.dx - 8, c.dy + 2)
-          ..moveTo(c.dx - 4, c.dy - 2)
-          ..lineTo(c.dx - 8, c.dy + 2)
-          ..lineTo(c.dx - 4, c.dy + 6),
+          ..moveTo(center.dx + 8, center.dy - 7)
+          ..lineTo(center.dx + 8, center.dy + 2)
+          ..lineTo(center.dx - 8, center.dy + 2)
+          ..moveTo(center.dx - 4, center.dy - 2)
+          ..lineTo(center.dx - 8, center.dy + 2)
+          ..lineTo(center.dx - 4, center.dy + 6),
       _Icon.space =>
         Path()
-          ..moveTo(c.dx - 8, c.dy - 2)
-          ..lineTo(c.dx - 8, c.dy + 3)
-          ..lineTo(c.dx + 8, c.dy + 3)
-          ..lineTo(c.dx + 8, c.dy - 2),
+          ..moveTo(center.dx - 8, center.dy - 2)
+          ..lineTo(center.dx - 8, center.dy + 3)
+          ..lineTo(center.dx + 8, center.dy + 3)
+          ..lineTo(center.dx + 8, center.dy - 2),
     };
     canvas.drawPath(path, _iconPaint(color));
   }

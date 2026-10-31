@@ -51,6 +51,21 @@ typedef GoldenTestNavigatorBuilder = Widget Function(
 /// to it, call it from the test's own builder.
 GoldenTestNavigatorBuilder? goldenTestNavigatorBuilder;
 
+/// Whether the software keyboard appears by itself when a text field in the
+/// widget under test gains focus, and hides when it loses focus.
+///
+/// The keyboard is simulated from what the field asks the platform for, so
+/// its layout follows the field's `keyboardType` and its style follows
+/// [Device.platform]. A test that sets its own `keyboard` turns the
+/// simulation off for that test, so the keyboard it sets is the one shown.
+///
+/// As on a device, nothing appears for a field with [TextInputType.none],
+/// which has its own input UI, or on a device whose [Device.platform] is a
+/// desktop, where input comes from a hardware keyboard.
+///
+/// Set it to `false` to show a keyboard only in tests that set `keyboard`.
+bool goldenTestSimulateKeyboard = true;
+
 /// The default device(s) used for all golden tests when no other device configuration is specified.
 ///
 /// This is the device configuration used by default unless:
