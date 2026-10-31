@@ -213,14 +213,8 @@ List<void Function()> goldenTestImageLoaderSetups = [];
 /// The golden test difference tolerance at which tests are considered failing.
 /// Ranges from 0-100(%), inclusive.
 ///
-/// Default value: [0].
-void goldenTestDifferenceTolerance(double diffTolerance) {
-  if (goldenFileComparator is LocalFileComparator) {
-    goldenFileComparator = LocalFileComparatorWithTolerance(
-      Uri.parse(
-        '${(goldenFileComparator as LocalFileComparator).basedir}/test.dart',
-      ),
-      diffTolerance,
-    );
-  }
-}
+/// Default value: [0]. [goldenTest] installs the comparator with that value
+/// when the project has not set one, so failure images always land in a
+/// `failures/` folder next to each variant's golden file.
+void goldenTestDifferenceTolerance(double diffTolerance) =>
+    installGoldenTestComparator(diffTolerance);

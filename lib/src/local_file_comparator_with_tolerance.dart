@@ -1,6 +1,21 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+/// Replaces [goldenFileComparator] with a [LocalFileComparatorWithTolerance]
+/// for the same test directory, so failure images land in a `failures/` folder
+/// next to each golden file rather than one folder next to the test file.
+///
+/// Does nothing when the comparator is not file based, e.g. on the web.
+void installGoldenTestComparator(double diffTolerance) {
+  final GoldenFileComparator comparator = goldenFileComparator;
+  if (comparator is LocalFileComparator) {
+    goldenFileComparator = LocalFileComparatorWithTolerance(
+      Uri.parse('${comparator.basedir}/test.dart'),
+      diffTolerance,
+    );
+  }
+}
+
 class LocalFileComparatorWithTolerance extends LocalFileComparator {
   LocalFileComparatorWithTolerance(super.testFile, this.diffTolerance)
     : assert(

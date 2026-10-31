@@ -7,6 +7,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_test/src/config.dart';
 import 'package:golden_test/src/device.dart';
+import 'package:golden_test/src/local_file_comparator_with_tolerance.dart';
 import 'package:golden_test/src/network_image_stub.dart';
 import 'package:golden_test/src/utils/device_frame.dart';
 import 'package:meta/meta.dart';
@@ -124,6 +125,20 @@ Future<void> _ensurePackageFontsLoaded() async {
       .load();
 }
 
+/// Flutter's default [LocalFileComparator] writes failure images to a single
+/// `failures/` folder next to the test file, named after the golden file only.
+/// Every locale, theme, device and text scale variant of a test shares that
+/// name, so each failing variant overwrites the previous one's images.
+/// [LocalFileComparatorWithTolerance] writes them next to the golden instead.
+///
+/// Only Flutter's own comparator is replaced, so a comparator set by the
+/// project, including one from [goldenTestDifferenceTolerance], is kept.
+void _ensureFailuresPerVariant() {
+  if (goldenFileComparator.runtimeType == LocalFileComparator) {
+    installGoldenTestComparator(0);
+  }
+}
+
 @isTest
 void goldenTest({
   required String name,
@@ -159,6 +174,7 @@ void goldenTest({
           testWidgets(
             name,
             (WidgetTester tester) async {
+              _ensureFailuresPerVariant();
               await _ensurePackageFontsLoaded();
               tester.platformDispatcher.platformBrightnessTestValue = mode;
               tester.platformDispatcher.textScaleFactorTestValue = scale;
