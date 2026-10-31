@@ -29,19 +29,19 @@ jobs:
     steps:
       - name: Open or update the issue
         run: |
-          pana=$(gh api "repos/$GH_REPO/actions/runs/$RUN_ID/jobs" \
+          pana_conclusion=$(gh api "repos/$GH_REPO/actions/runs/$RUN_ID/jobs" \
             --jq '.jobs[] | select(.name == "pana") | .conclusion')
-          if [ "$pana" != "failure" ]; then
-            echo "The pana job did not fail (${pana:-missing}), nothing to report."
+          if [ "$pana_conclusion" != "failure" ]; then
+            echo "The pana job did not fail (${pana_conclusion:-missing}), nothing to report."
             exit 0
           fi
 
           title="pana score dropped on master"
           body="pana lost points on master at $SHA: $RUN_URL"
-          issue=$(gh issue list --state open --search "in:title \"$title\"" \
+          open_issue_number=$(gh issue list --state open --search "in:title \"$title\"" \
             --json number,title --jq ".[] | select(.title == \"$title\") | .number" | head -n 1)
-          if [ -n "$issue" ]; then
-            gh issue comment "$issue" --body "Still failing. $body"
+          if [ -n "$open_issue_number" ]; then
+            gh issue comment "$open_issue_number" --body "Still failing. $body"
           else
             gh issue create --title "$title" \
               --body "$body. Run \`pana .\` locally to see which checks lost points."

@@ -45,6 +45,6 @@ Releases are published to pub.dev by GitHub Actions, not from a local machine.
 3. The **Publish** workflow runs the full CI suite on the tag and checks the version: it must be the next release on its major line, `CHANGELOG.md` must start with its section, and the public API change must fit the bump. The run's summary shows what kind of release it is.
 4. It then waits in the `pub.dev` environment for a maintainer to approve the deployment on the run's page. Once approved, it publishes.
 
-A release for an older major line, such as `1.1.3` after `2.1.0`, is tagged on that line's branch (`1.x`) and needs one more approval, in the `pub.dev-maintenance` environment. The branch needs these workflows for that.
+A release for an older major line, such as `1.1.3` after `2.1.0`, is tagged on that line's branch (`1.x`) and needs one more approval, in the `pub.dev-maintenance` environment. The branch needs these workflows for that, minus the `pana` job in `ci.yml`: pub.dev shows the score of the latest version only, so it shouldn't hold back a fix for an older line.
 
 Running **Publish** by hand from the Actions tab builds and checks the package archive without publishing. It also needs the approval.

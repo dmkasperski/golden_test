@@ -24,19 +24,19 @@ major=${BASH_REMATCH[1]}
 [[ $tag == "v$version" ]] ||
   fail "Tag $tag does not match version $version in pubspec.yaml."
 
-published=$(
+published_versions=$(
   curl -sSf "https://pub.dev/api/packages/$package" |
     jq -r '.versions[].version' |
     grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' |
     sort -V
 )
-if grep -qx "$version" <<<"$published"; then
+if grep -qx "$version" <<<"$published_versions"; then
   fail "$version is already published on pub.dev."
 fi
 
-latest=$(tail -n 1 <<<"$published")
+latest=$(tail -n 1 <<<"$published_versions")
 latest_major=${latest%%.*}
-line_latest=$(grep -E "^$major\." <<<"$published" | tail -n 1 || true)
+line_latest=$(grep -E "^$major\." <<<"$published_versions" | tail -n 1 || true)
 
 if [[ -n $line_latest ]]; then
   IFS=. read -r _ minor patch <<<"$line_latest"
@@ -69,9 +69,9 @@ git rev-parse --verify --quiet "origin/$branch" >/dev/null ||
 git merge-base --is-ancestor "$sha" "origin/$branch" ||
   fail "Tag $tag is not on $branch. Releases of $major.x are tagged on $branch."
 
-heading=$(grep -m 1 '^## ' CHANGELOG.md || true)
-[[ $heading == "## $version" ]] ||
-  fail "CHANGELOG.md must start with a '## $version' section, found '${heading:-nothing}'."
+changelog_heading=$(grep -m 1 '^## ' CHANGELOG.md || true)
+[[ $changelog_heading == "## $version" ]] ||
+  fail "CHANGELOG.md must start with a '## $version' section, found '${changelog_heading:-nothing}'."
 
 {
   echo "version=$version"
