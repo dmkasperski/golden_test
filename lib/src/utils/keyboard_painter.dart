@@ -16,13 +16,16 @@ class ResolvedKeyboard {
     required this.bottomArea,
   });
 
-  factory ResolvedKeyboard.of(GoldenKeyboard keyboard, Device device) {
-    final style = keyboard.style ?? _styleOf(device);
+  factory ResolvedKeyboard.of({
+    required GoldenKeyboard keyboard,
+    required Device device,
+  }) {
+    final GoldenKeyboardStyle style = keyboard.style ?? _styleOf(device);
     final KeyboardLayout layout = _layoutOf(
       style: style,
       type: keyboard.type,
     );
-    final bottomArea = switch (style) {
+    final double bottomArea = switch (style) {
       // An iPhone without a home button keeps a row for the globe and
       // dictation keys below the letters, over the home indicator.
       GoldenKeyboardStyle.ios => device.insets.bottom > 0 ? 75.0 : 0.0,
@@ -150,17 +153,24 @@ void paintKeyboard({
   required Brightness brightness,
   required double devicePixelRatio,
 }) {
-  final colors = _KeyboardColors.of(keyboard.style, brightness);
-  final painter = _KeyboardPainter(canvas, colors, devicePixelRatio);
+  final _KeyboardColors colors = _KeyboardColors.of(
+    style: keyboard.style,
+    brightness: brightness,
+  );
+  final _KeyboardPainter painter = _KeyboardPainter(
+    canvas: canvas,
+    colors: colors,
+    devicePixelRatio: devicePixelRatio,
+  );
   canvas.drawRect(area, Paint()..color = colors.background);
 
-  final keysArea = Rect.fromLTRB(
+  final Rect keysArea = Rect.fromLTRB(
     area.left,
     area.top,
     area.right,
     area.bottom - keyboard.bottomArea,
   );
-  final bottomArea = Rect.fromLTRB(
+  final Rect bottomArea = Rect.fromLTRB(
     area.left,
     keysArea.bottom,
     area.right,
@@ -206,8 +216,11 @@ class _KeyboardColors {
     this.keyShadow,
   });
 
-  factory _KeyboardColors.of(GoldenKeyboardStyle style, Brightness brightness) {
-    final light = brightness == Brightness.light;
+  factory _KeyboardColors.of({
+    required GoldenKeyboardStyle style,
+    required Brightness brightness,
+  }) {
+    final bool light = brightness == Brightness.light;
 
     return switch (style) {
       GoldenKeyboardStyle.ios => _KeyboardColors(
@@ -254,7 +267,7 @@ class _Key {
       sublabel = null,
       stretch = false;
 
-  const _Key.digit(this.label, [this.sublabel])
+  const _Key.digit(this.label, {this.sublabel})
     : flex = 1,
       kind = _KeyKind.letter,
       icon = null,
@@ -280,10 +293,16 @@ class _Key {
 
 const _letterRows = ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'];
 
-List<_Key> _letters(String row) => [for (final c in row.split('')) _Key(c)];
+List<_Key> _letters(String row) => [
+  for (final String c in row.split('')) _Key(c),
+];
 
 class _KeyboardPainter {
-  _KeyboardPainter(this.canvas, this.colors, this.devicePixelRatio);
+  _KeyboardPainter({
+    required this.canvas,
+    required this.colors,
+    required this.devicePixelRatio,
+  });
 
   final Canvas canvas;
   final _KeyboardColors colors;
@@ -295,7 +314,7 @@ class _KeyboardPainter {
   // iOS ----------------------------------------------------------------------
 
   void iosLetters(Rect area, TextInputType type) {
-    final bottomRow = switch (type) {
+    final List<_Key> bottomRow = switch (type) {
       _ when type.index == TextInputType.emailAddress.index => [
         const _Key('@'),
         const _Key('.'),
@@ -374,9 +393,9 @@ class _KeyboardPainter {
 
     const margin = 3.0;
     const gap = 6.0;
-    final unit = (area.width - 2 * margin - 9 * gap) / 10;
+    final double unit = (area.width - 2 * margin - 9 * gap) / 10;
 
-    for (var i = 0; i < rows.length; i++) {
+    for (int i = 0; i < rows.length; i++) {
       _row(
         rows[i],
         left: area.left + margin,
@@ -394,24 +413,24 @@ class _KeyboardPainter {
   void iosNumberPad(Rect area, TextInputType type) {
     const margin = 6.0;
     const gap = 6.0;
-    final unit = (area.width - 2 * margin - 2 * gap) / 3;
+    final double unit = (area.width - 2 * margin - 2 * gap) / 3;
     final double rowsTop = area.bottom - _rowsHeight(GoldenKeyboardStyle.ios);
-    final phone = type.index == TextInputType.phone.index;
-    final rows = [
+    final bool phone = type.index == TextInputType.phone.index;
+    final List<List<_Key>> rows = [
       [
-        const _Key.digit('1', ''),
-        const _Key.digit('2', 'ABC'),
-        const _Key.digit('3', 'DEF'),
+        const _Key.digit('1', sublabel: ''),
+        const _Key.digit('2', sublabel: 'ABC'),
+        const _Key.digit('3', sublabel: 'DEF'),
       ],
       [
-        const _Key.digit('4', 'GHI'),
-        const _Key.digit('5', 'JKL'),
-        const _Key.digit('6', 'MNO'),
+        const _Key.digit('4', sublabel: 'GHI'),
+        const _Key.digit('5', sublabel: 'JKL'),
+        const _Key.digit('6', sublabel: 'MNO'),
       ],
       [
-        const _Key.digit('7', 'PQRS'),
-        const _Key.digit('8', 'TUV'),
-        const _Key.digit('9', 'WXYZ'),
+        const _Key.digit('7', sublabel: 'PQRS'),
+        const _Key.digit('8', sublabel: 'TUV'),
+        const _Key.digit('9', sublabel: 'WXYZ'),
       ],
       [
         if (phone)
@@ -425,7 +444,7 @@ class _KeyboardPainter {
       ],
     ];
 
-    for (var i = 0; i < rows.length; i++) {
+    for (int i = 0; i < rows.length; i++) {
       _row(
         rows[i],
         left: area.left + margin,
@@ -441,10 +460,10 @@ class _KeyboardPainter {
   }
 
   void iosBottomArea(Rect area) {
-    final paint = _iconPaint(colors.label);
-    final y = area.top + 22;
+    final Paint paint = _iconPaint(colors.label);
+    final double y = area.top + 22;
 
-    final globe = Offset(area.left + 34, y);
+    final Offset globe = Offset(area.left + 34, y);
     canvas.drawCircle(globe, 10, paint);
     canvas.drawOval(
       Rect.fromCenter(center: globe, width: 9, height: 20),
@@ -452,7 +471,7 @@ class _KeyboardPainter {
     );
     canvas.drawLine(globe.translate(-10, 0), globe.translate(10, 0), paint);
 
-    final mic = Offset(area.right - 34, y);
+    final Offset mic = Offset(area.right - 34, y);
     canvas.drawRRect(
       RRect.fromRectAndRadius(
         Rect.fromCenter(center: mic.translate(0, -3), width: 7, height: 12),
@@ -472,9 +491,9 @@ class _KeyboardPainter {
 
   void _suggestionDividers(Rect bar) {
     if (bar.height < _iosSuggestionBar / 2) return;
-    final paint = Paint()..color = colors.functionKey;
-    for (final fraction in [1 / 3, 2 / 3]) {
-      final x = _snap(bar.left + bar.width * fraction);
+    final Paint paint = Paint()..color = colors.functionKey;
+    for (final double fraction in [1 / 3, 2 / 3]) {
+      final double x = _snap(bar.left + bar.width * fraction);
       canvas.drawRect(
         Rect.fromLTRB(x, _snap(bar.top + 10), x + 1, _snap(bar.bottom - 10)),
         paint,
@@ -491,10 +510,10 @@ class _KeyboardPainter {
 
     const margin = 4.0;
     const gap = 6.0;
-    final unit = (area.width - 2 * margin - 9 * gap) / 10;
-    final email = type.index == TextInputType.emailAddress.index;
-    final url = type.index == TextInputType.url.index;
-    final rows = [
+    final double unit = (area.width - 2 * margin - 9 * gap) / 10;
+    final bool email = type.index == TextInputType.emailAddress.index;
+    final bool url = type.index == TextInputType.url.index;
+    final List<List<_Key>> rows = [
       _letters(_letterRows[0]),
       _letters(_letterRows[1]),
       [
@@ -511,7 +530,7 @@ class _KeyboardPainter {
       ],
     ];
 
-    for (var i = 0; i < rows.length; i++) {
+    for (int i = 0; i < rows.length; i++) {
       _row(
         rows[i],
         left: area.left + margin,
@@ -529,15 +548,15 @@ class _KeyboardPainter {
   void androidNumberPad(Rect area, TextInputType type) {
     const margin = 4.0;
     const gap = 6.0;
-    final unit = (area.width - 2 * margin - 3 * gap) / 4;
+    final double unit = (area.width - 2 * margin - 3 * gap) / 4;
     final double rowsTop =
         area.bottom - _rowsHeight(GoldenKeyboardStyle.android);
-    final (leftKey, rightKey) = switch (type) {
+    final (String leftKey, String rightKey) = switch (type) {
       _ when type.index == TextInputType.phone.index => ('*', '#'),
       _ when type.index == TextInputType.datetime.index => ('/', ':'),
       _ => (',', '.'),
     };
-    final rows = [
+    final List<List<_Key>> rows = [
       [
         const _Key('1'),
         const _Key('2'),
@@ -564,7 +583,7 @@ class _KeyboardPainter {
       ],
     ];
 
-    for (var i = 0; i < rows.length; i++) {
+    for (int i = 0; i < rows.length; i++) {
       _row(
         rows[i],
         left: area.left + margin,
@@ -581,10 +600,10 @@ class _KeyboardPainter {
 
   void _suggestionStrip(Rect strip) {
     if (strip.height < _androidSuggestionStrip / 2) return;
-    final paint = Paint()..color = colors.label;
-    final center = Offset(strip.left + 28, strip.center.dy);
-    for (final dx in [-4.5, 1.5]) {
-      for (final dy in [-4.5, 1.5]) {
+    final Paint paint = Paint()..color = colors.label;
+    final Offset center = Offset(strip.left + 28, strip.center.dy);
+    for (final double dx in [-4.5, 1.5]) {
+      for (final double dy in [-4.5, 1.5]) {
         canvas.drawRRect(
           RRect.fromRectAndRadius(
             Rect.fromLTWH(_snap(center.dx + dx), _snap(center.dy + dy), 3, 3),
@@ -625,16 +644,16 @@ class _KeyboardPainter {
   }) {
     double fixedWidth(_Key key) => key.flex * unit + (key.flex - 1) * gap;
 
-    final fixed = keys
+    final double fixed = keys
         .where((key) => !key.stretch)
         .fold<double>(0, (sum, key) => sum + fixedWidth(key));
-    final stretchCount = keys.where((key) => key.stretch).length;
-    final free = right - left - fixed - (keys.length - 1) * gap;
-    final stretchWidth = stretchCount == 0 ? 0.0 : free / stretchCount;
+    final int stretchCount = keys.where((key) => key.stretch).length;
+    final double free = right - left - fixed - (keys.length - 1) * gap;
+    final double stretchWidth = stretchCount == 0 ? 0.0 : free / stretchCount;
 
-    var x = stretchCount == 0 ? left + free / 2 : left;
-    for (final key in keys) {
-      final width = key.stretch ? stretchWidth : fixedWidth(key);
+    double x = stretchCount == 0 ? left + free / 2 : left;
+    for (final _Key key in keys) {
+      final double width = key.stretch ? stretchWidth : fixedWidth(key);
       _key(
         key: key,
         rect: Rect.fromLTRB(
@@ -656,19 +675,22 @@ class _KeyboardPainter {
     required double radius,
     required double fontSize,
   }) {
-    final fill = switch (key.kind) {
+    final Color? fill = switch (key.kind) {
       _KeyKind.letter => colors.key,
       _KeyKind.function => colors.functionKey,
       _KeyKind.action => colors.actionKey,
       _KeyKind.blank => null,
     };
-    final content = key.kind == _KeyKind.action
+    final Color content = key.kind == _KeyKind.action
         ? colors.actionLabel
         : colors.label;
 
     if (fill != null) {
-      final rrect = RRect.fromRectAndRadius(rect, Radius.circular(radius));
-      final shadow = colors.keyShadow;
+      final RRect rrect = RRect.fromRectAndRadius(
+        rect,
+        Radius.circular(radius),
+      );
+      final Color? shadow = colors.keyShadow;
       if (shadow != null) {
         canvas.drawRRect(
           rrect.shift(const Offset(0, 1)),
@@ -687,16 +709,16 @@ class _KeyboardPainter {
       return;
     }
 
-    final label = key.label;
+    final String? label = key.label;
     if (label == null) return;
 
-    final isWord = label.length > 1 && key.sublabel == null;
+    final bool isWord = label.length > 1 && key.sublabel == null;
     final TextPainter main = _text(
       text: label,
       fontSize: isWord ? 15 : fontSize,
       color: content,
     );
-    final sub = key.sublabel == null || key.sublabel!.isEmpty
+    final TextPainter? sub = key.sublabel == null || key.sublabel!.isEmpty
         ? null
         : _text(
             text: key.sublabel!,
@@ -704,8 +726,8 @@ class _KeyboardPainter {
             color: content,
             letterSpacing: 1.5,
           );
-    final subHeight = key.sublabel == null ? 0.0 : 12.0;
-    final top = rect.center.dy - (main.height + subHeight) / 2;
+    final double subHeight = key.sublabel == null ? 0.0 : 12.0;
+    final double top = rect.center.dy - (main.height + subHeight) / 2;
 
     main.paint(
       canvas,
@@ -751,7 +773,7 @@ class _KeyboardPainter {
     required Offset center,
     required Color color,
   }) {
-    final path = switch (icon) {
+    final Path path = switch (icon) {
       _Icon.shift =>
         Path()
           ..moveTo(center.dx, center.dy - 8)

@@ -156,7 +156,10 @@ class KeyboardSimulation {
   void _show(GoldenKeyboard? requestedKeyboard) {
     final ResolvedKeyboard? shownKeyboard = requestedKeyboard == null
         ? null
-        : ResolvedKeyboard.of(requestedKeyboard, _device);
+        : ResolvedKeyboard.of(
+            keyboard: requestedKeyboard,
+            device: _device,
+          );
     setKeyboardInsets(
       tester: _tester,
       device: _device,

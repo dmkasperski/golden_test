@@ -129,8 +129,11 @@ void main() {
     test('A height lower than the keys fails', () {
       expect(
         () => ResolvedKeyboard.of(
-          const GoldenKeyboard(style: GoldenKeyboardStyle.ios, height: 250),
-          _iphone,
+          keyboard: const GoldenKeyboard(
+            style: GoldenKeyboardStyle.ios,
+            height: 250,
+          ),
+          device: _iphone,
         ),
         throwsAssertionError,
       );

@@ -210,7 +210,7 @@ void goldenTest({
               );
               final ResolvedKeyboard? fixedKeyboard = keyboard == null
                   ? null
-                  : ResolvedKeyboard.of(keyboard, device);
+                  : ResolvedKeyboard.of(keyboard: keyboard, device: device);
               setKeyboardInsets(
                 tester: tester,
                 device: device,
