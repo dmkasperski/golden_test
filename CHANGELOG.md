@@ -8,6 +8,12 @@
 - **Keyboard**: the simulated keyboard is built from what the field asks the platform for, so its layout follows the field's `keyboardType` and its style the device's platform. The view reports it as a bottom `viewInsets`, as a device does, so a `Scaffold` with `resizeToAvoidBottomInset` shrinks its body, one without it is covered, and content that no longer fits overflows. It takes the taps over its area, as on a device. `goldenTest` also takes a `keyboard`, which shows one keyboard for the whole test and turns the simulation off for it: `GoldenKeyboard` picks the `TextInputType` (letters, email, URL, Twitter, web search, number pad, phone pad, and the iOS digits-and-punctuation layer for `datetime` and signed numbers), the style (`GoldenKeyboardStyle.ios` or `.android`) and optionally the height. As on a device, a field with `TextInputType.none` and a device with a desktop `platform` open no keyboard. See [README § Keyboard](README.md#keyboard).
 - **`Device.platform`**: devices carry an optional `TargetPlatform`, which picks the keyboard drawn when `GoldenKeyboard` has no style of its own. `Device.iphone15Pro()` and `Device.ipadPro12()` are iOS, `Device.pixel9ProXL()` is Android. It does not change the platform the widget under test is built for.
 
+## 2.1.1
+
+### Fixes
+- **Failure images no longer overwrite each other across variants** — without `goldenTestDifferenceTolerance`, Flutter's own comparator was used. It writes every failure to one `failures/` folder next to the test file, named after the golden file only. All locales, themes, devices and text scales of a test share that name, so each failing variant overwrote the previous one and only the last one was left. `goldenTest` now uses the package comparator with a tolerance of 0 unless the project set its own comparator, so failure images always land next to each variant's golden file, e.g. `goldens/en/light/failures/`. `goldenTestDifferenceTolerance` still sets the tolerance. If your CI uploads `test/failures/` or your `.gitignore` ignores only `test/failures/`, change them to `**/goldens/**/failures/`.
+- **Diff images are freed after each comparison** — the package comparator never disposed the comparison result, so its diff images leaked on every failure and on every pass within the tolerance.
+
 ## 2.1.0
 
 ### New features
