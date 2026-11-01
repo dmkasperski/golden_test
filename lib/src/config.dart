@@ -51,6 +51,28 @@ typedef GoldenTestNavigatorBuilder = Widget Function(
 /// to it, call it from the test's own builder.
 GoldenTestNavigatorBuilder? goldenTestNavigatorBuilder;
 
+/// Whether the software keyboard appears by itself when a text field in the
+/// widget under test gains focus, and hides when it loses focus.
+///
+/// The keyboard is simulated from what the field asks the platform for, so
+/// its layout follows the field's `keyboardType` and its style follows
+/// [Device.platform]. A test that sets its own `keyboard` turns the
+/// simulation off for that test, so the keyboard it sets is the one shown.
+///
+/// As on a device, nothing appears for a field with [TextInputType.none],
+/// which has its own input UI, or on a device whose [Device.platform] is a
+/// desktop, where input comes from a hardware keyboard.
+///
+/// While it is on, the harness leaves `viewInsets` to the widget under test,
+/// so a test that sets `tester.view.viewInsets` itself is no longer shrunk by
+/// the harness.
+///
+/// It is off by default, because turning it on changes every golden that
+/// focuses a text field. Set it to `true` in `flutter_test_config.dart`;
+/// while it is off, only tests that set `keyboard` show one. A test's own
+/// `simulateKeyboard` parameter overrides it.
+bool goldenTestSimulateKeyboard = false;
+
 /// The default device(s) used for all golden tests when no other device configuration is specified.
 ///
 /// This is the device configuration used by default unless:

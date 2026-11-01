@@ -1,3 +1,10 @@
+## 2.2.0
+
+### New features
+- **Keyboard**: `goldenTest` takes a `keyboard`, which shows the software keyboard over the bottom of the screen for the whole test, so a golden captures how a screen lays out while someone is typing. The view reports it as a bottom `viewInsets`, as a device does, so a `Scaffold` with `resizeToAvoidBottomInset` shrinks its body, one without it is covered, and content that no longer fits overflows. It takes the taps over its area, as on a device. `GoldenKeyboard` picks the `TextInputType` (letters, email, URL, Twitter, web search, number pad, phone pad, and the iOS digits-and-punctuation layer for `datetime` and signed numbers), the style (`GoldenKeyboardStyle.ios` or `.android`) and optionally the height. See [README § Keyboard](README.md#keyboard).
+- **Keyboard on focus, opt-in**: with `goldenTestSimulateKeyboard = true` in `flutter_test_config.dart`, or `simulateKeyboard: true` on a single `goldenTest`, the keyboard appears by itself when a text field in the widget under test gains focus and hides when it loses focus. It is built from what the field asks the platform for, so its layout follows the field's `keyboardType` and its style the device's platform. As on a device, a field with `TextInputType.none` and a device with a desktop `platform` open no keyboard. While it is on, the harness leaves `viewInsets` to the widget under test, so a test that sets `tester.view.viewInsets` itself is no longer shrunk by the harness. It is off by default, because turning it on changes every golden that focuses a field.
+- **`Device.platform`**: devices carry an optional `TargetPlatform`, which picks the keyboard drawn when `GoldenKeyboard` has no style of its own. `Device.iphone15Pro()` and `Device.ipadPro12()` are iOS, `Device.pixel9ProXL()` is Android and `Device.browser()` is macOS, which shows no keyboard on focus. It does not change the platform the widget under test is built for.
+
 ## 2.1.1
 
 ### Fixes

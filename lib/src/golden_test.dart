@@ -7,9 +7,12 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_test/src/config.dart';
 import 'package:golden_test/src/device.dart';
+import 'package:golden_test/src/keyboard.dart';
 import 'package:golden_test/src/local_file_comparator_with_tolerance.dart';
 import 'package:golden_test/src/network_image_stub.dart';
 import 'package:golden_test/src/utils/device_frame.dart';
+import 'package:golden_test/src/utils/keyboard_painter.dart';
+import 'package:golden_test/src/utils/keyboard_simulation.dart';
 import 'package:meta/meta.dart';
 
 /// The goldenTest method is designed to facilitate automated UI testing
@@ -52,6 +55,17 @@ import 'package:meta/meta.dart';
 ///   so what it provides is also visible to every route pushed from the widget
 ///   under test, such as dialogs, sheets and menus. When `null`,
 ///   [goldenTestNavigatorBuilder] is used.
+///
+/// * [keyboard]: An optional software keyboard shown over the bottom of the
+///   screen for the whole test. The view reports it as a bottom `viewInsets`,
+///   so the widget under test lays out as it would with the keyboard open.
+///   Without it, the keyboard appears by itself when a text field gains focus
+///   and matches the field's `keyboardType`, while [simulateKeyboard] is
+///   `true`. See [GoldenKeyboard].
+///
+/// * [simulateKeyboard]: Whether the keyboard appears by itself when a text
+///   field gains focus and hides when it loses focus. When `null`,
+///   [goldenTestSimulateKeyboard] is used. A [keyboard] turns it off.
 ///
 /// * [setup]: An optional asynchronous function that can be used to perform setup tasks before the test runs.
 ///
@@ -113,6 +127,15 @@ import 'package:meta/meta.dart';
 ///     supportedTextScales: [1.0, AndroidFontScale.maximum.value],
 ///   );
 /// ```
+///
+/// Example of a screen with the keyboard open:
+/// ```dart
+///   goldenTest(
+///     name: 'SignIn keyboard',
+///     builder: (_) => const SignInScreen(),
+///     keyboard: const GoldenKeyboard(type: TextInputType.emailAddress),
+///   );
+/// ```
 /// {@end-tool}
 bool _packageFontsLoaded = false;
 
@@ -150,6 +173,8 @@ void goldenTest({
   List<double> supportedTextScales = const [],
   List<LocalizationsDelegate<dynamic>>? localizationsDelegates,
   GoldenTestNavigatorBuilder? navigatorBuilder,
+  GoldenKeyboard? keyboard,
+  bool? simulateKeyboard,
   Future<void> Function(WidgetTester tester)? setup,
   Future<void> Function(WidgetTester tester)? tearDown,
   Future<void> Function(WidgetTester tester)? action,
@@ -179,7 +204,23 @@ void goldenTest({
               tester.platformDispatcher.platformBrightnessTestValue = mode;
               tester.platformDispatcher.textScaleFactorTestValue = scale;
               debugDisableShadows = false;
-              _setupSize(device, tester);
+              _setupSize(
+                device: device,
+                tester: tester,
+              );
+              final ResolvedKeyboard? fixedKeyboard = keyboard == null
+                  ? null
+                  : ResolvedKeyboard.of(keyboard: keyboard, device: device);
+              setKeyboardInsets(
+                tester: tester,
+                device: device,
+                keyboard: fixedKeyboard,
+              );
+              final KeyboardSimulation? keyboardSimulation =
+                  keyboard == null &&
+                      (simulateKeyboard ?? goldenTestSimulateKeyboard)
+                  ? KeyboardSimulation.install(tester: tester, device: device)
+                  : null;
 
               // Outer finally: runWithNetworkImageStub can throw before
               // reaching its body, which would leak debugDisableShadows.
@@ -208,15 +249,28 @@ void goldenTest({
                           goldenTestLocalizationsDelegates,
                       navigatorBuilder:
                           navigatorBuilder ?? goldenTestNavigatorBuilder,
+                      resizeToAvoidBottomInset:
+                          fixedKeyboard == null && keyboardSimulation == null,
                     );
 
                     await tester.pumpWidget(
                       _GoldenTestRoot(
-                        child: DecoratedBox(
-                          position: DecorationPosition.foreground,
-                          decoration: DeviceFrame(mode, device.insets),
-                          child: widget,
-                        ),
+                        child: keyboardSimulation == null
+                            ? _DeviceFrameBox(
+                                mode: mode,
+                                device: device,
+                                keyboard: fixedKeyboard,
+                                child: widget,
+                              )
+                            : ValueListenableBuilder(
+                                valueListenable: keyboardSimulation.keyboard,
+                                builder: (_, keyboard, _) => _DeviceFrameBox(
+                                  mode: mode,
+                                  device: device,
+                                  keyboard: keyboard,
+                                  child: widget,
+                                ),
+                              ),
                       ),
                     );
 
@@ -247,6 +301,7 @@ void goldenTest({
                   }
                 });
               } finally {
+                keyboardSimulation?.dispose();
                 debugDisableShadows = true;
               }
             },
@@ -376,6 +431,7 @@ Widget _themedWidget({
   required List<Locale> supportedLocales,
   List<LocalizationsDelegate<dynamic>>? localizationsDelegates,
   GoldenTestNavigatorBuilder? navigatorBuilder,
+  bool resizeToAvoidBottomInset = true,
 }) => MaterialApp(
   theme: theme,
   color: Colors.white,
@@ -394,24 +450,77 @@ Widget _themedWidget({
   localeResolutionCallback: ((Locale? local, Iterable<Locale> locales) =>
       supportedLocales.first),
   onUnknownRoute: (settings) => _unknownPage(settings),
-  home: Scaffold(body: child),
+  // A Scaffold that resizes for the keyboard also removes the inset from the
+  // MediaQuery of its body. When a keyboard can show, this one must not, or
+  // the widget under test would always be shrunk and see viewInsets.bottom ==
+  // 0, whatever its own resizeToAvoidBottomInset says. Left alone, the inset
+  // reaches the widget's own Scaffold, which handles it as on a device.
+  home: Scaffold(
+    resizeToAvoidBottomInset: resizeToAvoidBottomInset,
+    body: child,
+  ),
 );
 
-/// Sets size of test device
-void _setupSize(Device device, WidgetTester tester) {
-  tester.view.physicalSize = Size(
-    device.width * device.devicePixelRatio,
-    device.height * device.devicePixelRatio,
+/// Sets size of test device. The keyboard, which changes `padding` and
+/// `viewInsets`, is applied separately with [setKeyboardInsets].
+void _setupSize({
+  required Device device,
+  required WidgetTester tester,
+}) {
+  final double ratio = device.devicePixelRatio;
+  tester.view.physicalSize = Size(device.width * ratio, device.height * ratio);
+  tester.view.devicePixelRatio = ratio;
+  tester.view.viewPadding = FakeViewPadding(
+    left: device.insets.left * ratio,
+    top: device.insets.top * ratio,
+    right: device.insets.right * ratio,
+    bottom: device.insets.bottom * ratio,
   );
-  tester.view.devicePixelRatio = device.devicePixelRatio;
-  FakeViewPadding padding = FakeViewPadding(
-    left: device.insets.left * device.devicePixelRatio,
-    top: device.insets.top * device.devicePixelRatio,
-    right: device.insets.right * device.devicePixelRatio,
-    bottom: device.insets.bottom * device.devicePixelRatio,
-  );
-  tester.view.padding = padding;
-  tester.view.viewPadding = padding;
+}
+
+/// Paints the device frame, and the keyboard when there is one, over the app.
+///
+/// The keyboard also takes the taps over its area, as on a device, so a tap
+/// on a control it covers does not reach the control.
+class _DeviceFrameBox extends StatelessWidget {
+  const _DeviceFrameBox({
+    required this.mode,
+    required this.device,
+    required this.keyboard,
+    required this.child,
+  });
+
+  final Brightness mode;
+  final Device device;
+  final ResolvedKeyboard? keyboard;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final ResolvedKeyboard? keyboard = this.keyboard;
+
+    return DecoratedBox(
+      position: DecorationPosition.foreground,
+      decoration: DeviceFrame(mode, device.insets, keyboard: keyboard),
+      // The app stays the first child with or without a keyboard, so its
+      // state survives the keyboard coming and going.
+      child: Stack(
+        fit: StackFit.passthrough,
+        alignment: Alignment.topLeft,
+        children: [
+          child,
+          if (keyboard != null)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              height: keyboard.height,
+              child: const AbsorbPointer(child: SizedBox.expand()),
+            ),
+        ],
+      ),
+    );
+  }
 }
 
 /// Marks the root of the pumped tree, so the snapshot finder matches exactly
