@@ -51,8 +51,8 @@ jobs:
         with:
           name: golden-failures
           path: |
-            test/failures/
-            example/test/failures/
+            test/**/failures/
+            example/test/**/failures/
           if-no-files-found: ignore
 
       - name: Publish dry-run
