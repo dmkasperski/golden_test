@@ -1,0 +1,48 @@
+name: pana on master
+
+# Opens an issue when the pana job of CI fails on master, so a score drop
+# caused by an SDK, pana or dependency release is tracked. It is a separate
+# workflow so that CI, which Publish reuses, never needs write access.
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [master]
+
+permissions:
+  actions: read
+  issues: write
+
+jobs:
+  report:
+    if: >-
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.conclusion == 'failure'
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      RUN_ID: ${{ github.event.workflow_run.id }}
+      RUN_URL: ${{ github.event.workflow_run.html_url }}
+      SHA: ${{ github.event.workflow_run.head_sha }}
+    steps:
+      - name: Open or update the issue
+        run: |
+          pana_conclusion=$(gh api "repos/$GH_REPO/actions/runs/$RUN_ID/jobs" \
+            --jq '.jobs[] | select(.name == "pana") | .conclusion')
+          if [ "$pana_conclusion" != "failure" ]; then
+            echo "The pana job did not fail (${pana_conclusion:-missing}), nothing to report."
+            exit 0
+          fi
+
+          title="pana score dropped on master"
+          body="pana lost points on master at $SHA: $RUN_URL"
+          open_issue_number=$(gh issue list --state open --search "in:title \"$title\"" \
+            --json number,title --jq ".[] | select(.title == \"$title\") | .number" | head -n 1)
+          if [ -n "$open_issue_number" ]; then
+            gh issue comment "$open_issue_number" --body "Still failing. $body"
+          else
+            gh issue create --title "$title" \
+              --body "$body. Run \`pana .\` locally to see which checks lost points."
+          fi

@@ -474,7 +474,7 @@ update from CI (or a container mirroring it) where possible.
 - Never hardcode locale/theme/font values that don't match the real app (§2).
 - `goldenTestLocalizationsDelegates` takes the app's own delegates only **in a pure `material_ui` app**. In a mixed app (any dependency still on `package:flutter/material.dart`) you must also supply `flutter_localizations`' globals, usually via `AppLocalizations.localizationsDelegates` — see §4.
 - Leave the tolerance unset (§9); pin the environment (§10) instead.
-- Add `failures/` to `.gitignore` — golden failure artifacts are build output.
+- Add `**/goldens/**/failures/` to `.gitignore` — golden failure artifacts are build output, written next to each golden. A bare `failures/` would also ignore source folders such as `lib/domain/failures/`.
 - Tag golden tests (`tags: 'golden_test'`) so CI can split them: `--exclude-tags=golden_test` for a fast run, `--tags=golden_test` for the visual suite. **Declare the tag** in `dart_test.yaml` at the package root, or every run prints `Warning: A tag was used that wasn't specified in dart_test.yaml`:
 
   ```yaml
