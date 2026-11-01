@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_test/src/device.dart';
@@ -71,10 +72,15 @@ class KeyboardSimulation {
   TextInputType _keyboardType = TextInputType.text;
   bool _isVisible = false;
 
+  /// What the field last asked for, applied or waiting for the frame to end.
+  GoldenKeyboard? _requestedKeyboard;
+  bool _isDisposed = false;
+
   /// The keyboard currently shown, or `null` while it is hidden.
   final ValueNotifier<ResolvedKeyboard?> keyboard = ValueNotifier(null);
 
   void dispose() {
+    _isDisposed = true;
     _messenger.allMessagesHandler = _previousHandler;
     keyboard.dispose();
   }
@@ -125,9 +131,32 @@ class KeyboardSimulation {
         _isVisible &&
         _keyboardType.index != TextInputType.none.index &&
         hasSoftwareKeyboard(_device);
-    final ResolvedKeyboard? shownKeyboard = opensKeyboard
-        ? ResolvedKeyboard.of(GoldenKeyboard(type: _keyboardType), _device)
+    final GoldenKeyboard? requestedKeyboard = opensKeyboard
+        ? GoldenKeyboard(type: _keyboardType)
         : null;
+    if (requestedKeyboard == _requestedKeyboard) return;
+    _requestedKeyboard = requestedKeyboard;
+
+    // EditableText.didUpdateWidget sends TextInput.updateConfig during build,
+    // where neither the view's metrics nor a ValueNotifier may change: both
+    // would call setState. Apply it once the frame is over instead.
+    final SchedulerBinding scheduler = SchedulerBinding.instance;
+    if (scheduler.schedulerPhase == SchedulerPhase.persistentCallbacks) {
+      scheduler.addPostFrameCallback((_) {
+        if (!_isDisposed && _requestedKeyboard == requestedKeyboard) {
+          _show(requestedKeyboard);
+        }
+      });
+      return;
+    }
+
+    _show(requestedKeyboard);
+  }
+
+  void _show(GoldenKeyboard? requestedKeyboard) {
+    final ResolvedKeyboard? shownKeyboard = requestedKeyboard == null
+        ? null
+        : ResolvedKeyboard.of(requestedKeyboard, _device);
     setKeyboardInsets(
       tester: _tester,
       device: _device,
