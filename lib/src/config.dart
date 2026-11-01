@@ -63,8 +63,15 @@ GoldenTestNavigatorBuilder? goldenTestNavigatorBuilder;
 /// which has its own input UI, or on a device whose [Device.platform] is a
 /// desktop, where input comes from a hardware keyboard.
 ///
-/// Set it to `false` to show a keyboard only in tests that set `keyboard`.
-bool goldenTestSimulateKeyboard = true;
+/// While it is on, the harness leaves `viewInsets` to the widget under test,
+/// so a test that sets `tester.view.viewInsets` itself is no longer shrunk by
+/// the harness.
+///
+/// It is off by default, because turning it on changes every golden that
+/// focuses a text field. Set it to `true` in `flutter_test_config.dart`;
+/// while it is off, only tests that set `keyboard` show one. A test's own
+/// `simulateKeyboard` parameter overrides it.
+bool goldenTestSimulateKeyboard = false;
 
 /// The default device(s) used for all golden tests when no other device configuration is specified.
 ///

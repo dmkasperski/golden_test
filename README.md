@@ -350,7 +350,7 @@ goldenTest(
 ## Keyboard
 Golden tests show the software keyboard over the bottom of the screen whenever a device would, to check how a screen lays out while someone is typing: whether the submit button stays visible, whether the focused field scrolls into view, whether anything overflows.
 
-By default the keyboard appears by itself when a text field gains focus and hides when it loses focus. It is built from what the field asks the platform for, so its layout follows the field's `keyboardType`. Tap or `enterText` into a field in `action` and the golden has the keyboard:
+With `goldenTestSimulateKeyboard = true` in `flutter_test_config.dart`, the keyboard appears by itself when a text field gains focus and hides when it loses focus. It is built from what the field asks the platform for, so its layout follows the field's `keyboardType`. Tap or `enterText` into a field in `action` and the golden has the keyboard:
 
 ```dart
 goldenTest(
@@ -373,9 +373,9 @@ goldenTest(
 );
 ```
 
-`goldenTestSimulateKeyboard = false` in `flutter_test_config.dart` turns the simulation off everywhere; then only tests that set `keyboard` show one.
+The simulation is off by default, because turning it on changes every golden that focuses a field; while it is off, only tests that set `keyboard` show one. A test's `simulateKeyboard` overrides the global setting either way, so a project can turn it on for the screens that need it, or off for a test that focuses a field but should not show a keyboard.
 
-Either way the keyboard is simulated, not opened. The view reports it as a bottom `viewInsets`, the way a device reports an open keyboard, and the keyboard is drawn into that area like the status bar. Everything else follows from Flutter's own handling of the inset: a `Scaffold` with `resizeToAvoidBottomInset` shrinks its body, one without it is covered, and content that no longer fits overflows and fails the test. `MediaQuery.paddingOf(context).bottom` drops to `0`, since the keyboard covers the bottom safe area. The keyboard takes the taps over its area, as on a device, so `tester.tap` on a control it covers does not reach the control. Tests that set `tester.view.viewInsets` by hand now reach the widget under test with it instead of shrinking the harness; switch them to a focused field or to `keyboard`.
+Either way the keyboard is simulated, not opened. The view reports it as a bottom `viewInsets`, the way a device reports an open keyboard, and the keyboard is drawn into that area like the status bar. Everything else follows from Flutter's own handling of the inset: a `Scaffold` with `resizeToAvoidBottomInset` shrinks its body, one without it is covered, and content that no longer fits overflows and fails the test. `MediaQuery.paddingOf(context).bottom` drops to `0`, since the keyboard covers the bottom safe area. The keyboard takes the taps over its area, as on a device, so `tester.tap` on a control it covers does not reach the control. While the simulation is on, tests that set `tester.view.viewInsets` by hand reach the widget under test with it instead of shrinking the harness; switch them to a focused field or to `keyboard`.
 
 | iOS, `emailAddress` | Android, `number` |
 | ------------------- | ----------------- |
@@ -387,7 +387,7 @@ Either way the keyboard is simulated, not opened. The view reports it as a botto
 
 The keys are the English QWERTY layout whatever the test's locale, so a keyboard golden changes only when the screen does. The layouts are those of a phone; on a tablet preset the keys stretch to its width.
 
-The keyboards are the iOS and Android ones, and the simulation follows what those platforms do: a field with `TextInputType.none`, which brings its own input UI, opens nothing, and neither does any field on a device whose `platform` is `macOS`, `linux` or `windows`, where input comes from a hardware keyboard. A device without a `platform`, such as `Device.browser()`, follows `defaultTargetPlatform`, which is Android under `flutter test`. `keyboard:` draws what it is given on any device.
+The keyboards are the iOS and Android ones, and the simulation follows what those platforms do: a field with `TextInputType.none`, which brings its own input UI, opens nothing, and neither does any field on a device whose `platform` is `macOS`, `linux` or `windows`, where input comes from a hardware keyboard. `Device.browser()` is `macOS`, so it opens none either. A device without a `platform`, such as `Device.noInsets()`, follows `defaultTargetPlatform`, which is Android under `flutter test`. `keyboard:` draws what it is given on any device.
 
 <a name="global-config"></a>
 ## Global Setup Callback

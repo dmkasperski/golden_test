@@ -60,8 +60,12 @@ import 'package:meta/meta.dart';
 ///   screen for the whole test. The view reports it as a bottom `viewInsets`,
 ///   so the widget under test lays out as it would with the keyboard open.
 ///   Without it, the keyboard appears by itself when a text field gains focus
-///   and matches the field's `keyboardType`, while
-///   [goldenTestSimulateKeyboard] is `true`. See [GoldenKeyboard].
+///   and matches the field's `keyboardType`, while [simulateKeyboard] is
+///   `true`. See [GoldenKeyboard].
+///
+/// * [simulateKeyboard]: Whether the keyboard appears by itself when a text
+///   field gains focus and hides when it loses focus. When `null`,
+///   [goldenTestSimulateKeyboard] is used. A [keyboard] turns it off.
 ///
 /// * [setup]: An optional asynchronous function that can be used to perform setup tasks before the test runs.
 ///
@@ -170,6 +174,7 @@ void goldenTest({
   List<LocalizationsDelegate<dynamic>>? localizationsDelegates,
   GoldenTestNavigatorBuilder? navigatorBuilder,
   GoldenKeyboard? keyboard,
+  bool? simulateKeyboard,
   Future<void> Function(WidgetTester tester)? setup,
   Future<void> Function(WidgetTester tester)? tearDown,
   Future<void> Function(WidgetTester tester)? action,
@@ -212,7 +217,8 @@ void goldenTest({
                 keyboard: fixedKeyboard,
               );
               final KeyboardSimulation? keyboardSimulation =
-                  keyboard == null && goldenTestSimulateKeyboard
+                  keyboard == null &&
+                      (simulateKeyboard ?? goldenTestSimulateKeyboard)
                   ? KeyboardSimulation.install(tester: tester, device: device)
                   : null;
 
