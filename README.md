@@ -348,7 +348,7 @@ goldenTest(
 
 <a name="keyboard"></a>
 ## Keyboard
-Golden tests show the software keyboard over the bottom of the screen whenever a device would, to check how a screen lays out while someone is typing: whether the submit button stays visible, whether the focused field scrolls into view, whether anything overflows.
+Golden tests can show the software keyboard over the bottom of the screen, to check how a screen lays out while someone is typing: whether the submit button stays visible, whether the focused field scrolls into view, whether anything overflows.
 
 With `goldenTestSimulateKeyboard = true` in `flutter_test_config.dart`, the keyboard appears by itself when a text field gains focus and hides when it loses focus. It is built from what the field asks the platform for, so its layout follows the field's `keyboardType`. Tap or `enterText` into a field in `action` and the golden has the keyboard:
 

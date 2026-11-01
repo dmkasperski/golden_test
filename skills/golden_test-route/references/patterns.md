@@ -500,8 +500,9 @@ turns the focus-driven simulation off for it. The keyboard is reported as
 `viewInsets`, so the screen's own `Scaffold` decides whether to resize,
 exactly as on a device.
 
-With `goldenTestSimulateKeyboard = true` in `flutter_test_config.dart`
-(off by default), the keyboard comes by itself: it appears when a field
+With `simulateKeyboard: true` on the `goldenTest`, or
+`goldenTestSimulateKeyboard = true` in `flutter_test_config.dart` (both off
+by default), the keyboard comes by itself: it appears when a field
 gains focus (`tester.tap` on it, `enterText`, `autofocus`) and matches that
 field's `keyboardType`, and it hides when the field loses focus. Use that for
 goldens of typing itself — a field with text, a validation error while

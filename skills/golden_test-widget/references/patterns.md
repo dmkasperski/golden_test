@@ -496,8 +496,8 @@ goldenTest(
 
 **A sheet with a text field** gets one more golden with
 `keyboard: const GoldenKeyboard()`, or with the field focused in `action:`,
-which brings the keyboard by itself while `goldenTestSimulateKeyboard` is
-on. The `Scaffold` above resizes, so the
+which brings the keyboard by itself with `simulateKeyboard: true` on the
+`goldenTest` (or `goldenTestSimulateKeyboard` on; both off by default). The `Scaffold` above resizes, so the
 content sits on the keyboard, as a sheet shown with
 `isScrollControlled: true` and padded by `viewInsets` does. That checks the
 content still fits in what is left: if it cannot scroll, it overflows and
