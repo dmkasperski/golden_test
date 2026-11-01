@@ -1,0 +1,29 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      // "Golden" above a test or a file runs it; "Update golden" regenerates
+      // its PNGs. Both come from the Dart extension's custom CodeLens:
+      // https://dartcode.org/docs/settings/#dartcodelens
+      "name": "Golden",
+      "type": "dart",
+      "request": "launch",
+      "codeLens": {
+        "for": ["run-test", "run-file"],
+        "path": "test",
+        "title": "Golden"
+      }
+    },
+    {
+      "name": "Update golden",
+      "type": "dart",
+      "request": "launch",
+      "codeLens": {
+        "for": ["run-test", "run-file"],
+        "path": "test",
+        "title": "Update golden"
+      },
+      "toolArgs": ["--update-goldens"]
+    }
+  ]
+}
