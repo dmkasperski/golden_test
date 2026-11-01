@@ -24,9 +24,6 @@ jobs:
 
       - run: flutter --version
 
-      - name: Verify formatting
-        run: dart format --output=none --set-exit-if-changed .
-
       - name: Analyze package
         run: |
           flutter pub get
@@ -37,6 +34,12 @@ jobs:
         run: |
           flutter pub get
           flutter analyze
+
+      # After pub get: the formatter reads analysis_options.yaml, whose
+      # include of flutter_lints resolves only once the packages are there.
+      # Without it the file is dropped, with the formatter settings in it.
+      - name: Verify formatting
+        run: dart format --output=none --set-exit-if-changed .
 
       - name: Run package tests
         run: flutter test
