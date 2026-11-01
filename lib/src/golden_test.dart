@@ -445,7 +445,7 @@ void _setupSize({
   required Device device,
   required WidgetTester tester,
 }) {
-  final ratio = device.devicePixelRatio;
+  final double ratio = device.devicePixelRatio;
   tester.view.physicalSize = Size(device.width * ratio, device.height * ratio);
   tester.view.devicePixelRatio = ratio;
   tester.view.viewPadding = FakeViewPadding(
@@ -457,6 +457,9 @@ void _setupSize({
 }
 
 /// Paints the device frame, and the keyboard when there is one, over the app.
+///
+/// The keyboard also takes the taps over its area, as on a device, so a tap
+/// on a control it covers does not reach the control.
 class _DeviceFrameBox extends StatelessWidget {
   const _DeviceFrameBox({
     required this.mode,
@@ -471,11 +474,31 @@ class _DeviceFrameBox extends StatelessWidget {
   final Widget child;
 
   @override
-  Widget build(BuildContext context) => DecoratedBox(
-    position: DecorationPosition.foreground,
-    decoration: DeviceFrame(mode, device.insets, keyboard: keyboard),
-    child: child,
-  );
+  Widget build(BuildContext context) {
+    final ResolvedKeyboard? keyboard = this.keyboard;
+
+    return DecoratedBox(
+      position: DecorationPosition.foreground,
+      decoration: DeviceFrame(mode, device.insets, keyboard: keyboard),
+      // The app stays the first child with or without a keyboard, so its
+      // state survives the keyboard coming and going.
+      child: Stack(
+        fit: StackFit.passthrough,
+        alignment: Alignment.topLeft,
+        children: [
+          child,
+          if (keyboard != null)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              height: keyboard.height,
+              child: const AbsorbPointer(child: SizedBox.expand()),
+            ),
+        ],
+      ),
+    );
+  }
 }
 
 /// Marks the root of the pumped tree, so the snapshot finder matches exactly

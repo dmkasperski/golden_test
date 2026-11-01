@@ -375,7 +375,7 @@ goldenTest(
 
 `goldenTestSimulateKeyboard = false` in `flutter_test_config.dart` turns the simulation off everywhere; then only tests that set `keyboard` show one.
 
-Either way the keyboard is simulated, not opened. The view reports it as a bottom `viewInsets`, the way a device reports an open keyboard, and the keyboard is drawn into that area like the status bar. Everything else follows from Flutter's own handling of the inset: a `Scaffold` with `resizeToAvoidBottomInset` shrinks its body, one without it is covered, and content that no longer fits overflows and fails the test. `MediaQuery.paddingOf(context).bottom` drops to `0`, since the keyboard covers the bottom safe area. Tests that set `tester.view.viewInsets` by hand now reach the widget under test with it instead of shrinking the harness; switch them to a focused field or to `keyboard`.
+Either way the keyboard is simulated, not opened. The view reports it as a bottom `viewInsets`, the way a device reports an open keyboard, and the keyboard is drawn into that area like the status bar. Everything else follows from Flutter's own handling of the inset: a `Scaffold` with `resizeToAvoidBottomInset` shrinks its body, one without it is covered, and content that no longer fits overflows and fails the test. `MediaQuery.paddingOf(context).bottom` drops to `0`, since the keyboard covers the bottom safe area. The keyboard takes the taps over its area, as on a device, so `tester.tap` on a control it covers does not reach the control. Tests that set `tester.view.viewInsets` by hand now reach the widget under test with it instead of shrinking the harness; switch them to a focused field or to `keyboard`.
 
 | iOS, `emailAddress` | Android, `number` |
 | ------------------- | ----------------- |
@@ -383,7 +383,7 @@ Either way the keyboard is simulated, not opened. The view reports it as a botto
 
 - `style`: `GoldenKeyboardStyle.ios` or `.android`. Leave it out and it follows the device's `platform`, so a test over `Device.iphone15Pro()` and `Device.pixel9ProXL()` draws each its own keyboard. A device without a platform falls back to `defaultTargetPlatform`.
 - `type`: the `TextInputType` the field requests. `number` and `phone` draw a number pad (`numberWithOptions(decimal: true)` adds the decimal key on iOS). `datetime` and `numberWithOptions(signed: true)` draw digits and punctuation on iOS, whose number pad has no minus, and a number pad on Android. `emailAddress`, `url`, `twitter` and `webSearch` add their own keys to the letter layout, and every other type draws the letter layout.
-- `height`: overrides the keyboard's height in logical pixels, measured from the bottom of the screen. By default it is the height of that keyboard on a phone in portrait, including the device's bottom inset.
+- `height`: overrides the keyboard's height in logical pixels, measured from the bottom of the screen. By default it is the height of that keyboard on a phone in portrait, including the device's bottom inset. The keys keep their size at the bottom and the suggestion bar takes up the difference, so the height can be no lower than that style's number pad on the device.
 
 The keys are the English QWERTY layout whatever the test's locale, so a keyboard golden changes only when the screen does. The layouts are those of a phone; on a tablet preset the keys stretch to its width.
 
