@@ -296,7 +296,8 @@ the test that produced it.
 ## 8. When a golden fails
 
 The message gives both numbers: `Pixel test failed, 0.11%, 3362px diff
-detected.` Four images land in `failures/`, next to the test:
+detected.` Four images land in `failures/`, next to the golden file
+(`goldens/en/light/failures/`), so each locale and theme keeps its own:
 
 | File | What it is |
 |---|---|

@@ -12,6 +12,10 @@ void main() {
   group('keyboard', () {
     int submitted = 0;
 
+    test('The simulation is off by default', () {
+      expect(goldenTestSimulateKeyboard, isFalse);
+    });
+
     for (final (Device device, String style) in <(Device, String)>[
       (_iphone, 'iOS'),
       (_pixel, 'Android'),
@@ -31,7 +35,10 @@ void main() {
           ]) {
         for (final Brightness mode in [
           Brightness.light,
-          if (typeName == 'text' || typeName == 'number') Brightness.dark,
+          if (typeName == 'text' ||
+              typeName == 'number' ||
+              typeName == 'datetime')
+            Brightness.dark,
         ]) {
           goldenTest(
             name: 'Keyboard $style $typeName ${mode.name}',

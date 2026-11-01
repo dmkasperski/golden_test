@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_test/src/config.dart';
 import 'package:golden_test/src/device.dart';
 import 'package:golden_test/src/keyboard.dart';
+import 'package:golden_test/src/local_file_comparator_with_tolerance.dart';
 import 'package:golden_test/src/network_image_stub.dart';
 import 'package:golden_test/src/utils/device_frame.dart';
 import 'package:golden_test/src/utils/keyboard_painter.dart';
@@ -59,8 +60,12 @@ import 'package:meta/meta.dart';
 ///   screen for the whole test. The view reports it as a bottom `viewInsets`,
 ///   so the widget under test lays out as it would with the keyboard open.
 ///   Without it, the keyboard appears by itself when a text field gains focus
-///   and matches the field's `keyboardType`, while
-///   [goldenTestSimulateKeyboard] is `true`. See [GoldenKeyboard].
+///   and matches the field's `keyboardType`, while [simulateKeyboard] is
+///   `true`. See [GoldenKeyboard].
+///
+/// * [simulateKeyboard]: Whether the keyboard appears by itself when a text
+///   field gains focus and hides when it loses focus. When `null`,
+///   [goldenTestSimulateKeyboard] is used. A [keyboard] turns it off.
 ///
 /// * [setup]: An optional asynchronous function that can be used to perform setup tasks before the test runs.
 ///
@@ -143,6 +148,20 @@ Future<void> _ensurePackageFontsLoaded() async {
       .load();
 }
 
+/// Flutter's default [LocalFileComparator] writes failure images to a single
+/// `failures/` folder next to the test file, named after the golden file only.
+/// Every locale, theme, device and text scale variant of a test shares that
+/// name, so each failing variant overwrites the previous one's images.
+/// [LocalFileComparatorWithTolerance] writes them next to the golden instead.
+///
+/// Only Flutter's own comparator is replaced, so a comparator set by the
+/// project, including one from [goldenTestDifferenceTolerance], is kept.
+void _ensureFailuresPerVariant() {
+  if (goldenFileComparator.runtimeType == LocalFileComparator) {
+    installGoldenTestComparator(0);
+  }
+}
+
 @isTest
 void goldenTest({
   required String name,
@@ -155,6 +174,7 @@ void goldenTest({
   List<LocalizationsDelegate<dynamic>>? localizationsDelegates,
   GoldenTestNavigatorBuilder? navigatorBuilder,
   GoldenKeyboard? keyboard,
+  bool? simulateKeyboard,
   Future<void> Function(WidgetTester tester)? setup,
   Future<void> Function(WidgetTester tester)? tearDown,
   Future<void> Function(WidgetTester tester)? action,
@@ -179,6 +199,7 @@ void goldenTest({
           testWidgets(
             name,
             (WidgetTester tester) async {
+              _ensureFailuresPerVariant();
               await _ensurePackageFontsLoaded();
               tester.platformDispatcher.platformBrightnessTestValue = mode;
               tester.platformDispatcher.textScaleFactorTestValue = scale;
@@ -196,7 +217,8 @@ void goldenTest({
                 keyboard: fixedKeyboard,
               );
               final KeyboardSimulation? keyboardSimulation =
-                  keyboard == null && goldenTestSimulateKeyboard
+                  keyboard == null &&
+                      (simulateKeyboard ?? goldenTestSimulateKeyboard)
                   ? KeyboardSimulation.install(tester: tester, device: device)
                   : null;
 

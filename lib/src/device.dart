@@ -68,6 +68,7 @@ class Device {
         width: 3024,
         height: 1964,
         insets: const EdgeInsets.only(top: 120),
+        platform: TargetPlatform.macOS,
       );
 
   Device copyWith({

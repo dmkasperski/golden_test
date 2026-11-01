@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_test/golden_test.dart';
+import 'package:golden_test/src/utils/keyboard_painter.dart';
 import 'package:material_ui/material_ui.dart';
 
 const _iphone = Device.iphone15Pro();
@@ -8,6 +9,9 @@ void main() {
   goldenTestDifferenceTolerance(0.05);
 
   group('keyboard simulation', () {
+    setUp(() => goldenTestSimulateKeyboard = true);
+    tearDown(() => goldenTestSimulateKeyboard = false);
+
     goldenTest(
       name: 'Keyboard appears when a field gains focus',
       supportedLocales: [const Locale('en')],
@@ -165,9 +169,42 @@ void main() {
       },
     );
 
+    test('No keyboard on Device.browser()', () {
+      expect(hasSoftwareKeyboard(const Device.browser()), isFalse);
+    });
+
+    goldenTest(
+      name: 'No keyboard when the test turns the simulation off',
+      supportedLocales: [const Locale('en')],
+      supportedThemes: [Brightness.light],
+      supportedDevices: [_iphone],
+      simulateKeyboard: false,
+      builder: (_) => const _Form(),
+      action: (tester) async {
+        await tester.tap(find.byKey(_Form.emailField));
+        await tester.pumpAndSettle();
+        final BuildContext context = tester.element(find.byType(_Form));
+        expect(MediaQuery.viewInsetsOf(context).bottom, 0);
+      },
+    );
+
     group('turned off', () {
       setUp(() => goldenTestSimulateKeyboard = false);
-      tearDown(() => goldenTestSimulateKeyboard = true);
+
+      goldenTest(
+        name: 'Keyboard when the test turns the simulation on',
+        supportedLocales: [const Locale('en')],
+        supportedThemes: [Brightness.light],
+        supportedDevices: [_iphone],
+        simulateKeyboard: true,
+        builder: (_) => const _Form(),
+        action: (tester) async {
+          await tester.tap(find.byKey(_Form.emailField));
+          await tester.pumpAndSettle();
+          final BuildContext context = tester.element(find.byType(_Form));
+          expect(MediaQuery.viewInsetsOf(context).bottom, 336);
+        },
+      );
 
       goldenTest(
         name: 'No keyboard when the simulation is off',

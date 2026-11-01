@@ -144,8 +144,10 @@ a quota — a static settings screen needs far less than a checkout flow.
       ends above the keyboard. The second is the one that matters: a screen
       that cannot scroll overflows, and one that scrolls *under* the keyboard
       hides its submit button — which the image alone does not flag, so the
-      assertion has to. A golden that types into a field gets the keyboard
-      by itself, matching the field's `keyboardType`
+      assertion has to. With `simulateKeyboard: true` on the `goldenTest`
+      (or `goldenTestSimulateKeyboard` on; both off by default), a golden
+      that types into a field gets the keyboard by itself, matching the
+      field's `keyboardType`
       (`references/patterns.md`)
 - [ ] **Scrolled to bottom** — on a short device (§5). For *content* coverage prefer a tall device (above); keep a scrolled golden for what scrolling itself changes — a collapsing header, a sticky bar, a trailing spinner
 - [ ] **Pushed-route chrome** — if a back arrow or close affordance appears
@@ -404,7 +406,8 @@ combination, or re-stubbing the same thing in every `setup:`.
 ## 7. When a golden fails
 
 The message gives both numbers: `Pixel test failed, 0.11%, 3362px diff
-detected.` Four images land in `failures/`, next to the test:
+detected.` Four images land in `failures/`, next to the golden file
+(`goldens/en/light/failures/`), so each locale and theme keeps its own:
 
 | File | What it is |
 |---|---|
