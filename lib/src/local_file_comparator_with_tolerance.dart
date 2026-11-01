@@ -24,7 +24,7 @@ class LocalFileComparatorWithTolerance extends LocalFileComparator {
       );
 
   /// Tolerance above which tests will be marked as Failed.
-  /// Ranges from (0-1), both inclusive.
+  /// Ranges from (0-100)%, both inclusive.
   final double diffTolerance;
 
   @override
@@ -34,30 +34,39 @@ class LocalFileComparatorWithTolerance extends LocalFileComparator {
       await getGoldenBytes(golden),
     );
 
-    if (!result.passed && result.diffPercent * 100 <= diffTolerance) {
-      debugPrint('''
-        Difference: ${result.diffPercent * 100}%, 
+    try {
+      if (!result.passed && result.diffPercent * 100 <= diffTolerance) {
+        debugPrint('''
+        Difference: ${result.diffPercent * 100}%,
         Acceptable tolerance: $diffTolerance%
         ''');
 
-      return true;
+        return true;
+      }
+
+      if (!result.passed) {
+        final Uri goldenPathWithoutFile = golden.replace(
+          pathSegments: golden.pathSegments.sublist(
+            0,
+            golden.pathSegments.length - 1,
+          ),
+        );
+
+        final Uri updatedBasedir = basedir.resolve(
+          goldenPathWithoutFile.toString(),
+        );
+
+        final error = await generateFailureOutput(
+          result,
+          golden,
+          updatedBasedir,
+        );
+        throw FlutterError(error);
+      }
+      return result.passed;
+    } finally {
+      // Frees the diff images, as Flutter's own comparator does.
+      result.dispose();
     }
-
-    if (!result.passed) {
-      final Uri goldenPathWithoutFile = golden.replace(
-        pathSegments: golden.pathSegments.sublist(
-          0,
-          golden.pathSegments.length - 1,
-        ),
-      );
-
-      final Uri updatedBasedir = basedir.resolve(
-        goldenPathWithoutFile.toString(),
-      );
-
-      final error = await generateFailureOutput(result, golden, updatedBasedir);
-      throw FlutterError(error);
-    }
-    return result.passed;
   }
 }

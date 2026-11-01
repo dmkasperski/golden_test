@@ -31,5 +31,8 @@ build/
 # FVM - .fvmrc is tracked so everyone builds on the pinned SDK
 .fvm/
 
+# Golden failure images, written next to each golden
+**/goldens/**/failures/
+
 # Claude Code worktrees (embedded git repos, never commit these)
 .claude/worktrees/
