@@ -10,6 +10,8 @@
   - [Setup Theme](#setup-theme)
     - [Dark Theme](#dark-theme)
   - [Text Scale (Accessibility)](#text-scale)
+  - [Keyboard](#keyboard)
+  - [Foldables (iPhone Duo)](#foldables)
   - [Global Setup Callback](#global-setup-callback)
   - [Navigator Builder](#navigator-builder)
   - [Network Image Stub](#network-image-stub)
@@ -388,6 +390,93 @@ Either way the keyboard is simulated, not opened. The view reports it as a botto
 The keys are the English QWERTY layout whatever the test's locale, so a keyboard golden changes only when the screen does. The layouts are those of a phone; on a tablet preset the keys stretch to its width.
 
 The keyboards are the iOS and Android ones, and the simulation follows what those platforms do: a field with `TextInputType.none`, which brings its own input UI, opens nothing, and neither does any field on a device whose `platform` is `macOS`, `linux` or `windows`, where input comes from a hardware keyboard. `Device.browser()` is `macOS`, so it opens none either. A device without a `platform`, such as `Device.noInsets()`, follows `defaultTargetPlatform`, which is Android under `flutter test`. `keyboard:` draws what it is given on any device.
+
+<a name="foldables"></a>
+## Foldables (iPhone Duo)
+A foldable is several screens in one device, and a layout that is right on one of them can be wrong on the next: content runs across the fold, a phone layout stretches over the inner display, a dialog lands on the crease. `Device.iphoneDuo()` builds the widget under test once for every pose and puts them side by side in **one golden**, so a single image covers the whole device — and one line in a test is enough to see what a screen does on all of them.
+
+```dart
+goldenTest(
+  name: 'Inbox',
+  supportedDevices: [Device.iphoneDuo()],
+  builder: (_) => const InboxScreen(),
+);
+```
+
+![A golden of one screen in four iPhone Duo poses: closed, half open like a book, half open like a laptop, and open flat](https://raw.githubusercontent.com/dmkasperski/golden_test/master/doc/screenshots/duo_poses.png)
+
+Each pose is built from scratch, with its own `setup`, `action` and `tearDown`, exactly as a test of its own would be, so nothing carries over between them. The pose's name is written under its screen, and the edges of the fold are marked while the device is half open.
+
+### Poses
+By default the golden shows four: the cover display (`closed`), both ways of holding the device half open (`halfOpenBook`, `halfOpenLaptop`) and the inner display lying flat (`open`). `IphoneDuoPose` has three more — the cover display in both landscape rotations and the inner display in portrait — and `poses` picks which to show:
+
+```dart
+Device.iphoneDuo(poses: [IphoneDuoPose.closed, IphoneDuoPose.halfOpenBook]);
+```
+
+The metrics of the cover display are measured on the iPhone Duo simulator (iOS 27.2), down to the camera and the status cluster. Those of the inner display are not: the simulator cannot be folded from the command line, so they come from [`duo_kit`](https://pub.dev/packages/duo_kit).
+
+### Another foldable
+`Device.folding` builds one out of the screens it can show, for a device this package has no preset for. Each posture is an ordinary `Device` and needs a name, which the golden writes under its screen:
+
+```dart
+Device.folding(
+  name: 'my foldable',
+  platform: TargetPlatform.android,
+  postures: const [
+    Device(
+      name: 'closed',
+      devicePixelRatio: 3,
+      width: 420,
+      height: 900,
+      insets: EdgeInsets.only(top: 48, bottom: 40),
+    ),
+    Device(
+      name: 'open',
+      devicePixelRatio: 3,
+      width: 840,
+      height: 900,
+      insets: EdgeInsets.only(top: 48, bottom: 40),
+      displayFeatures: [
+        DisplayFeature(
+          bounds: Rect.fromLTWH(410, 0, 20, 900),
+          type: DisplayFeatureType.hinge,
+          state: DisplayFeatureState.postureHalfOpened,
+        ),
+      ],
+    ),
+  ],
+);
+```
+
+The device takes its window from the first posture, so there is nothing to keep in step by hand.
+
+### Does the app know about the fold?
+On iOS, Flutter does not fill `MediaQuery.displayFeatures`, so an app learns where the fold is only through a plugin that publishes it, such as [`foldable`](https://pub.dev/packages/foldable). Without one, the app has no idea the screen is folded: dialogs and sheets open in the middle, across the crease, and a split layout cannot avoid it.
+
+`reportsDisplayFeatures` says which of the two your app is. It defaults to `false`, the plain Flutter behaviour, so goldens show what most apps actually do today:
+
+```dart
+// The app publishes the fold with a plugin.
+Device.iphoneDuo(reportsDisplayFeatures: true);
+```
+
+The device frame draws the status cluster, the camera and the fold either way, so the golden shows where they are even when the app cannot see them. The rest of the side strip is left alone, because it belongs to the app — that is where Apple's guidelines put the navigation.
+
+### Platform
+A device states the platform it runs, and the widget under test is built for it:
+
+```dart
+const Device.iphone15Pro();   // built for iOS
+const Device.pixel9ProXL();   // built for Android
+const Device(name: 'plain');  // no platform of its own, so Android
+```
+
+It decides `Theme.of(context).platform`, which the back icon, switches and other adaptive widgets, the scroll physics and the text selection controls read.
+
+`flutter test` reports Android whatever device a golden runs on, so before this a golden of `Device.iphone15Pro()` said iPhone and drew Android. A device with no `platform` still gets that default, which is the way to keep a golden as it was.
+
+`defaultTargetPlatform` itself is left alone on purpose. A `ThemeData` resolves its typography from it when it is built, and a test environment has fonts for Android only, so overriding it would render every glyph as a blank box — in the widget under test and in any app or theme it builds of its own. A package that reads `defaultTargetPlatform` rather than the theme therefore still sees Android.
 
 <a name="global-config"></a>
 ## Global Setup Callback

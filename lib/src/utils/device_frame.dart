@@ -1,3 +1,5 @@
+import 'dart:ui' show DisplayFeature;
+
 import 'package:material_ui/material_ui.dart';
 import 'package:golden_test/src/utils/device_frame_painter.dart';
 import 'package:golden_test/src/utils/keyboard_painter.dart';
@@ -6,11 +8,22 @@ class DeviceFrame extends Decoration {
   final Brightness brightness;
   final EdgeInsets insets;
   final ResolvedKeyboard? keyboard;
+  final List<DisplayFeature> displayFeatures;
 
-  const DeviceFrame(this.brightness, this.insets, {this.keyboard});
+  const DeviceFrame(
+    this.brightness,
+    this.insets, {
+    this.keyboard,
+    this.displayFeatures = const [],
+  });
 
   @override
   BoxPainter createBoxPainter([VoidCallback? onChanged]) {
-    return DeviceFramePainter(brightness, insets, keyboard: keyboard);
+    return DeviceFramePainter(
+      brightness,
+      insets,
+      keyboard: keyboard,
+      displayFeatures: displayFeatures,
+    );
   }
 }
