@@ -277,7 +277,7 @@ golden; the rest are `flutter_test`'s group-level hooks.
 | `setUpAll` | Expensive, immutable, shareable: a loaded fixture file, `registerFallbackValue`. Never mutable state — one test corrupting it breaks the rest in order-dependent ways. |
 | `setUp` | The shared baseline: fresh mocks, DI registration, the default happy-path stub. |
 | `setup:` | Only what's *different* about this variant, plus anything that must be in effect before first build. |
-| `action:` | States needing interaction — `enterText`, `tap`, `drag`, focus. Follow with `pump`/`pumpAndSettle`. |
+| `action:` | States needing interaction — `enterText`, `tap`, `drag`, focus. Follow with `pump`/`pumpAndSettle`. Gestures only, never an `expect` (§10). |
 | `tearDown:` | Undoing what `setup:`/`action:` did that outlives the tree — an overridden global, a static singleton, a channel handler. |
 | `tearDown` | Disposing what `setUp` created: closing a bloc, `getIt.popScope()`, resetting mocks. |
 | `tearDownAll` | Releasing `setUpAll` resources. Rarely needed. |
@@ -427,6 +427,15 @@ checkerboard placeholder instead of hanging. No `HttpOverrides`, no
 
 ## 10. Non-negotiables
 
+- **The image is the assertion — no `expect` in a `goldenTest`.** The
+  screenshot already compares every pixel of the frame, so
+  `expect(find.text('Label'), findsOneWidget)` re-checks something strictly
+  weaker — and when it fails, it fails *before* the shot is taken: you get a
+  matcher error and no `failures/` images, losing the one artifact that
+  shows what changed. `action:` is for reaching a state, not for checking
+  the state it reached. Behaviour worth asserting — a callback fired, a
+  route pushed, a controller updated — belongs in a plain `testWidgets`
+  beside the golden, where a failure message is the point.
 - **Zero insets** unless the widget is screen-shaped (§3). `Device.noInsets()`
   is the default; a custom showcase `Device` (§5) also qualifies — what
   matters is that no device chrome is in the frame, not which constructor

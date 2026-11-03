@@ -462,6 +462,12 @@ A screen with an input has to stay usable while the keyboard is up: every
 field and the submit button must still be reachable by scrolling. Two
 goldens cover it.
 
+This is the one place a golden test carries an `expect` (§9). Both outcomes
+look like a plausible screen with a keyboard on it, so the image can't tell
+a reviewer which one it is — and once regenerated, a golden of the broken
+layout passes forever. The rect comparison is what makes the reachability
+bug fail loudly; it costs the screenshot for that run, which is the trade.
+
 ```dart
 /// Fails when [finder] ends below the top of the simulated keyboard.
 void expectAboveKeyboard(WidgetTester tester, Finder finder) {
