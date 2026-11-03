@@ -4,17 +4,15 @@ import 'package:golden_test/golden_test.dart';
 import 'package:golden_test_example/screens/inbox_screen.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'fixtures/inbox.dart';
+
 void main() {
   goldenTest(
     name: 'navigatorBuilder',
     supportedLocales: [const Locale('en')],
     supportedThemes: [Brightness.light],
     navigatorBuilder: (context, navigator) => BlocProvider<InboxCubit>(
-      create: (_) => InboxCubit(const [
-        'Your order has shipped',
-        'Meeting moved to 3 PM',
-        'Welcome to the team',
-      ]),
+      create: (_) => InboxCubit(sampleMessages),
       child: navigator,
     ),
     builder: (_) => const InboxScreen(),

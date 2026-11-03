@@ -1,3 +1,6 @@
+import 'dart:math' show max;
+import 'dart:ui' as ui;
+
 import 'package:cupertino_ui/cupertino_ui.dart'
     show GlobalCupertinoLocalizations;
 import 'package:flutter/services.dart';
@@ -204,104 +207,161 @@ void goldenTest({
               tester.platformDispatcher.platformBrightnessTestValue = mode;
               tester.platformDispatcher.textScaleFactorTestValue = scale;
               debugDisableShadows = false;
-              _setupSize(
+
+              // Include device name in path only when testing multiple devices
+              final shouldIncludeDeviceName = testDevices.length > 1;
+              final goldenPath = _buildGoldenPath(
+                locale: locale,
+                mode: mode,
                 device: device,
-                tester: tester,
+                name: name,
+                includeDeviceName: shouldIncludeDeviceName,
+                textScale: includeTextScaleInPath ? scale : null,
+                subdirectory: subdirectory,
               );
-              final ResolvedKeyboard? fixedKeyboard = keyboard == null
-                  ? null
-                  : ResolvedKeyboard.of(keyboard: keyboard, device: device);
-              setKeyboardInsets(
-                tester: tester,
-                device: device,
-                keyboard: fixedKeyboard,
-              );
-              final KeyboardSimulation? keyboardSimulation =
-                  keyboard == null &&
-                      (simulateKeyboard ?? goldenTestSimulateKeyboard)
-                  ? KeyboardSimulation.install(tester: tester, device: device)
-                  : null;
+
+              // A foldable is built once for every posture, and its golden
+              // shows all of them side by side.
+              final List<Device> screens = device.postures.isEmpty
+                  ? [device]
+                  : device.postures;
+              final captures = <_PostureCapture>[];
+
+              final ThemeData lightTheme = goldenTestThemeInTests;
+              final ThemeData darkTheme = goldenTestDarkThemeInTests;
 
               // Outer finally: runWithNetworkImageStub can throw before
               // reaching its body, which would leak debugDisableShadows.
               try {
                 await runWithNetworkImageStub(() async {
-                  try {
-                    if (globalSetup != null) {
-                      await globalSetup!(locale);
-                    }
-
-                    if (setup != null) {
-                      await setup(tester);
-                    }
-
-                    final widget = _themedWidget(
-                      child: Container(
-                        alignment: Alignment.topLeft,
-                        child: Builder(builder: builder),
-                      ),
-                      theme: mode == Brightness.light
-                          ? goldenTestThemeInTests
-                          : goldenTestDarkThemeInTests,
-                      supportedLocales: [locale],
-                      localizationsDelegates:
-                          localizationsDelegates ??
-                          goldenTestLocalizationsDelegates,
-                      navigatorBuilder:
-                          navigatorBuilder ?? goldenTestNavigatorBuilder,
-                      resizeToAvoidBottomInset:
-                          fixedKeyboard == null && keyboardSimulation == null,
+                  for (final (index, screen) in screens.indexed) {
+                    _setupSize(
+                      device: screen,
+                      tester: tester,
                     );
+                    // A device states the platform it runs, and the theme
+                    // carries it, which is what adaptive widgets, the back
+                    // icon and the scroll physics read.
+                    //
+                    // `defaultTargetPlatform` itself is deliberately left
+                    // alone. Every `ThemeData` built while it is overridden
+                    // resolves its typography from it, and a test
+                    // environment has no fonts for a platform other than
+                    // Android, so a widget that builds an app or a theme of
+                    // its own would render every glyph as a blank box.
+                    final TargetPlatform? platformOverride = screen.platform;
+                    final ResolvedKeyboard? fixedKeyboard = keyboard == null
+                        ? null
+                        : ResolvedKeyboard.of(
+                            keyboard: keyboard,
+                            device: screen,
+                          );
+                    setKeyboardInsets(
+                      tester: tester,
+                      device: screen,
+                      keyboard: fixedKeyboard,
+                    );
+                    final KeyboardSimulation? keyboardSimulation =
+                        keyboard == null &&
+                            (simulateKeyboard ?? goldenTestSimulateKeyboard)
+                        ? KeyboardSimulation.install(
+                            tester: tester,
+                            device: screen,
+                          )
+                        : null;
 
-                    await tester.pumpWidget(
-                      _GoldenTestRoot(
-                        child: keyboardSimulation == null
-                            ? _DeviceFrameBox(
-                                mode: mode,
-                                device: device,
-                                keyboard: fixedKeyboard,
-                                child: widget,
-                              )
-                            : ValueListenableBuilder(
-                                valueListenable: keyboardSimulation.keyboard,
-                                builder: (_, keyboard, _) => _DeviceFrameBox(
+                    try {
+                      if (globalSetup != null) {
+                        await globalSetup!(locale);
+                      }
+
+                      if (setup != null) {
+                        await setup(tester);
+                      }
+
+                      final widget = _themedWidget(
+                        child: Container(
+                          alignment: Alignment.topLeft,
+                          child: Builder(builder: builder),
+                        ),
+                        // A ThemeData freezes defaultTargetPlatform into its
+                        // own `platform` when it is built, and the project's
+                        // themes are top-level variables built once, before
+                        // any override. Without this, adaptive widgets and
+                        // anything reading Theme.of(context).platform would
+                        // keep the platform of whichever test ran first.
+                        theme: _applyPlatform(
+                          mode == Brightness.light ? lightTheme : darkTheme,
+                          platformOverride,
+                        ),
+                        supportedLocales: [locale],
+                        localizationsDelegates:
+                            localizationsDelegates ??
+                            goldenTestLocalizationsDelegates,
+                        navigatorBuilder:
+                            navigatorBuilder ?? goldenTestNavigatorBuilder,
+                        resizeToAvoidBottomInset:
+                            fixedKeyboard == null && keyboardSimulation == null,
+                      );
+
+                      await tester.pumpWidget(
+                        _GoldenTestRoot(
+                          // A new key for every posture, so that each one is
+                          // built from scratch, as a test of its own would be.
+                          key: ValueKey<int>(index),
+                          child: keyboardSimulation == null
+                              ? _DeviceFrameBox(
                                   mode: mode,
-                                  device: device,
-                                  keyboard: keyboard,
+                                  device: screen,
+                                  keyboard: fixedKeyboard,
                                   child: widget,
+                                )
+                              : ValueListenableBuilder(
+                                  valueListenable: keyboardSimulation.keyboard,
+                                  builder: (_, keyboard, _) => _DeviceFrameBox(
+                                    mode: mode,
+                                    device: screen,
+                                    keyboard: keyboard,
+                                    child: widget,
+                                  ),
                                 ),
-                              ),
-                      ),
-                    );
+                        ),
+                      );
 
-                    if (action != null) {
+                      if (action != null) {
+                        await tester.pumpAndSettle();
+                        await action(tester);
+                      }
+
                       await tester.pumpAndSettle();
-                      await action(tester);
+                      await _precacheImages(tester);
+
+                      if (device.postures.isEmpty) {
+                        await _takeAScreenshot(goldenPath);
+                      } else {
+                        captures.add(await _capturePosture(tester, screen));
+                      }
+                    } finally {
+                      if (tearDown != null) {
+                        await tearDown(tester);
+                      }
+                      keyboardSimulation?.dispose();
                     }
+                  }
 
-                    await tester.pumpAndSettle();
-                    await _precacheImages(tester);
-
-                    // Include device name in path only when testing multiple devices
-                    final shouldIncludeDeviceName = testDevices.length > 1;
-                    final goldenPath = _buildGoldenPath(
-                      locale: locale,
+                  if (captures.isNotEmpty) {
+                    await _matchPostures(
+                      tester: tester,
+                      captures: captures,
                       mode: mode,
-                      device: device,
-                      name: name,
-                      includeDeviceName: shouldIncludeDeviceName,
-                      textScale: includeTextScaleInPath ? scale : null,
-                      subdirectory: subdirectory,
+                      goldenPath: goldenPath,
                     );
-                    await _takeAScreenshot(goldenPath);
-                  } finally {
-                    if (tearDown != null) {
-                      await tearDown(tester);
-                    }
                   }
                 });
               } finally {
-                keyboardSimulation?.dispose();
+                for (final capture in captures) {
+                  capture.image.dispose();
+                }
                 debugDisableShadows = true;
               }
             },
@@ -424,6 +484,16 @@ String _formatTextScale(double scale) {
   return s.replaceFirst(RegExp(r'\.?0+$'), '');
 }
 
+/// The theme as the device's platform would build it, or unchanged when the
+/// test builds for the default platform.
+/// The theme as the device's platform sees it.
+///
+/// Only [ThemeData.platform] moves, which is what adaptive widgets read.
+/// The typography stays as the theme was built with, because the platform's
+/// own fonts are not in a test environment.
+ThemeData _applyPlatform(ThemeData theme, TargetPlatform? platform) =>
+    platform == null ? theme : theme.copyWith(platform: platform);
+
 /// Apply theme to pumped Widget.
 Widget _themedWidget({
   required Widget child,
@@ -455,9 +525,15 @@ Widget _themedWidget({
   // the widget under test would always be shrunk and see viewInsets.bottom ==
   // 0, whatever its own resizeToAvoidBottomInset says. Left alone, the inset
   // reaches the widget's own Scaffold, which handles it as on a device.
+  //
+  // The widget under test gets a ScaffoldMessenger of its own. Snackbars go to
+  // the outermost Scaffolds of a messenger, and without it that would be this
+  // one: a snackbar would span the whole screen, over the widget's own bottom
+  // navigation bar, and a screen with two Scaffolds side by side would show
+  // one snackbar instead of one in each, as it does in an app.
   home: Scaffold(
     resizeToAvoidBottomInset: resizeToAvoidBottomInset,
-    body: child,
+    body: ScaffoldMessenger(child: child),
   ),
 );
 
@@ -476,6 +552,9 @@ void _setupSize({
     right: device.insets.right * ratio,
     bottom: device.insets.bottom * ratio,
   );
+  tester.view.displayFeatures = device.reportsDisplayFeatures
+      ? device.displayFeatures
+      : const [];
 }
 
 /// Paints the device frame, and the keyboard when there is one, over the app.
@@ -501,7 +580,12 @@ class _DeviceFrameBox extends StatelessWidget {
 
     return DecoratedBox(
       position: DecorationPosition.foreground,
-      decoration: DeviceFrame(mode, device.insets, keyboard: keyboard),
+      decoration: DeviceFrame(
+        mode,
+        device.insets,
+        keyboard: keyboard,
+        displayFeatures: device.displayFeatures,
+      ),
       // The app stays the first child with or without a keyboard, so its
       // state survives the keyboard coming and going.
       child: Stack(
@@ -531,7 +615,7 @@ class _DeviceFrameBox extends StatelessWidget {
 /// [matchesGoldenFile] captures the nearest enclosing [RepaintBoundary], which
 /// remains the view.
 class _GoldenTestRoot extends StatelessWidget {
-  const _GoldenTestRoot({required this.child});
+  const _GoldenTestRoot({super.key, required this.child});
 
   final Widget child;
 
@@ -544,6 +628,161 @@ Future<void> _takeAScreenshot(dynamic key, {int? version}) async =>
       find.byType(_GoldenTestRoot),
       matchesGoldenFile(key, version: version),
     );
+
+/// One posture of a foldable, rasterised for [_matchPostures].
+typedef _PostureCapture = ({Device posture, ui.Image image});
+
+Future<_PostureCapture> _capturePosture(
+  WidgetTester tester,
+  Device posture,
+) async {
+  final Element root = find.byType(_GoldenTestRoot).evaluate().single;
+  final ui.Image? image = await tester.runAsync(() => captureImage(root));
+  return (posture: posture, image: image!);
+}
+
+/// Compares the postures of a foldable, side by side and each named under
+/// its screen, with one golden file.
+///
+/// A fold or hinge that splits the screen is marked in the margin, with a
+/// bar across its width above and below the screen, or left and right of a
+/// horizontal one. Nothing is drawn over the screen, so its pixels are the
+/// app's own, and the bars are solid and aligned to whole pixels, so they
+/// rasterise the same everywhere. A fold open flat has no width and is not
+/// marked.
+Future<void> _matchPostures({
+  required WidgetTester tester,
+  required List<_PostureCapture> captures,
+  required Brightness mode,
+  required String goldenPath,
+}) async {
+  final double ratio = captures
+      .map((capture) => capture.posture.devicePixelRatio)
+      .reduce(max);
+  final double margin = 32 * ratio;
+  final double labelHeight = 40 * ratio;
+  final double markGap = (4 * ratio).roundToDouble();
+  final double markThickness = (6 * ratio).roundToDouble();
+  final double screensHeight = captures
+      .map((capture) => capture.image.height.toDouble())
+      .reduce(max);
+  final double width =
+      margin * (captures.length + 1) +
+      captures.fold(0.0, (sum, capture) => sum + capture.image.width);
+  final double labelTop = margin + screensHeight + markGap + markThickness;
+  final double height = labelTop + labelHeight + margin / 2;
+  final Paint markPaint = Paint()
+    ..isAntiAlias = false
+    ..color = const Color(0xFF8E8E93);
+
+  final recorder = ui.PictureRecorder();
+  final canvas = Canvas(recorder);
+  canvas.drawRect(
+    Rect.fromLTWH(0, 0, width, height),
+    Paint()
+      ..color = mode == Brightness.light
+          ? const Color(0xFFD1D1D6)
+          : const Color(0xFF2C2C2E),
+  );
+
+  double left = margin;
+  for (final capture in captures) {
+    canvas.drawImage(capture.image, Offset(left, margin), Paint());
+
+    final Rect screen = Rect.fromLTWH(
+      left,
+      margin,
+      capture.image.width.toDouble(),
+      capture.image.height.toDouble(),
+    );
+    for (final ui.DisplayFeature feature in capture.posture.displayFeatures) {
+      if (feature.type == ui.DisplayFeatureType.cutout) {
+        continue;
+      }
+      final Rect fold = feature.bounds;
+      final double scale = capture.posture.devicePixelRatio;
+      if (fold.width > 0 && fold.height >= fold.width) {
+        final double from = (left + fold.left * scale).roundToDouble();
+        final double to = (left + fold.right * scale).roundToDouble();
+        canvas
+          ..drawRect(
+            Rect.fromLTRB(
+              from,
+              screen.top - markGap - markThickness,
+              to,
+              screen.top - markGap,
+            ),
+            markPaint,
+          )
+          ..drawRect(
+            Rect.fromLTRB(
+              from,
+              screen.bottom + markGap,
+              to,
+              screen.bottom + markGap + markThickness,
+            ),
+            markPaint,
+          );
+      } else if (fold.height > 0 && fold.width > fold.height) {
+        final double from = (margin + fold.top * scale).roundToDouble();
+        final double to = (margin + fold.bottom * scale).roundToDouble();
+        canvas
+          ..drawRect(
+            Rect.fromLTRB(
+              screen.left - markGap - markThickness,
+              from,
+              screen.left - markGap,
+              to,
+            ),
+            markPaint,
+          )
+          ..drawRect(
+            Rect.fromLTRB(
+              screen.right + markGap,
+              from,
+              screen.right + markGap + markThickness,
+              to,
+            ),
+            markPaint,
+          );
+      }
+    }
+
+    final label = TextPainter(
+      text: TextSpan(
+        text: capture.posture.name,
+        style: TextStyle(
+          color: mode == Brightness.light ? Colors.black : Colors.white,
+          fontSize: 15 * ratio,
+          fontFamily: 'Roboto',
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    label.paint(
+      canvas,
+      Offset(
+        left + (capture.image.width - label.width) / 2,
+        labelTop + (labelHeight - label.height) / 2,
+      ),
+    );
+    label.dispose();
+
+    left += capture.image.width + margin;
+  }
+
+  final ui.Picture picture = recorder.endRecording();
+  final ui.Image? composite = await tester.runAsync(
+    () => picture.toImage(width.ceil(), height.ceil()),
+  );
+  picture.dispose();
+
+  try {
+    await expectLater(composite!, matchesGoldenFile(goldenPath));
+  } finally {
+    composite?.dispose();
+  }
+}
 
 /// Fallback for route generator
 PageRouteBuilder _unknownPage(RouteSettings settings) => PageRouteBuilder(

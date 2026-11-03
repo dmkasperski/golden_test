@@ -2,6 +2,7 @@ library;
 
 export 'src/config.dart';
 export 'src/device.dart';
+export 'src/iphone_duo.dart';
 export 'src/golden_test.dart';
 export 'src/keyboard.dart';
 export 'src/network_image_stub.dart';
