@@ -367,6 +367,9 @@ maintenance cost against zero coverage.
 you scroll, tap, enter text, or pull to refresh to reach a state the builder
 alone can't produce. Follow every gesture with `pump`/`pumpAndSettle`.
 
+It scrolls and taps; it doesn't check. The screenshot is what asserts the
+result, so an `expect` only belongs here in the single case §9 names.
+
 Copy-pasteable recipes (scroll to bottom, tap to expand, scroll until
 visible, pull to refresh) are in
 [`references/patterns.md`](references/patterns.md).
@@ -503,6 +506,27 @@ branches** (the stub always succeeds immediately, so inject a custom
 
 ## 9. Non-negotiables
 
+- **The image is the assertion — no `expect` in a `goldenTest`.** The
+  screenshot already compares every pixel of the frame, so
+  `expect(find.text('Error'), findsOneWidget)` re-checks something strictly
+  weaker — and when it fails, it fails *before* the shot is taken: you get a
+  matcher error and no `failures/` images, losing the one artifact that
+  shows what changed. `action:` is for reaching a state, not for checking
+  the state it reached. Behaviour worth asserting — a route pushed, a
+  request sent, a form rejected — belongs in a plain `testWidgets` beside
+  the golden, where a failure message is the point.
+
+  **One exception: an invariant no image can show.** A golden asserts that
+  nothing *changed*, not that anything is *right* — a submit button that has
+  always sat under the keyboard has a green golden of that bug, and a
+  reviewer regenerating a batch sees a plausible screen either way. Where
+  correct and broken look equally plausible, one geometric comparison
+  against the viewport earns its place, and the missing screenshot is the
+  point: the message names the fault that a diff only hints at. The
+  keyboard-reachability check in
+  [`references/patterns.md`](references/patterns.md) is that case. It is the
+  whole exception — it never licenses `findsOneWidget`, a text check or a
+  widget-type check, every one of which the image already asserts.
 - **Stub state directly** — never drive it through real reducers, notifiers,
   or business logic to reach a visual state.
 - **Isolate DI/service-locator registrations per test** (§6).
