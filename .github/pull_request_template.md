@@ -2,7 +2,6 @@
 
 ## Checklist
 
-- [ ] `CHANGELOG.md` has an entry for every change that package users act on. Repo infrastructure stays out.
-- [ ] `version` in `pubspec.yaml` is either unchanged, or the next release on its major line that fits the change: breaking → major, new public API → minor, otherwise patch.
-- [ ] If `version` changed, `CHANGELOG.md` starts with `## <version>` and `example/pubspec.lock` points at it (`flutter pub get` in `example/`).
+- [ ] A fragment in `changelog.d/` for every change package users act on, written for someone upgrading ([how](../blob/master/changelog.d/README.md)). Repo infrastructure needs none — label the PR `skip changelog` instead.
+- [ ] `version` in `pubspec.yaml` is **unchanged**. The release sets it: `prepare_release.sh` computes it from the fragments on `master` when the release is cut.
 - [ ] Goldens whose UI changed are regenerated, even if they pass under the tolerance.

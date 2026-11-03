@@ -73,6 +73,14 @@ changelog_heading=$(grep -m 1 '^## ' CHANGELOG.md || true)
 [[ $changelog_heading == "## $version" ]] ||
   fail "CHANGELOG.md must start with a '## $version' section, found '${changelog_heading:-nothing}'."
 
+# prepare_release.sh consumes the fragments it writes into that section. Any
+# left behind are changes this release describes nowhere, so the version it
+# was given may be too small for what it actually carries.
+leftover=$(find changelog.d -name '*.md' ! -name 'README.md' 2>/dev/null | sort)
+[[ -z $leftover ]] ||
+  fail "changelog.d still holds fragments, so $version was not prepared with prepare_release.sh:
+$leftover"
+
 {
   echo "version=$version"
   echo "previous=$previous"

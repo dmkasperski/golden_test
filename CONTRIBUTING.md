@@ -36,13 +36,19 @@ By following these guidelines, you can contribute effectively to the Golden Test
 ## Releasing
 Releases are published to pub.dev by GitHub Actions, not from a local machine.
 
-1. Merge a pull request that sets `version` in `pubspec.yaml` and adds the matching `CHANGELOG.md` entry.
+A change does not pick its own version. Each pull request adds a fragment to [`changelog.d/`](changelog.d/README.md) saying what it changed and what bump it alone would need, and leaves `version` in `pubspec.yaml` alone. The release then takes the largest bump among the fragments that actually landed, so a change that slips to the next release takes its bump with it, and two branches never conflict over the same `CHANGELOG.md` lines.
+
+1. On `master`, with everything for the release merged, collect the fragments:
+   ```bash
+   .github/scripts/prepare_release.sh          # --dry-run to see it first
+   ```
+   It computes the version, writes the `CHANGELOG.md` section, sets `version` in `pubspec.yaml`, refreshes `example/pubspec.lock` and deletes the fragments it consumed. Review the diff and merge it as a pull request of its own.
 2. Tag that commit on `master` with `v` and the version, and push the tag:
    ```bash
    git tag v2.1.0 origin/master
    git push origin v2.1.0
    ```
-3. The **Publish** workflow runs the full CI suite on the tag and checks the version: it must be the next release on its major line, `CHANGELOG.md` must start with its section, and the public API change must fit the bump. The run's summary shows what kind of release it is.
+3. The **Publish** workflow runs the full CI suite on the tag and checks the version: it must be the next release on its major line, `CHANGELOG.md` must start with its section, `changelog.d/` must hold no fragment left over, and the public API change must fit the bump. The run's summary shows what kind of release it is.
 4. It then waits in the `pub.dev` environment for a maintainer to approve the deployment on the run's page. Once approved, it publishes.
 
 A release for an older major line, such as `1.1.3` after `2.1.0`, is tagged on that line's branch (`1.x`) and needs one more approval, in the `pub.dev-maintenance` environment. The branch needs these workflows for that, minus the `pana` job in `ci.yml`: pub.dev shows the score of the latest version only, so it shouldn't hold back a fix for an older line.

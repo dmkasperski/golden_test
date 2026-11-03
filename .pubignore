@@ -43,5 +43,8 @@ TODO.md
 doc/material_decoupling_plan.md
 .claude/
 
+# Release process, not package content
+changelog.d/
+
 # Golden failure artifacts
 **/failures/
