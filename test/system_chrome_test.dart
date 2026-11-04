@@ -335,4 +335,30 @@ void main() {
       tearDown: (_) async => expect(padding.bottom, 48.0),
     );
   });
+
+  group('what the chrome looks like', () {
+    // One flat mid-tone under the whole window, so that both halves of the
+    // frame read against it: the status bar, which the frame fills with the
+    // window's own background, and the navigation bar, which it does not
+    // fill at all and leaves to the app, as edge-to-edge Android does.
+    Widget body(BuildContext context) =>
+        const ColoredBox(color: Color(0xFF7E8C9A), child: SizedBox.expand());
+
+    // The one golden that says the platform decides the chrome. The same
+    // window, drawn three ways: iOS puts the clock in the middle of the left
+    // half and ends in a home indicator, Android pushes the clock to the
+    // edge and orders its icons its own way, and the three-button bar is
+    // twice the gesture bar's height.
+    goldenTest(
+      name: 'The chrome the platform draws',
+      supportedLocales: [const Locale('en')],
+      supportedThemes: [Brightness.light, Brightness.dark],
+      supportedDevices: [
+        const Device.iphone15Pro(),
+        const Device.pixel9ProXL(),
+        const Device.pixel9ProXL(navigation: AndroidNavigation.threeButton),
+      ],
+      builder: body,
+    );
+  });
 }
