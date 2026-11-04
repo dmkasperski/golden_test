@@ -1,12 +1,26 @@
 import 'dart:math';
 import 'dart:ui' show DisplayFeature, DisplayFeatureState, DisplayFeatureType;
 
+import 'package:golden_test/src/android_navigation.dart';
 import 'package:golden_test/src/utils/keyboard_painter.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// One degree in radians, so that measured angles can be written as read.
 const double _degrees = pi / 180;
 const double _halfPi = pi / 2;
+
+/// How far in from the edges of the screen Android's status bar sets its
+/// clock and its icons.
+const double _androidStatusBarPadding = 16;
+
+/// Half the width of the punch-hole camera, as drawn.
+///
+/// Android reports a cutout as the region it reserves, which is wider and
+/// taller than the hole itself — on a Pixel 6a a 55.2 x 50.3 region around a
+/// hole of roughly 24 across. The region is what the app has to lay out
+/// around and what [DisplayFeature] carries; this is only what the frame
+/// paints inside it.
+const double _androidLensRadius = 12;
 
 /// The radius of the Duo status indicator's ring, along the middle of its
 /// stroke. Its signal dots sit on the same circle.
@@ -18,12 +32,36 @@ class DeviceFramePainter extends BoxPainter {
   final ResolvedKeyboard? keyboard;
   final List<DisplayFeature> displayFeatures;
 
+  /// The platform the device runs, which decides the chrome drawn around the
+  /// app: the layout of the status bar, and whether the bottom inset carries
+  /// an iOS home indicator or an Android navigation bar.
+  ///
+  /// A device that states no platform keeps the one look this package drew
+  /// before there were two, so its goldens do not move.
+  final TargetPlatform? platform;
+
+  /// How the Android device shows its navigation. Read only when [platform]
+  /// is Android.
+  final AndroidNavigation navigation;
+
   DeviceFramePainter(
     this.brightness,
     this.insets, {
     this.keyboard,
     this.displayFeatures = const [],
+    this.platform,
+    this.navigation = AndroidNavigation.gesture,
   });
+
+  /// Whether the device draws Android's own chrome. A device with no platform
+  /// keeps the iOS-shaped chrome this package has always drawn.
+  bool get _isAndroid => switch (platform) {
+    null || TargetPlatform.iOS || TargetPlatform.macOS => false,
+    TargetPlatform.android ||
+    TargetPlatform.fuchsia ||
+    TargetPlatform.linux ||
+    TargetPlatform.windows => true,
+  };
 
   Color get _contentColor =>
       brightness == Brightness.light ? Colors.black : Colors.white;
@@ -45,7 +83,11 @@ class DeviceFramePainter extends BoxPainter {
       for (final DisplayFeature feature in displayFeatures)
         if (feature.type == DisplayFeatureType.cutout) feature.bounds,
     ];
-    if (cutouts.isNotEmpty) {
+    // A cutout means two different things. On an iOS foldable it is the
+    // status cluster, which replaces the status bar outright. On Android it
+    // is the punch-hole camera, a hole in an ordinary status bar that is
+    // drawn around it.
+    if (cutouts.isNotEmpty && !_isAndroid) {
       // A device whose status bar is a cluster, such as iPhone Duo. The rest
       // of the insets, such as its strip, is the app's to draw in.
       _drawStatusClusters(canvas, cutouts);
@@ -70,7 +112,22 @@ class DeviceFramePainter extends BoxPainter {
       }
 
       if (insets.top != 0) {
-        _drawStatusBar(canvas, size);
+        if (_isAndroid) {
+          _drawAndroidStatusBar(canvas, size);
+        } else {
+          _drawStatusBar(canvas, size);
+        }
+      }
+
+      // The punch-hole camera, which Android reserves a region for and the
+      // app has to draw around.
+      if (_isAndroid) {
+        for (final Rect cutout in cutouts) {
+          _drawLens(
+            canvas,
+            Rect.fromCircle(center: cutout.center, radius: _androidLensRadius),
+          );
+        }
       }
     }
 
@@ -91,7 +148,11 @@ class DeviceFramePainter extends BoxPainter {
     }
 
     if (insets.bottom != 0) {
-      _drawHomeIndicator(canvas, size);
+      if (_isAndroid) {
+        _drawAndroidNavigation(canvas, size);
+      } else {
+        _drawHomeIndicator(canvas, size);
+      }
     }
   }
 
@@ -108,9 +169,54 @@ class DeviceFramePainter extends BoxPainter {
     final centerY = insets.top / 2;
 
     _drawTime(canvas, centerY, color);
-    _drawBattery(canvas, size.width, centerY, color);
-    _drawWifi(canvas, size.width, centerY, color);
-    _drawSignalBars(canvas, size.width, centerY, color);
+    _drawIosStatusIcons(canvas, size.width, centerY, color);
+  }
+
+  /// Android's status bar: the clock hard against the left edge, and the
+  /// status icons against the right, in Android's own order.
+  ///
+  /// iOS centres its clock in the left half of the bar; Android does not,
+  /// which is the clearest difference between the two at a glance.
+  void _drawAndroidStatusBar(Canvas canvas, Size size) {
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, size.width, insets.top),
+      Paint()..color = _backgroundColor,
+    );
+
+    final color = _contentColor;
+    final centerY = insets.top / 2;
+
+    _drawTime(canvas, centerY, color, left: _androidStatusBarPadding);
+    _drawAndroidStatusIcons(canvas, size.width, centerY, color);
+  }
+
+  /// The signal, Wi-Fi and battery of an iOS status bar, laid out from the
+  /// right edge of [width].
+  void _drawIosStatusIcons(
+    Canvas canvas,
+    double width,
+    double centerY,
+    Color color,
+  ) {
+    _drawBattery(canvas, width - 10.5, centerY, color);
+    _drawWifi(canvas, width - 42, centerY, color);
+    _drawSignalBars(canvas, width - 65, centerY, color);
+  }
+
+  /// The same icons as an Android status bar orders them, laid out from the
+  /// right edge of [width]: the battery last on the right, then the signal,
+  /// then Wi-Fi. iOS puts Wi-Fi between the signal and the battery instead.
+  void _drawAndroidStatusIcons(
+    Canvas canvas,
+    double width,
+    double centerY,
+    Color color,
+  ) {
+    const double gap = 7;
+    double right = width - _androidStatusBarPadding;
+    right = _drawBattery(canvas, right, centerY, color) - gap;
+    right = _drawSignalBars(canvas, right, centerY, color) - gap;
+    _drawWifi(canvas, right, centerY, color);
   }
 
   /// Marks the edges of a fold or hinge while the device is half open, with
@@ -190,9 +296,7 @@ class DeviceFramePainter extends BoxPainter {
         canvas.translate(cluster.left, cluster.top);
         final double centerY = cluster.height / 2;
         _drawTime(canvas, centerY, color, centerX: 30);
-        _drawBattery(canvas, cluster.width, centerY, color);
-        _drawWifi(canvas, cluster.width, centerY, color);
-        _drawSignalBars(canvas, cluster.width, centerY, color);
+        _drawIosStatusIcons(canvas, cluster.width, centerY, color);
         canvas.restore();
         continue;
       }
@@ -221,12 +325,17 @@ class DeviceFramePainter extends BoxPainter {
       _drawCombinedIndicator(canvas, Offset(centreX, indicatorY), color);
     }
 
-    // The lens fills its reserved region exactly, and stays black in both
-    // brightnesses, as it is a hole in the display rather than a drawing.
+    // The lens fills its reserved region exactly here, because that is what
+    // the iPhone Duo simulator reports: a region the size of the camera.
     for (final Rect camera in cameras) {
-      canvas.drawOval(camera, Paint()..color = const Color(0xFF000000));
+      _drawLens(canvas, camera);
     }
   }
+
+  /// A camera lens, which stays black in both brightnesses because it is a
+  /// hole in the display rather than something drawn on it.
+  void _drawLens(Canvas canvas, Rect bounds) =>
+      canvas.drawOval(bounds, Paint()..color = const Color(0xFF000000));
 
   /// The one indicator iPhone Duo shows in its strip in place of separate
   /// signal, Wi-Fi and battery icons: a ring open at the bottom, Wi-Fi inside
@@ -282,6 +391,7 @@ class DeviceFramePainter extends BoxPainter {
     double centerY,
     Color color, {
     double? centerX,
+    double left = 24,
     double fontSize = 15,
   }) {
     final painter = TextPainter(
@@ -300,22 +410,26 @@ class DeviceFramePainter extends BoxPainter {
     painter.paint(
       canvas,
       Offset(
-        centerX == null ? 24 : centerX - painter.width / 2,
+        centerX == null ? left : centerX - painter.width / 2,
         centerY - painter.height / 2,
       ),
     );
   }
 
-  void _drawBattery(
+  /// The battery, with the right edge of its cap at [right]. Returns the x of
+  /// its left edge, so a cluster can be laid out from the right.
+  double _drawBattery(
     Canvas canvas,
-    double screenWidth,
+    double right,
     double centerY,
     Color color,
   ) {
-    const rightPadding = 14.0;
     const bodyWidth = 25.0;
     const bodyHeight = 12.0;
-    final x = screenWidth - rightPadding - bodyWidth;
+    const capWidth = 2.0;
+    const capGap = 1.5;
+    final bodyRight = right - capWidth - capGap;
+    final x = bodyRight - bodyWidth;
     final y = centerY - bodyHeight / 2;
 
     canvas.drawRRect(
@@ -345,22 +459,20 @@ class DeviceFramePainter extends BoxPainter {
 
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        Rect.fromLTWH(screenWidth - rightPadding + 1.5, centerY - 2, 2, 4),
+        Rect.fromLTWH(right - capWidth, centerY - 2, capWidth, 4),
         const Radius.circular(1),
       ),
       Paint()..color = color.withAlpha(80),
     );
+
+    return x;
   }
 
-  void _drawWifi(
-    Canvas canvas,
-    double screenWidth,
-    double centerY,
-    Color color,
-  ) {
-    const rightPadding = 14.0;
-    const batteryWidth = 25.0;
-    final wifiCenterX = screenWidth - rightPadding - batteryWidth - 12;
+  /// Wi-Fi, with the right edge of its box at [right]. Returns the x of its
+  /// left edge.
+  double _drawWifi(Canvas canvas, double right, double centerY, Color color) {
+    const double halfWidth = 9;
+    final wifiCenterX = right - halfWidth;
     final wifiDotY = centerY + 4;
 
     canvas.drawCircle(
@@ -384,20 +496,18 @@ class DeviceFramePainter extends BoxPainter {
         arcPaint,
       );
     }
+
+    return wifiCenterX - halfWidth;
   }
 
-  void _drawSignalBars(
+  /// The signal bars, with the right edge of the tallest at [right]. Returns
+  /// the x of the left edge of the shortest.
+  double _drawSignalBars(
     Canvas canvas,
-    double screenWidth,
+    double right,
     double centerY,
     Color color,
   ) {
-    const rightPadding = 14.0;
-    const batteryWidth = 25.0;
-    const wifiGap = 12.0;
-    final signalRight =
-        screenWidth - rightPadding - batteryWidth - wifiGap - 14;
-
     const barCount = 4;
     const barWidth = 3.0;
     const barGap = 1.5;
@@ -407,8 +517,7 @@ class DeviceFramePainter extends BoxPainter {
 
     for (var i = 0; i < barCount; i++) {
       final h = minH + (maxH - minH) * (i / (barCount - 1));
-      final x =
-          signalRight - (barCount - 1 - i) * (barWidth + barGap) - barWidth;
+      final x = right - (barCount - 1 - i) * (barWidth + barGap) - barWidth;
       canvas.drawRRect(
         RRect.fromRectAndRadius(
           Rect.fromLTWH(x, bottomY - h, barWidth, h),
@@ -417,6 +526,80 @@ class DeviceFramePainter extends BoxPainter {
         Paint()..color = color,
       );
     }
+
+    return right - (barCount - 1) * (barWidth + barGap) - barWidth;
+  }
+
+  /// Android's navigation over the bottom inset: one handle for gestures, or
+  /// back, home and recents for the three-button bar.
+  ///
+  /// Nothing fills the bar behind them. Modern Android draws edge to edge and
+  /// lets the app's own background show through, and a device that dims it
+  /// instead does so with a separate system overlay, independent of the mode.
+  void _drawAndroidNavigation(Canvas canvas, Size size) {
+    final Paint paint = Paint()..color = _contentColor.withAlpha(0xDD);
+    final double centerY = size.height - insets.bottom / 2;
+
+    switch (navigation) {
+      case AndroidNavigation.gesture:
+        final Rect handle = Rect.fromCenter(
+          center: Offset(size.width / 2, centerY),
+          width: 108,
+          height: 4,
+        );
+        if (_landsOnHalfOpenFold(handle)) {
+          return;
+        }
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(handle, const Radius.circular(2)),
+          paint,
+        );
+
+      case AndroidNavigation.threeButton:
+        // Evenly spaced across the bar, as stock Android places them.
+        final double back = size.width / 4;
+        final double home = size.width / 2;
+        final double recents = size.width * 3 / 4;
+
+        canvas.drawPath(
+          Path()
+            ..moveTo(back - 7, centerY)
+            ..lineTo(back + 7, centerY - 8)
+            ..lineTo(back + 7, centerY + 8)
+            ..close(),
+          paint,
+        );
+        canvas.drawCircle(Offset(home, centerY), 7.5, paint);
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromCenter(
+              center: Offset(recents, centerY),
+              width: 14,
+              height: 14,
+            ),
+            const Radius.circular(1.5),
+          ),
+          paint,
+        );
+    }
+  }
+
+  /// Whether [bounds] land on a fold or hinge the device is held half open
+  /// at, where nothing should be drawn.
+  ///
+  /// A handle or an indicator centred on the window lands on the crease of a
+  /// device held half open like a book. A device puts it somewhere else, and
+  /// nothing documents where, so draw nothing rather than invent a position.
+  /// The bottom inset is still reserved either way.
+  bool _landsOnHalfOpenFold(Rect bounds) {
+    for (final DisplayFeature feature in displayFeatures) {
+      if (feature.type != DisplayFeatureType.cutout &&
+          feature.state == DisplayFeatureState.postureHalfOpened &&
+          feature.bounds.overlaps(bounds)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   void _drawHomeIndicator(Canvas canvas, Size size) {
@@ -427,16 +610,8 @@ class DeviceFramePainter extends BoxPainter {
       height: 5,
     );
 
-    // Centred on the window, it lands on the crease of a device held half
-    // open like a book. A device puts it somewhere else, and nothing
-    // documents where, so draw nothing rather than invent a position. The
-    // bottom inset is still reserved either way.
-    for (final DisplayFeature feature in displayFeatures) {
-      if (feature.type != DisplayFeatureType.cutout &&
-          feature.state == DisplayFeatureState.postureHalfOpened &&
-          feature.bounds.overlaps(indicator)) {
-        return;
-      }
+    if (_landsOnHalfOpenFold(indicator)) {
+      return;
     }
 
     canvas.drawRRect(

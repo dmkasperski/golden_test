@@ -209,7 +209,14 @@ The following devices are configured for testing, but you can always create your
     Device.browser() - simulates a generic web browser
 ```
 
-The iPhone, iPad and Pixel presets set `platform`, which picks the [keyboard](#keyboard) they draw. A custom `Device` can set it too.
+The iPhone, iPad and Pixel presets set `platform`, which picks the [keyboard](#keyboard) and the [system chrome](#system-chrome) they draw. A custom `Device` can set it too.
+
+`Device.pixel9ProXL()` also takes the navigation mode Android is set to, which decides how much of the screen the system keeps and what the frame draws there:
+
+```dart
+Device.pixel9ProXL();                                              // gestures, Android's default
+Device.pixel9ProXL(navigation: AndroidNavigation.threeButton);     // back, home, recents
+```
 
 <a name="localized-goldens"></a>
 ## Localized Goldens
@@ -477,6 +484,29 @@ It decides `Theme.of(context).platform`, which the back icon, switches and other
 `flutter test` reports Android whatever device a golden runs on, so before this a golden of `Device.iphone15Pro()` said iPhone and drew Android. A device with no `platform` still gets that default, which is the way to keep a golden as it was.
 
 `defaultTargetPlatform` itself is left alone on purpose. A `ThemeData` resolves its typography from it when it is built, and a test environment has fonts for Android only, so overriding it would render every glyph as a blank box — in the widget under test and in any app or theme it builds of its own. A package that reads `defaultTargetPlatform` rather than the theme therefore still sees Android.
+
+<a name="system-chrome"></a>
+### System chrome
+The frame drawn around the widget is the chrome of the device's `platform`.
+
+An iOS device gets the iOS status bar — the clock in the left half, the signal, Wi-Fi and battery on the right — and the home indicator over the bottom inset. An Android device gets Android's: the clock hard against the left edge, the icons in Android's own order, the punch-hole camera where the device reports one, and either the gesture handle or the three-button bar at the bottom. A device with no `platform` keeps the iOS-shaped chrome this package has always drawn, so its goldens do not move.
+
+`AndroidNavigation` is not only a way of drawing. The mode is what the Android system reserves the bottom inset for, so it sets `insets.bottom` as well:
+
+| | `insets.bottom` | drawn as |
+| --- | --- | --- |
+| `AndroidNavigation.gesture` | 24.0 | one horizontal handle |
+| `AndroidNavigation.threeButton` | 48.0 | back, home and recents |
+
+Android's old two-button mode is deliberately absent: a device set to it reserves the same 24.0 as gestures and draws the gesture handle, so it is not a mode of its own any more. Translucent system bars are a separate Android overlay, independent of the mode, and are not drawn yet — the frame leaves the bars to the app's own background, as modern edge-to-edge Android does.
+
+`copyWith` moves the bottom inset with the mode, so a test can flip one device without restating its geometry:
+
+```dart
+const Device.pixel9ProXL().copyWith(navigation: AndroidNavigation.threeButton);
+```
+
+The numbers are measured on a Pixel 6a emulator (Android 16, API 36). The device also reports its punch-hole camera as a cutout, which reaches the widget under test in `MediaQuery.displayFeatures`, so Flutter lays dialogs and popups out below it, as it does on the device.
 
 <a name="global-config"></a>
 ## Global Setup Callback
