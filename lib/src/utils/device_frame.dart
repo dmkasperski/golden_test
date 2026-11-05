@@ -19,6 +19,15 @@ class DeviceFrame extends Decoration {
   /// is Android.
   final AndroidNavigation navigation;
 
+  /// Whether to draw the status bar at all. Off, the window keeps the inset
+  /// it reports and the app still lays out below it, but nothing is drawn
+  /// over the top of the golden.
+  final bool showStatusBar;
+
+  /// Whether to draw the bottom bar at all: Android's navigation, or iOS's
+  /// home indicator.
+  final bool showNavigation;
+
   const DeviceFrame(
     this.brightness,
     this.insets, {
@@ -26,6 +35,8 @@ class DeviceFrame extends Decoration {
     this.displayFeatures = const [],
     this.platform,
     this.navigation = AndroidNavigation.gesture,
+    this.showStatusBar = true,
+    this.showNavigation = true,
   });
 
   @override
@@ -37,6 +48,8 @@ class DeviceFrame extends Decoration {
       displayFeatures: displayFeatures,
       platform: platform,
       navigation: navigation,
+      showStatusBar: showStatusBar,
+      showNavigation: showNavigation,
     );
   }
 }

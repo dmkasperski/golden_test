@@ -78,6 +78,8 @@ class _CanvasLog implements Canvas {
 _CanvasLog _paintFrame(
   Device device, {
   Brightness brightness = Brightness.light,
+  bool showStatusBar = true,
+  bool showNavigation = true,
 }) {
   final log = _CanvasLog();
   DeviceFrame(
@@ -86,6 +88,8 @@ _CanvasLog _paintFrame(
     displayFeatures: device.displayFeatures,
     platform: device.platform,
     navigation: device.navigation,
+    showStatusBar: showStatusBar,
+    showNavigation: showNavigation,
   ).createBoxPainter().paint(
     log,
     Offset.zero,
@@ -360,5 +364,137 @@ void main() {
       ],
       builder: body,
     );
+  });
+
+  group('the mode draws the navigation, not the inset', () {
+    // An inset is a poor signal for a bar. The top half of a split screen
+    // reports no bottom inset and shows no navigation; the half below it
+    // reports one and shows it. The device says which it is.
+    const Device bare = Device(
+      name: 'android reporting no inset',
+      width: 400,
+      height: 800,
+      platform: TargetPlatform.android,
+      navigation: AndroidNavigation.threeButton,
+    );
+
+    test('a window reporting no inset still draws the bar its mode has', () {
+      final log = _paintFrame(bare);
+
+      expect(
+        log.within(const Rect.fromLTRB(0, 752, 400, 800)),
+        hasLength(3),
+        reason: 'back, home and recents, in the 48 the mode owns',
+      );
+    });
+
+    test('none draws nothing, whatever the device reserves', () {
+      final log = _paintFrame(
+        const Device(
+          name: 'edge to edge',
+          width: 400,
+          height: 800,
+          insets: EdgeInsets.only(bottom: 48),
+          platform: TargetPlatform.android,
+          navigation: AndroidNavigation.none,
+        ),
+      );
+
+      expect(log.within(const Rect.fromLTRB(0, 700, 400, 800)), isEmpty);
+      expect(AndroidNavigation.none.bottomInset, 0);
+    });
+
+    test('an inset taller than the bar leaves the extra space above it', () {
+      final log = _paintFrame(
+        const Device(
+          name: 'generous inset',
+          width: 400,
+          height: 800,
+          insets: EdgeInsets.only(bottom: 30),
+          platform: TargetPlatform.android,
+        ),
+      );
+
+      final List<_Op> handle = log.within(
+        const Rect.fromLTRB(0, 770, 400, 800),
+      );
+      expect(handle, hasLength(1));
+      expect(
+        handle.single.$2!.center.dy,
+        800 - AndroidNavigation.gestureBottomInset / 2,
+        reason: 'the bar sits in its own 24, not centred in the 30',
+      );
+    });
+  });
+
+  group('nothing fills a bar', () {
+    // A real device draws its bars over the app. An app bar's colour runs to
+    // the top edge and the clock sits on it, so a frame that filled the band
+    // would hide a colour the device shows.
+    test('the status bar paints no band over the app', () {
+      const Device phone = Device(
+        name: 'phone',
+        width: 400,
+        height: 800,
+        insets: EdgeInsets.only(top: 50),
+        platform: TargetPlatform.android,
+      );
+
+      for (final _Op op in _paintFrame(phone).drawings) {
+        expect(
+          op.$2,
+          isNot(const Rect.fromLTRB(0, 0, 400, 50)),
+          reason: 'the band itself is never painted',
+        );
+      }
+    });
+  });
+
+  group('the frame can be turned off', () {
+    const Device phone = Device(
+      name: 'phone',
+      width: 400,
+      height: 800,
+      insets: EdgeInsets.only(top: 50, bottom: 24),
+      platform: TargetPlatform.android,
+    );
+
+    test('without the status bar the top of the window stays the app\'s', () {
+      final log = _paintFrame(phone, showStatusBar: false);
+
+      expect(log.within(const Rect.fromLTRB(0, 0, 400, 50)), isEmpty);
+      expect(
+        log.within(const Rect.fromLTRB(0, 776, 400, 800)),
+        isNotEmpty,
+        reason: 'the navigation is a separate switch',
+      );
+    });
+
+    test('without the navigation the bottom of the window stays the app\'s', () {
+      final log = _paintFrame(phone, showNavigation: false);
+
+      expect(log.within(const Rect.fromLTRB(0, 776, 400, 800)), isEmpty);
+      expect(log.within(const Rect.fromLTRB(0, 0, 400, 50)), isNotEmpty);
+    });
+
+    test('the iOS home indicator answers the same switch', () {
+      final log = _paintFrame(
+        const Device.iphone15Pro(),
+        showNavigation: false,
+      );
+      final Device iphone = const Device.iphone15Pro();
+
+      expect(
+        log.within(
+          Rect.fromLTRB(
+            0,
+            iphone.height - iphone.insets.bottom,
+            iphone.width,
+            iphone.height,
+          ),
+        ),
+        isEmpty,
+      );
+    });
   });
 }

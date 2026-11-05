@@ -44,6 +44,15 @@ class DeviceFramePainter extends BoxPainter {
   /// is Android.
   final AndroidNavigation navigation;
 
+  /// Whether to draw the status bar at all. Off, the window keeps the inset
+  /// it reports and the app still lays out below it, but nothing is drawn
+  /// over the top of the golden.
+  final bool showStatusBar;
+
+  /// Whether to draw the bottom bar at all: Android's navigation, or iOS's
+  /// home indicator.
+  final bool showNavigation;
+
   DeviceFramePainter(
     this.brightness,
     this.insets, {
@@ -51,6 +60,8 @@ class DeviceFramePainter extends BoxPainter {
     this.displayFeatures = const [],
     this.platform,
     this.navigation = AndroidNavigation.gesture,
+    this.showStatusBar = true,
+    this.showNavigation = true,
   });
 
   /// Whether the device draws Android's own chrome. A device with no platform
@@ -111,7 +122,7 @@ class DeviceFramePainter extends BoxPainter {
         );
       }
 
-      if (insets.top != 0) {
+      if (insets.top != 0 && showStatusBar) {
         if (_isAndroid) {
           _drawAndroidStatusBar(canvas, size);
         } else {
@@ -147,24 +158,28 @@ class DeviceFramePainter extends BoxPainter {
       );
     }
 
-    if (insets.bottom != 0) {
-      if (_isAndroid) {
+    // What is drawn at the bottom is the mode's to decide on Android, and
+    // the inset's on iOS, which has one indicator and no modes. An inset is
+    // a poor signal for a bar: an app in the top half of a split screen
+    // reports none and has none, while the half below it reports one and
+    // draws it.
+    if (_isAndroid) {
+      if (showNavigation) {
         _drawAndroidNavigation(canvas, size);
-      } else {
-        _drawHomeIndicator(canvas, size);
       }
+    } else if (showNavigation && insets.bottom != 0) {
+      _drawHomeIndicator(canvas, size);
     }
   }
 
   Color get _backgroundColor =>
       brightness == Brightness.light ? Colors.white : Colors.black;
 
+  /// Nothing fills the bar. On a device the status bar is transparent and
+  /// the app draws under it, so an app bar's own colour runs to the top edge
+  /// and the clock sits over it. Filling it here would hide that colour and
+  /// show a strip no device ever displays.
   void _drawStatusBar(Canvas canvas, Size size) {
-    canvas.drawRect(
-      Rect.fromLTWH(0, 0, size.width, insets.top),
-      Paint()..color = _backgroundColor,
-    );
-
     final color = _contentColor;
     final centerY = insets.top / 2;
 
@@ -178,11 +193,6 @@ class DeviceFramePainter extends BoxPainter {
   /// iOS centres its clock in the left half of the bar; Android does not,
   /// which is the clearest difference between the two at a glance.
   void _drawAndroidStatusBar(Canvas canvas, Size size) {
-    canvas.drawRect(
-      Rect.fromLTWH(0, 0, size.width, insets.top),
-      Paint()..color = _backgroundColor,
-    );
-
     final color = _contentColor;
     final centerY = insets.top / 2;
 
@@ -538,9 +548,12 @@ class DeviceFramePainter extends BoxPainter {
   /// instead does so with a separate system overlay, independent of the mode.
   void _drawAndroidNavigation(Canvas canvas, Size size) {
     final Paint paint = Paint()..color = _contentColor.withAlpha(0xDD);
-    final double centerY = size.height - insets.bottom / 2;
+    final double centerY = size.height - navigation.height / 2;
 
     switch (navigation) {
+      case AndroidNavigation.none:
+        return;
+
       case AndroidNavigation.gesture:
         final Rect handle = Rect.fromCenter(
           center: Offset(size.width / 2, centerY),

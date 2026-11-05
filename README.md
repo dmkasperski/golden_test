@@ -489,22 +489,36 @@ It decides `Theme.of(context).platform`, which the back icon, switches and other
 ### System chrome
 The frame drawn around the widget is the chrome of the device's `platform`.
 
-An iOS device gets the iOS status bar — the clock in the left half, the signal, Wi-Fi and battery on the right — and the home indicator over the bottom inset. An Android device gets Android's: the clock hard against the left edge, the icons in Android's own order, the punch-hole camera where the device reports one, and either the gesture handle or the three-button bar at the bottom. A device with no `platform` keeps the iOS-shaped chrome this package has always drawn, so its goldens do not move.
+An iOS device gets the iOS status bar — the clock in the left half, the signal, Wi-Fi and battery on the right — and the home indicator over the bottom inset. An Android device gets Android's: the clock hard against the left edge, the icons in Android's own order, the punch-hole camera where the device reports one, and either the gesture handle or the three-button bar at the bottom. A device with no `platform` keeps the iOS-shaped chrome this package has always drawn.
 
-`AndroidNavigation` is not only a way of drawing. The mode is what the Android system reserves the bottom inset for, so it sets `insets.bottom` as well:
+Nothing fills a bar. On a device the status bar and the navigation are drawn over the app, so an app bar's colour runs to the top edge and the clock sits on it; a frame that filled those bands would show a strip no device displays and would hide the app's own colour. The glyphs take their colour from the golden's brightness.
 
-| | `insets.bottom` | drawn as |
+`AndroidNavigation` says what the bottom bar is, and the mode owns the band it draws in:
+
+| | band | drawn as |
 | --- | --- | --- |
 | `AndroidNavigation.gesture` | 24.0 | one horizontal handle |
 | `AndroidNavigation.threeButton` | 48.0 | back, home and recents |
+| `AndroidNavigation.none` | 0 | nothing |
 
-Android's old two-button mode is deliberately absent: a device set to it reserves the same 24.0 as gestures and draws the gesture handle, so it is not a mode of its own any more. Translucent system bars are a separate Android overlay, independent of the mode, and are not drawn yet — the frame leaves the bars to the app's own background, as modern edge-to-edge Android does.
+The mode draws because the device is set to it, not because an inset happens to be non-zero. An inset is a poor signal for a bar: an app in the top half of a split screen reports no bottom inset and has no navigation, while the half below it reports one and draws it. So a window that reports no inset at all still shows the navigation its mode has, and a window that reports more than the mode needs leaves the extra space above the bar — a device with a 30.0 bottom inset and gestures draws the handle in the bottom 24.0 of it.
 
-`copyWith` moves the bottom inset with the mode, so a test can flip one device without restating its geometry:
+The mode is also what the Android system reserves the inset for, so the presets move `insets.bottom` with it, and `copyWith` does the same — a test can flip one device without restating its geometry:
 
 ```dart
 const Device.pixel9ProXL().copyWith(navigation: AndroidNavigation.threeButton);
 ```
+
+Use `AndroidNavigation.none` for a golden of a window drawn edge to edge, or of a device that hides its bars. To drop the chrome across a whole suite instead, set either switch in `flutter_test_config.dart`:
+
+```dart
+goldenTestShowStatusBar = false;
+goldenTestShowNavigation = false;
+```
+
+Both leave the device's insets alone, so the app lays out exactly as it did; only the drawing stops.
+
+Android's old two-button mode is deliberately absent: a device set to it reserves the same 24.0 as gestures and draws the gesture handle, so it is not a mode of its own any more.
 
 The numbers are measured on a Pixel 6a emulator (Android 16, API 36). The device also reports its punch-hole camera as a cutout, which reaches the widget under test in `MediaQuery.displayFeatures`, so Flutter lays dialogs and popups out below it, as it does on the device.
 

@@ -195,6 +195,23 @@ bool goldenTestSupportMultipleDevices = false;
 /// for themselves what to serve.
 bool goldenTestStubNetworkImages = true;
 
+/// Whether the device frame draws the status bar — the clock and the signal,
+/// Wi-Fi and battery icons — over the top of every golden.
+///
+/// Set it to `false` in `flutter_test_config.dart` for a suite that would
+/// rather see the app alone. The window still reports the inset it always
+/// did, so the app lays out exactly as before; only the drawing stops.
+bool goldenTestShowStatusBar = true;
+
+/// Whether the device frame draws the bottom bar: Android's navigation, or
+/// iOS's home indicator.
+///
+/// Set it to `false` in `flutter_test_config.dart` to leave the bottom of
+/// the window to the app. To drop Android's navigation for one device
+/// instead of the whole suite, give that device
+/// [AndroidNavigation.none].
+bool goldenTestShowNavigation = true;
+
 /// Callbacks that install image-loading stubs, invoked at the start of every
 /// golden test before the widget under test is built.
 ///

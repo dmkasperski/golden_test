@@ -21,12 +21,18 @@ enum AndroidNavigation {
 
   /// The three-button bar — back, home and recents — over a bottom inset of
   /// [AndroidNavigation.threeButtonBottomInset].
-  threeButton;
+  threeButton,
+
+  /// No navigation at all, for a golden of a window drawn edge to edge, or
+  /// of a device that hides its bars. Nothing is drawn and nothing is
+  /// reserved, whatever the device's own insets say.
+  none;
 
   /// The bottom inset this mode reserves, in logical pixels.
   double get bottomInset => switch (this) {
     AndroidNavigation.gesture => gestureBottomInset,
     AndroidNavigation.threeButton => threeButtonBottomInset,
+    AndroidNavigation.none => 0,
   };
 
   /// The bottom inset [AndroidNavigation.gesture] reserves.
@@ -37,4 +43,15 @@ enum AndroidNavigation {
 
   /// The bottom inset [AndroidNavigation.threeButton] reserves.
   static const double threeButtonBottomInset = 48.0;
+
+  /// The band this mode draws itself in, measured up from the bottom edge of
+  /// the window.
+  ///
+  /// This is the mode's own height, not the device's inset. The two are the
+  /// same on a device configured as the real one is, and a device that
+  /// reports a larger inset simply leaves the extra space above the bar, as
+  /// one with a taller gesture area does. It is what the bar is drawn in
+  /// either way, so a window that reports no inset at all still shows the
+  /// navigation the mode says it has.
+  double get height => bottomInset;
 }
