@@ -493,6 +493,8 @@ An iOS device gets the iOS status bar — the clock in the left half, the signal
 
 Nothing fills a bar. On a device the status bar and the navigation are drawn over the app, so an app bar's colour runs to the top edge and the clock sits on it; a frame that filled those bands would show a strip no device displays and would hide the app's own colour. The glyphs take their colour from the golden's brightness.
 
+A hairline along the inner edge of each bar marks how far it reaches, one physical pixel thick, since over a flat background there would otherwise be nothing to say where the status bar ends and the app begins. No device draws it, so `goldenTestShowChromeBounds = false` turns it off.
+
 `AndroidNavigation` says what the bottom bar is, and the mode owns the band it draws in:
 
 | | band | drawn as |
@@ -514,6 +516,7 @@ Use `AndroidNavigation.none` for a golden of a window drawn edge to edge, or of 
 ```dart
 goldenTestShowStatusBar = false;
 goldenTestShowNavigation = false;
+goldenTestShowChromeBounds = false;
 ```
 
 Both leave the device's insets alone, so the app lays out exactly as it did; only the drawing stops.

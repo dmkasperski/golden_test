@@ -53,6 +53,14 @@ class DeviceFramePainter extends BoxPainter {
   /// home indicator.
   final bool showNavigation;
 
+  /// Whether to mark how far each bar reaches with a hairline along its inner
+  /// edge.
+  ///
+  /// No device draws this. It is here because nothing fills a bar any more,
+  /// so over a flat background there is otherwise nothing to say where the
+  /// status bar ends and the app begins.
+  final bool showChromeBounds;
+
   DeviceFramePainter(
     this.brightness,
     this.insets, {
@@ -62,6 +70,7 @@ class DeviceFramePainter extends BoxPainter {
     this.navigation = AndroidNavigation.gesture,
     this.showStatusBar = true,
     this.showNavigation = true,
+    this.showChromeBounds = true,
   });
 
   /// Whether the device draws Android's own chrome. A device with no platform
@@ -128,6 +137,15 @@ class DeviceFramePainter extends BoxPainter {
         } else {
           _drawStatusBar(canvas, size);
         }
+        if (showChromeBounds) {
+          _drawBandEdge(
+            canvas,
+            insets.top,
+            size.width,
+            devicePixelRatio,
+            inward: -1,
+          );
+        }
       }
 
       // The punch-hole camera, which Android reserves a region for and the
@@ -164,12 +182,54 @@ class DeviceFramePainter extends BoxPainter {
     // reports none and has none, while the half below it reports one and
     // draws it.
     if (_isAndroid) {
-      if (showNavigation) {
+      if (showNavigation && navigation != AndroidNavigation.none) {
         _drawAndroidNavigation(canvas, size);
+        if (showChromeBounds) {
+          _drawBandEdge(
+            canvas,
+            size.height - navigation.height,
+            size.width,
+            devicePixelRatio,
+            inward: 1,
+          );
+        }
       }
     } else if (showNavigation && insets.bottom != 0) {
       _drawHomeIndicator(canvas, size);
+      if (showChromeBounds) {
+        _drawBandEdge(
+          canvas,
+          size.height - insets.bottom,
+          size.width,
+          devicePixelRatio,
+          inward: 1,
+        );
+      }
     }
+  }
+
+  /// A hairline across the window at [y], one physical pixel thick whatever
+  /// the device pixel ratio, marking how far a bar reaches.
+  /// [inward] is the direction of the band from [y], so that the stroke sits
+  /// on the band's last physical row rather than straddling the boundary
+  /// between two, which would spread it over both at half strength.
+  void _drawBandEdge(
+    Canvas canvas,
+    double y,
+    double width,
+    double devicePixelRatio, {
+    required double inward,
+  }) {
+    final double thickness = 1 / devicePixelRatio;
+    final double centre = y + inward * thickness / 2;
+
+    canvas.drawLine(
+      Offset(0, centre),
+      Offset(width, centre),
+      Paint()
+        ..color = _contentColor.withAlpha(0x4D)
+        ..strokeWidth = thickness,
+    );
   }
 
   Color get _backgroundColor =>

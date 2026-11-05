@@ -28,11 +28,19 @@ class _CanvasLog implements Canvas {
   List<_Op> get drawings =>
       ops.where((op) => op.$1.startsWith('draw')).toList();
 
-  /// Everything drawn inside [band], by the centre of what was drawn.
+  /// The glyphs drawn inside [band], by the centre of what was drawn.
+  ///
+  /// The hairline marking how far a bar reaches is left out: it says where
+  /// the band ends rather than filling it, and every band that is drawn has
+  /// one. [lines] has those.
   List<_Op> within(Rect band) => [
     for (final op in drawings)
-      if (op.$2 != null && band.contains(op.$2!.center)) op,
+      if (op.$1 != 'drawLine' && op.$2 != null && band.contains(op.$2!.center))
+        op,
   ];
+
+  /// The hairlines the frame drew, in the order it drew them.
+  List<_Op> get lines => drawings.where((op) => op.$1 == 'drawLine').toList();
 
   @override
   dynamic noSuchMethod(Invocation invocation) {
@@ -63,6 +71,10 @@ class _CanvasLog implements Canvas {
       Rect() => first,
       RRect() => first.outerRect,
       Path() => first.getBounds(),
+      Offset() when args.length > 1 && args[1] is Offset => Rect.fromPoints(
+        first,
+        args[1]! as Offset,
+      ),
       Offset() when args.length > 1 && args[1] is double => Rect.fromCircle(
         center: first,
         radius: args[1]! as double,
@@ -80,6 +92,7 @@ _CanvasLog _paintFrame(
   Brightness brightness = Brightness.light,
   bool showStatusBar = true,
   bool showNavigation = true,
+  bool showChromeBounds = true,
 }) {
   final log = _CanvasLog();
   DeviceFrame(
@@ -90,6 +103,7 @@ _CanvasLog _paintFrame(
     navigation: device.navigation,
     showStatusBar: showStatusBar,
     showNavigation: showNavigation,
+    showChromeBounds: showChromeBounds,
   ).createBoxPainter().paint(
     log,
     Offset.zero,
@@ -470,12 +484,15 @@ void main() {
       );
     });
 
-    test('without the navigation the bottom of the window stays the app\'s', () {
-      final log = _paintFrame(phone, showNavigation: false);
+    test(
+      'without the navigation the bottom of the window stays the app\'s',
+      () {
+        final log = _paintFrame(phone, showNavigation: false);
 
-      expect(log.within(const Rect.fromLTRB(0, 776, 400, 800)), isEmpty);
-      expect(log.within(const Rect.fromLTRB(0, 0, 400, 50)), isNotEmpty);
-    });
+        expect(log.within(const Rect.fromLTRB(0, 776, 400, 800)), isEmpty);
+        expect(log.within(const Rect.fromLTRB(0, 0, 400, 50)), isNotEmpty);
+      },
+    );
 
     test('the iOS home indicator answers the same switch', () {
       final log = _paintFrame(
@@ -493,6 +510,79 @@ void main() {
             iphone.height,
           ),
         ),
+        isEmpty,
+      );
+    });
+  });
+
+  group('the hairline says how far a bar reaches', () {
+    const Device phone = Device(
+      name: 'phone',
+      width: 400,
+      height: 800,
+      insets: EdgeInsets.only(top: 50, bottom: 24),
+      platform: TargetPlatform.android,
+    );
+
+    test('one along the status bar and one along the navigation', () {
+      final List<_Op> lines = _paintFrame(phone).lines;
+
+      expect(lines, hasLength(2));
+      // Half a physical pixel inside the band, so the stroke lands on one
+      // row instead of straddling two.
+      expect(lines.first.$2!.top, closeTo(50, 0.5));
+      expect(
+        lines.last.$2!.top,
+        closeTo(800 - AndroidNavigation.gestureBottomInset, 0.5),
+      );
+      expect(
+        lines.every((op) => op.$2!.left == 0 && op.$2!.right == 400),
+        isTrue,
+        reason: 'each runs the full width of the window',
+      );
+    });
+
+    test('it follows the mode, not the inset', () {
+      final List<_Op> lines = (_paintFrame(
+        const Device(
+          name: 'generous inset',
+          width: 400,
+          height: 800,
+          insets: EdgeInsets.only(bottom: 30),
+          platform: TargetPlatform.android,
+          navigation: AndroidNavigation.threeButton,
+        ),
+      )).lines;
+
+      expect(lines.single.$2!.top, closeTo(800 - 48, 0.5));
+    });
+
+    test('a bar that is not drawn is not marked', () {
+      expect(_paintFrame(phone, showNavigation: false).lines, hasLength(1));
+      expect(_paintFrame(phone, showStatusBar: false).lines, hasLength(1));
+      expect(
+        _paintFrame(phone, showChromeBounds: false).lines,
+        isEmpty,
+        reason: 'the switch turns both off and leaves the bars alone',
+      );
+      expect(
+        _paintFrame(phone, showChromeBounds: false).drawings,
+        isNotEmpty,
+      );
+    });
+
+    test('none reaches nowhere, so nothing is marked', () {
+      expect(
+        _paintFrame(
+          const Device(
+            name: 'edge to edge',
+            width: 400,
+            height: 800,
+            insets: EdgeInsets.only(bottom: 48),
+            platform: TargetPlatform.android,
+            navigation: AndroidNavigation.none,
+          ),
+        ).lines,
         isEmpty,
       );
     });

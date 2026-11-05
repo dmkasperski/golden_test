@@ -28,6 +28,10 @@ class DeviceFrame extends Decoration {
   /// home indicator.
   final bool showNavigation;
 
+  /// Whether to mark how far each bar reaches with a hairline along its inner
+  /// edge.
+  final bool showChromeBounds;
+
   const DeviceFrame(
     this.brightness,
     this.insets, {
@@ -37,6 +41,7 @@ class DeviceFrame extends Decoration {
     this.navigation = AndroidNavigation.gesture,
     this.showStatusBar = true,
     this.showNavigation = true,
+    this.showChromeBounds = true,
   });
 
   @override
@@ -50,6 +55,7 @@ class DeviceFrame extends Decoration {
       navigation: navigation,
       showStatusBar: showStatusBar,
       showNavigation: showNavigation,
+      showChromeBounds: showChromeBounds,
     );
   }
 }

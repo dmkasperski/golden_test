@@ -212,6 +212,15 @@ bool goldenTestShowStatusBar = true;
 /// [AndroidNavigation.none].
 bool goldenTestShowNavigation = true;
 
+/// Whether the device frame marks how far each bar reaches, with a hairline
+/// along the inner edge of the status bar and of the bottom bar.
+///
+/// No device draws this. It is here because nothing fills a bar, so over a
+/// flat background there is otherwise nothing to say where the status bar
+/// ends and the app begins. Set it to `false` in `flutter_test_config.dart`
+/// for a golden that shows only what a screen shows.
+bool goldenTestShowChromeBounds = true;
+
 /// Callbacks that install image-loading stubs, invoked at the start of every
 /// golden test before the widget under test is built.
 ///
