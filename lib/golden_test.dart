@@ -1,5 +1,6 @@
 library;
 
+export 'src/android_navigation.dart';
 export 'src/config.dart';
 export 'src/device.dart';
 export 'src/iphone_duo.dart';

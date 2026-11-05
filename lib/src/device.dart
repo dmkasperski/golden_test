@@ -1,5 +1,6 @@
-import 'dart:ui' show DisplayFeature;
+import 'dart:ui' show DisplayFeature, DisplayFeatureState, DisplayFeatureType;
 
+import 'package:golden_test/src/android_navigation.dart';
 import 'package:golden_test/src/iphone_duo.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -40,6 +41,17 @@ class Device {
   /// its own fields, and only a constructor can keep the two from disagreeing.
   final List<Device> postures;
 
+  /// How an Android device shows its navigation.
+  ///
+  /// The frame draws the gesture pill or the three-button bar for it, and it
+  /// is what [insets] reserve at the bottom. Devices of another [platform]
+  /// ignore it, so it is a field of every device only because any device may
+  /// turn out to be the Android one.
+  ///
+  /// The Android device factories set it together with [insets], so the two
+  /// cannot disagree; [copyWith] moves the bottom inset with it.
+  final AndroidNavigation navigation;
+
   const Device._({
     required this.name,
     required this.devicePixelRatio,
@@ -50,6 +62,7 @@ class Device {
     required this.displayFeatures,
     required this.reportsDisplayFeatures,
     required this.postures,
+    required this.navigation,
   });
 
   const Device({
@@ -61,6 +74,7 @@ class Device {
     TargetPlatform? platform,
     List<DisplayFeature> displayFeatures = const [],
     bool reportsDisplayFeatures = true,
+    AndroidNavigation navigation = AndroidNavigation.gesture,
   }) : this._(
          name: name,
          devicePixelRatio: devicePixelRatio,
@@ -71,6 +85,7 @@ class Device {
          displayFeatures: displayFeatures,
          reportsDisplayFeatures: reportsDisplayFeatures,
          postures: const [],
+         navigation: navigation,
        );
 
   /// A foldable, as the [postures] it can be in, each a screen of its own.
@@ -110,6 +125,7 @@ class Device {
       displayFeatures: const [],
       reportsDisplayFeatures: first.reportsDisplayFeatures,
       postures: postures,
+      navigation: first.navigation,
     );
   }
 
@@ -132,15 +148,46 @@ class Device {
         platform: TargetPlatform.iOS,
       );
 
-  const Device.pixel9ProXL()
-    : this(
-        name: 'pixel 9 pro xl',
-        devicePixelRatio: 3,
-        width: 430,
-        height: 926,
-        insets: const EdgeInsets.only(top: 48, bottom: 40),
-        platform: TargetPlatform.android,
-      );
+  /// A Pixel 9 Pro XL, in the given [navigation] mode.
+  ///
+  /// The mode sets the bottom inset — 24.0 for gestures, 48.0 for the
+  /// three-button bar — and what the frame draws there. The three-button
+  /// device is named apart, so a test that runs both modes files a golden
+  /// under each instead of one overwriting the other.
+  ///
+  /// The insets and the cutout are measured on a Pixel 6a emulator
+  /// (Android 16, API 36), which reports a 50.3 status bar and its punch-hole
+  /// camera as a cutout. The cutout's horizontal bounds are scaled from that
+  /// emulator's 411.4 logical width to this device's 430:
+  /// `182.9 * 430 / 411.4 = 191.2` and `238.1 * 430 / 411.4 = 248.9`.
+  const Device.pixel9ProXL({
+    AndroidNavigation navigation = AndroidNavigation.gesture,
+  }) : this(
+         name: navigation == AndroidNavigation.threeButton
+             ? 'pixel 9 pro xl 3-button'
+             : 'pixel 9 pro xl',
+         devicePixelRatio: 3,
+         width: 430,
+         height: 926,
+         insets: navigation == AndroidNavigation.threeButton
+             ? const EdgeInsets.only(
+                 top: 50.3,
+                 bottom: AndroidNavigation.threeButtonBottomInset,
+               )
+             : const EdgeInsets.only(
+                 top: 50.3,
+                 bottom: AndroidNavigation.gestureBottomInset,
+               ),
+         platform: TargetPlatform.android,
+         navigation: navigation,
+         displayFeatures: const [
+           DisplayFeature(
+             bounds: Rect.fromLTRB(191.2, 0, 248.9, 50.3),
+             type: DisplayFeatureType.cutout,
+             state: DisplayFeatureState.unknown,
+           ),
+         ],
+       );
 
   const Device.ipadPro12()
     : this(
@@ -203,6 +250,7 @@ class Device {
     TargetPlatform? platform,
     List<DisplayFeature>? displayFeatures,
     bool? reportsDisplayFeatures,
+    AndroidNavigation? navigation,
   }) {
     assert(
       postures.isEmpty ||
@@ -213,17 +261,31 @@ class Device {
       'A folding device takes its window from its postures, so there is '
       'nothing here for a new size or insets to change.',
     );
+    // A new navigation mode moves the bottom inset with it, because the mode
+    // is what the Android system reserves that inset for. Insets given here
+    // win, so a device can still state both.
+    final AndroidNavigation nextNavigation = navigation ?? this.navigation;
+    final bool navigationMoved =
+        nextNavigation != this.navigation &&
+        (platform ?? this.platform) == TargetPlatform.android;
+    final EdgeInsets nextInsets =
+        insets ??
+        (navigationMoved
+            ? this.insets.copyWith(bottom: nextNavigation.bottomInset)
+            : this.insets);
+
     return Device._(
       name: name ?? this.name,
       devicePixelRatio: devicePixelRatio ?? this.devicePixelRatio,
       width: width ?? this.width,
       height: height ?? this.height,
-      insets: insets ?? this.insets,
+      insets: nextInsets,
       platform: platform ?? this.platform,
       displayFeatures: displayFeatures ?? this.displayFeatures,
       reportsDisplayFeatures:
           reportsDisplayFeatures ?? this.reportsDisplayFeatures,
       postures: postures,
+      navigation: nextNavigation,
     );
   }
 }

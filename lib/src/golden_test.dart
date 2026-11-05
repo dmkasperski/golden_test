@@ -585,6 +585,11 @@ class _DeviceFrameBox extends StatelessWidget {
         device.insets,
         keyboard: keyboard,
         displayFeatures: device.displayFeatures,
+        platform: device.platform,
+        navigation: device.navigation,
+        showStatusBar: goldenTestShowStatusBar,
+        showNavigation: goldenTestShowNavigation,
+        showChromeBounds: goldenTestShowChromeBounds,
       ),
       // The app stays the first child with or without a keyboard, so its
       // state survives the keyboard coming and going.

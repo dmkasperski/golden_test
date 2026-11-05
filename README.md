@@ -209,7 +209,14 @@ The following devices are configured for testing, but you can always create your
     Device.browser() - simulates a generic web browser
 ```
 
-The iPhone, iPad and Pixel presets set `platform`, which picks the [keyboard](#keyboard) they draw. A custom `Device` can set it too.
+The iPhone, iPad and Pixel presets set `platform`, which picks the [keyboard](#keyboard) and the [system chrome](#system-chrome) they draw. A custom `Device` can set it too.
+
+`Device.pixel9ProXL()` also takes the navigation mode Android is set to, which decides how much of the screen the system keeps and what the frame draws there:
+
+```dart
+Device.pixel9ProXL();                                              // gestures, Android's default
+Device.pixel9ProXL(navigation: AndroidNavigation.threeButton);     // back, home, recents
+```
 
 <a name="localized-goldens"></a>
 ## Localized Goldens
@@ -477,6 +484,46 @@ It decides `Theme.of(context).platform`, which the back icon, switches and other
 `flutter test` reports Android whatever device a golden runs on, so before this a golden of `Device.iphone15Pro()` said iPhone and drew Android. A device with no `platform` still gets that default, which is the way to keep a golden as it was.
 
 `defaultTargetPlatform` itself is left alone on purpose. A `ThemeData` resolves its typography from it when it is built, and a test environment has fonts for Android only, so overriding it would render every glyph as a blank box — in the widget under test and in any app or theme it builds of its own. A package that reads `defaultTargetPlatform` rather than the theme therefore still sees Android.
+
+<a name="system-chrome"></a>
+### System chrome
+The frame drawn around the widget is the chrome of the device's `platform`.
+
+An iOS device gets the iOS status bar — the clock in the left half, the signal, Wi-Fi and battery on the right — and the home indicator over the bottom inset. An Android device gets Android's: the clock hard against the left edge, the icons in Android's own order, the punch-hole camera where the device reports one, and either the gesture handle or the three-button bar at the bottom. A device with no `platform` keeps the iOS-shaped chrome this package has always drawn.
+
+Nothing fills a bar. On a device the status bar and the navigation are drawn over the app, so an app bar's colour runs to the top edge and the clock sits on it; a frame that filled those bands would show a strip no device displays and would hide the app's own colour. The glyphs take their colour from the golden's brightness.
+
+A hairline along the inner edge of each bar marks how far it reaches, one physical pixel thick, since over a flat background there would otherwise be nothing to say where the status bar ends and the app begins. No device draws it, so `goldenTestShowChromeBounds = false` turns it off.
+
+`AndroidNavigation` says what the bottom bar is, and the mode owns the band it draws in:
+
+| | band | drawn as |
+| --- | --- | --- |
+| `AndroidNavigation.gesture` | 24.0 | one horizontal handle |
+| `AndroidNavigation.threeButton` | 48.0 | back, home and recents |
+| `AndroidNavigation.none` | 0 | nothing |
+
+The mode draws because the device is set to it, not because an inset happens to be non-zero. An inset is a poor signal for a bar: an app in the top half of a split screen reports no bottom inset and has no navigation, while the half below it reports one and draws it. So a window that reports no inset at all still shows the navigation its mode has, and a window that reports more than the mode needs leaves the extra space above the bar — a device with a 30.0 bottom inset and gestures draws the handle in the bottom 24.0 of it.
+
+The mode is also what the Android system reserves the inset for, so the presets move `insets.bottom` with it, and `copyWith` does the same — a test can flip one device without restating its geometry:
+
+```dart
+const Device.pixel9ProXL().copyWith(navigation: AndroidNavigation.threeButton);
+```
+
+Use `AndroidNavigation.none` for a golden of a window drawn edge to edge, or of a device that hides its bars. To drop the chrome across a whole suite instead, set either switch in `flutter_test_config.dart`:
+
+```dart
+goldenTestShowStatusBar = false;
+goldenTestShowNavigation = false;
+goldenTestShowChromeBounds = false;
+```
+
+Both leave the device's insets alone, so the app lays out exactly as it did; only the drawing stops.
+
+Android's old two-button mode is deliberately absent: a device set to it reserves the same 24.0 as gestures and draws the gesture handle, so it is not a mode of its own any more.
+
+The numbers are measured on a Pixel 6a emulator (Android 16, API 36). The device also reports its punch-hole camera as a cutout, which reaches the widget under test in `MediaQuery.displayFeatures`, so Flutter lays dialogs and popups out below it, as it does on the device.
 
 <a name="global-config"></a>
 ## Global Setup Callback
