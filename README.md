@@ -491,7 +491,7 @@ The frame drawn around the widget is the chrome of the device's `platform`.
 
 An iOS device gets the iOS status bar — the clock in the left half, the signal, Wi-Fi and battery on the right — and the home indicator over the bottom inset. An Android device gets Android's: the clock hard against the left edge, the icons in Android's own order, the punch-hole camera where the device reports one, and either the gesture handle or the three-button bar at the bottom. A device with no `platform` keeps the iOS-shaped chrome this package has always drawn.
 
-Nothing fills a bar. On a device the status bar and the navigation are drawn over the app, so an app bar's colour runs to the top edge and the clock sits on it; a frame that filled those bands would show a strip no device displays and would hide the app's own colour. The glyphs take their colour from the golden's brightness.
+Nothing fills a bar. On a device the status bar and the navigation are drawn over the app, so an app bar's colour runs to the top edge and the clock sits on it; a frame that filled those bands would show a strip no device displays and would hide the app's own colour. The glyphs take their colour from the `SystemUiOverlayStyle` the app sets under the status bar, as an `AppBar` or an `AnnotatedRegion` does, so a dark app bar gets white glyphs as on a device: Android reads `statusBarIconBrightness`, iOS draws the opposite of `statusBarBrightness`. Without a style they follow the golden's brightness.
 
 A hairline along the inner edge of each bar marks how far it reaches, one physical pixel thick, since over a flat background there would otherwise be nothing to say where the status bar ends and the app begins. No device draws it, so `goldenTestShowChromeBounds = false` turns it off.
 

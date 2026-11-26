@@ -1,5 +1,6 @@
 import 'dart:ui' show DisplayFeature;
 
+import 'package:flutter/services.dart' show SystemUiOverlayStyle;
 import 'package:material_ui/material_ui.dart';
 import 'package:golden_test/src/android_navigation.dart';
 import 'package:golden_test/src/utils/device_frame_painter.dart';
@@ -32,6 +33,10 @@ class DeviceFrame extends Decoration {
   /// edge.
   final bool showChromeBounds;
 
+  /// The style the app sets for the status bar, which picks the colour of
+  /// its glyphs as the system would. `null` when the app sets none.
+  final SystemUiOverlayStyle? statusBarStyle;
+
   const DeviceFrame(
     this.brightness,
     this.insets, {
@@ -42,6 +47,7 @@ class DeviceFrame extends Decoration {
     this.showStatusBar = true,
     this.showNavigation = true,
     this.showChromeBounds = true,
+    this.statusBarStyle,
   });
 
   @override
@@ -56,6 +62,7 @@ class DeviceFrame extends Decoration {
       showStatusBar: showStatusBar,
       showNavigation: showNavigation,
       showChromeBounds: showChromeBounds,
+      statusBarStyle: statusBarStyle,
     );
   }
 }

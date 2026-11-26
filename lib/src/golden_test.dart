@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:cupertino_ui/cupertino_ui.dart'
     show GlobalCupertinoLocalizations;
+import 'package:flutter/rendering.dart' show Layer, RenderView;
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart'
     show GlobalWidgetsLocalizations;
@@ -335,6 +336,7 @@ void goldenTest({
 
                       await tester.pumpAndSettle();
                       await _precacheImages(tester);
+                      await _followAppStatusBarStyle(tester, screen);
 
                       if (device.postures.isEmpty) {
                         await _takeAScreenshot(goldenPath);
@@ -557,11 +559,41 @@ void _setupSize({
       : const [];
 }
 
+/// Hands the frame the [SystemUiOverlayStyle] the app sets for the status
+/// bar, so the frame draws its glyphs in the colour a device would, and
+/// repaints it.
+///
+/// The style is found as the framework finds it to send to the system after
+/// every frame: the [AnnotatedRegion] the app paints under the status bar,
+/// such as an [AppBar]'s. The framework's own lookup can't be read back in a
+/// test, because the style it sends is global and kept between tests.
+Future<void> _followAppStatusBarStyle(
+  WidgetTester tester,
+  Device device,
+) async {
+  final RenderView view = tester.binding.renderViews.first;
+  final Layer? root = view.debugLayer;
+  if (root == null || device.insets.top == 0) {
+    return;
+  }
+  // The root layer scales by the device pixel ratio, so it is searched in
+  // physical pixels.
+  final SystemUiOverlayStyle? style = root.find<SystemUiOverlayStyle>(
+    Offset(
+      view.paintBounds.center.dx,
+      device.insets.top / 2 * device.devicePixelRatio,
+    ),
+  );
+  final _DeviceFrameBoxState frame = tester.state(find.byType(_DeviceFrameBox));
+  frame.statusBarStyle = style;
+  await tester.pump();
+}
+
 /// Paints the device frame, and the keyboard when there is one, over the app.
 ///
 /// The keyboard also takes the taps over its area, as on a device, so a tap
 /// on a control it covers does not reach the control.
-class _DeviceFrameBox extends StatelessWidget {
+class _DeviceFrameBox extends StatefulWidget {
   const _DeviceFrameBox({
     required this.mode,
     required this.device,
@@ -575,8 +607,21 @@ class _DeviceFrameBox extends StatelessWidget {
   final Widget child;
 
   @override
+  State<_DeviceFrameBox> createState() => _DeviceFrameBoxState();
+}
+
+class _DeviceFrameBoxState extends State<_DeviceFrameBox> {
+  SystemUiOverlayStyle? _statusBarStyle;
+
+  set statusBarStyle(SystemUiOverlayStyle? style) =>
+      setState(() => _statusBarStyle = style);
+
+  @override
   Widget build(BuildContext context) {
-    final ResolvedKeyboard? keyboard = this.keyboard;
+    final Brightness mode = widget.mode;
+    final Device device = widget.device;
+    final ResolvedKeyboard? keyboard = widget.keyboard;
+    final Widget child = widget.child;
 
     return DecoratedBox(
       position: DecorationPosition.foreground,
@@ -590,6 +635,7 @@ class _DeviceFrameBox extends StatelessWidget {
         showStatusBar: goldenTestShowStatusBar,
         showNavigation: goldenTestShowNavigation,
         showChromeBounds: goldenTestShowChromeBounds,
+        statusBarStyle: _statusBarStyle,
       ),
       // The app stays the first child with or without a keyboard, so its
       // state survives the keyboard coming and going.

@@ -2,9 +2,11 @@ import 'dart:typed_data';
 import 'dart:ui'
     show DisplayFeature, DisplayFeatureState, DisplayFeatureType, Paragraph;
 
+import 'package:flutter/services.dart' show SystemUiOverlayStyle;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_test/golden_test.dart';
 import 'package:golden_test/src/utils/device_frame.dart';
+import 'package:golden_test/src/utils/device_frame_painter.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// Accepts every image, so the golden tests here check the tree, not pixels.
@@ -586,5 +588,138 @@ void main() {
         isEmpty,
       );
     });
+  });
+
+  group('the status bar follows the app', () {
+    test('Android reads the icon brightness the app asks for', () {
+      expect(
+        statusBarIconBrightness(
+          style: SystemUiOverlayStyle.light,
+          isAndroid: true,
+        ),
+        Brightness.light,
+      );
+      expect(
+        statusBarIconBrightness(
+          style: const SystemUiOverlayStyle(
+            statusBarIconBrightness: Brightness.dark,
+            statusBarBrightness: Brightness.dark,
+          ),
+          isAndroid: true,
+        ),
+        Brightness.dark,
+      );
+    });
+
+    test('iOS draws the opposite of what the app says is behind the bar', () {
+      expect(
+        statusBarIconBrightness(
+          style: SystemUiOverlayStyle.light,
+          isAndroid: false,
+        ),
+        Brightness.light,
+      );
+      expect(
+        statusBarIconBrightness(
+          style: const SystemUiOverlayStyle(
+            statusBarIconBrightness: Brightness.light,
+            statusBarBrightness: Brightness.light,
+          ),
+          isAndroid: false,
+        ),
+        Brightness.dark,
+      );
+    });
+
+    test('a style that leaves it out leaves it to the theme', () {
+      for (final bool isAndroid in [true, false]) {
+        expect(
+          statusBarIconBrightness(style: null, isAndroid: isAndroid),
+          isNull,
+        );
+        expect(
+          statusBarIconBrightness(
+            style: const SystemUiOverlayStyle(),
+            isAndroid: isAndroid,
+          ),
+          isNull,
+        );
+      }
+    });
+
+    group('the harness hands the frame the app\'s style', () {
+      setUp(() {
+        final previous = goldenFileComparator;
+        goldenFileComparator = _AcceptingComparator();
+        addTearDown(() => goldenFileComparator = previous);
+      });
+
+      SystemUiOverlayStyle? frameStyle() => find
+          .byWidgetPredicate(
+            (widget) =>
+                widget is DecoratedBox && widget.decoration is DeviceFrame,
+          )
+          .evaluate()
+          .map(
+            (element) =>
+                ((element.widget as DecoratedBox).decoration as DeviceFrame)
+                    .statusBarStyle,
+          )
+          .single;
+
+      goldenTest(
+        name: 'The style under the status bar reaches the frame',
+        supportedLocales: [const Locale('en')],
+        supportedThemes: [Brightness.light],
+        supportedDevices: [const Device.iphone15Pro()],
+        builder: (_) => const AnnotatedRegion<SystemUiOverlayStyle>(
+          value: SystemUiOverlayStyle.light,
+          child: SizedBox.expand(),
+        ),
+        tearDown: (_) async => expect(frameStyle(), SystemUiOverlayStyle.light),
+      );
+
+      goldenTest(
+        name: 'A style below the status bar does not',
+        supportedLocales: [const Locale('en')],
+        supportedThemes: [Brightness.light],
+        supportedDevices: [const Device.iphone15Pro()],
+        builder: (_) => const Column(
+          children: [
+            SizedBox(height: 200),
+            AnnotatedRegion<SystemUiOverlayStyle>(
+              value: SystemUiOverlayStyle.light,
+              child: SizedBox(height: 100, width: double.infinity),
+            ),
+          ],
+        ),
+        tearDown: (_) async => expect(frameStyle(), isNull),
+      );
+    });
+
+    // A red strip under the status bar that asks for light glyphs, as an
+    // app's offline banner or a dark app bar does. Without the style the
+    // glyphs would follow the light theme and be black on red.
+    goldenTest(
+      name: 'The status bar over a strip that asks for light glyphs',
+      supportedLocales: [const Locale('en')],
+      supportedThemes: [Brightness.light],
+      supportedDevices: [
+        const Device.iphone15Pro(),
+        const Device.pixel9ProXL(),
+      ],
+      builder: (context) => Column(
+        children: [
+          AnnotatedRegion<SystemUiOverlayStyle>(
+            value: SystemUiOverlayStyle.light,
+            child: Container(
+              color: const Color(0xFFB71C1C),
+              height: MediaQuery.paddingOf(context).top + 48,
+            ),
+          ),
+          const Expanded(child: SizedBox.expand()),
+        ],
+      ),
+    );
   });
 }
