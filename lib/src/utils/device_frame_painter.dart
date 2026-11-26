@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'dart:ui' show DisplayFeature, DisplayFeatureState, DisplayFeatureType;
 
+import 'package:flutter/services.dart' show SystemUiOverlayStyle;
 import 'package:golden_test/src/android_navigation.dart';
 import 'package:golden_test/src/utils/keyboard_painter.dart';
 import 'package:material_ui/material_ui.dart';
@@ -25,6 +26,28 @@ const double _androidLensRadius = 12;
 /// The radius of the Duo status indicator's ring, along the middle of its
 /// stroke. Its signal dots sit on the same circle.
 const double _indicatorRadius = 18.8;
+
+/// The brightness of the status bar's glyphs that the system picks for
+/// [style], or `null` when [style] leaves it to the system's default.
+///
+/// The two platforms read different fields. Android takes the icon
+/// brightness the app asks for. iOS takes the brightness of what the app
+/// says is behind the bar and draws the opposite: light glyphs over a dark
+/// app bar.
+@visibleForTesting
+Brightness? statusBarIconBrightness({
+  required SystemUiOverlayStyle? style,
+  required bool isAndroid,
+}) {
+  if (isAndroid) {
+    return style?.statusBarIconBrightness;
+  }
+  return switch (style?.statusBarBrightness) {
+    Brightness.dark => Brightness.light,
+    Brightness.light => Brightness.dark,
+    null => null,
+  };
+}
 
 class DeviceFramePainter extends BoxPainter {
   final Brightness brightness;
@@ -61,6 +84,11 @@ class DeviceFramePainter extends BoxPainter {
   /// status bar ends and the app begins.
   final bool showChromeBounds;
 
+  /// The style the app sets for the status bar, which picks the colour of
+  /// its glyphs as the system would. `null` when the app sets none, and the
+  /// glyphs follow the theme.
+  final SystemUiOverlayStyle? statusBarStyle;
+
   DeviceFramePainter(
     this.brightness,
     this.insets, {
@@ -71,6 +99,7 @@ class DeviceFramePainter extends BoxPainter {
     this.showStatusBar = true,
     this.showNavigation = true,
     this.showChromeBounds = true,
+    this.statusBarStyle,
   });
 
   /// Whether the device draws Android's own chrome. A device with no platform
@@ -85,6 +114,18 @@ class DeviceFramePainter extends BoxPainter {
 
   Color get _contentColor =>
       brightness == Brightness.light ? Colors.black : Colors.white;
+
+  /// The colour of the status bar's glyphs: the one the app's style asks the
+  /// system for, so they stay readable over whatever the app draws under the
+  /// bar, or the theme's when the app asks for none.
+  Color get _statusBarContentColor => switch (statusBarIconBrightness(
+    style: statusBarStyle,
+    isAndroid: _isAndroid,
+  )) {
+    Brightness.light => Colors.white,
+    Brightness.dark => Colors.black,
+    null => _contentColor,
+  };
 
   @override
   void paint(Canvas canvas, Offset offset, ImageConfiguration configuration) {
@@ -240,7 +281,7 @@ class DeviceFramePainter extends BoxPainter {
   /// and the clock sits over it. Filling it here would hide that colour and
   /// show a strip no device ever displays.
   void _drawStatusBar(Canvas canvas, Size size) {
-    final color = _contentColor;
+    final color = _statusBarContentColor;
     final centerY = insets.top / 2;
 
     _drawTime(canvas, centerY, color);
@@ -253,7 +294,7 @@ class DeviceFramePainter extends BoxPainter {
   /// iOS centres its clock in the left half of the bar; Android does not,
   /// which is the clearest difference between the two at a glance.
   void _drawAndroidStatusBar(Canvas canvas, Size size) {
-    final color = _contentColor;
+    final color = _statusBarContentColor;
     final centerY = insets.top / 2;
 
     _drawTime(canvas, centerY, color, left: _androidStatusBarPadding);
@@ -354,7 +395,7 @@ class DeviceFramePainter extends BoxPainter {
   void _drawStatusClusters(Canvas canvas, List<Rect> cutouts) {
     bool isCamera(Rect rect) => rect.longestSide < 50;
     final List<Rect> cameras = cutouts.where(isCamera).toList();
-    final color = _contentColor;
+    final color = _statusBarContentColor;
 
     // Nothing fills a cluster: the device draws these over whatever the app
     // paints there. Measured on the simulator, the strip carries the app's
